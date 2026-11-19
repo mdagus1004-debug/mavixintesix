@@ -1,4 +1,4 @@
-// server.js - MAVIX INTESIX - Backend Render
+// server.js - MAVIXINTESIX - Backend Render
 const express = require('express');
 const cors = require('cors');
 const app = express();
@@ -7,20 +7,20 @@ app.use(express.json());
 const GROQ_API_KEY = process.env.GROQ_API_KEY || "gsk_XXXXXXXXXXXXXXXX";
 let memori = { namaBos: "", deposit: 0 };
 app.get('/', (req, res) => {
-  res.json({ ok: true, pesan: "MAVIX INTESIX HIDUP kat Render!", nama: "MAVIX INTESIX", panggilan: "MAVIX", jenis: "Perempuan", bahasa: "Indonesia Saja", otak: "Groq gpt-oss-120b" });
+  res.json({ ok: true, pesan: "MAVIXINTESIX HIDUP kat Render!", nama: "MAVIXINTESIX", panggilan: "MAVIX", jenis: "Perempuan", bahasa: "Indonesia Saja", otak: "Groq gpt-oss-120b" });
 });
 app.post('/otak', async (req, res) => {
   try{
     let teks = req.body.teks || "";
     let t = teks.toLowerCase();
     if(t.includes("halo") || t.includes("hai")){
-      return res.json({ jawapan: "Halo Bos, saya MAVIX INTESIX. Apa kabar? Ada yang bisa saya bantu?" });
+      return res.json({ jawapan: "Halo Bos, saya MAVIXINTESIX. Apa kabar? Ada yang bisa saya bantu?" });
     }
     if(t.includes("nama kamu") || t.includes("siapa kamu")){
-      return res.json({ jawapan: "Nama saya MAVIX INTESIX Bos, robot pembantu Bos. Bos yang membuat saya." });
+      return res.json({ jawapan: "Nama saya MAVIXINTESIX Bos, robot pembantu Bos. Bos yang membuat saya." });
     }
     if(t.includes("perempuan") || t.includes("jenis kelamin")){
-      return res.json({ jawapan: "Ya Bos, saya MAVIX INTESIX perempuan, teman Bos yang bantu Bos." });
+      return res.json({ jawapan: "Ya Bos, saya MAVIXINTESIX perempuan, teman Bos yang bantu Bos." });
     }
     if(t.includes("nama saya")){
       memori.namaBos = teks.replace(/nama saya/i, "").trim();
@@ -38,7 +38,7 @@ app.post('/otak', async (req, res) => {
     if(t.includes("baki") || t.includes("sisa deposit")){
       return res.json({ jawapan: "Deposit Bos sekarang " + memori.deposit + "." });
     }
-    let systemPrompt = `Kamu adalah MAVIX INTESIX, robot pembantu perempuan yang sopan dan ramah. Nama panggilan kamu MAVIX. Kamu HANYA bicara Bahasa Indonesia saja. Jangan pakai Bahasa Melayu, jangan pakai Bahasa Inggris, jangan campur-campur. Gunakan kata Indonesia yang benar: "Apa kabar" bukan "Apa khabar", "Ada yang bisa saya bantu" bukan "Nak saya tolong apa". Nama bos kamu adalah ${memori.namaBos || "Bos"}. Deposit bos sekarang ${memori.deposit}. Kamu dibuat oleh Bos untuk bantu Bos. Jawab pendek saja, maksimal 2 kalimat, karena jawaban ini akan dibacakan dengan suara. Jangan pakai * atau # atau emoji.`;
+    let systemPrompt = `Kamu adalah MAVIXINTESIX, robot pembantu perempuan yang sopan dan ramah. Nama panggilan kamu MAVIX. Kamu HANYA bicara Bahasa Indonesia saja. Jangan pakai Bahasa Melayu, jangan pakai Bahasa Inggris, jangan campur-campur. Gunakan kata Indonesia yang benar: "Apa kabar" bukan "Apa khabar", "Ada yang bisa saya bantu" bukan "Nak saya tolong apa". Nama bos kamu adalah ${memori.namaBos || "Bos"}. Deposit bos sekarang ${memori.deposit}. Kamu dibuat oleh Bos untuk bantu Bos. Jawab pendek saja, maksimal 2 kalimat, karena jawaban ini akan dibacakan dengan suara. Jangan pakai * atau # atau emoji.`;
     let groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": "Bearer " + GROQ_API_KEY },
@@ -53,7 +53,7 @@ app.post('/otak', async (req, res) => {
 });
 app.post('/cakap', async (req, res) => {
   let teks = req.body.teks || "Halo Bos";
-  res.json({ ok: true, teks: teks, suara: { nama: "MAVIX INTESIX", jenis: "Perempuan", suara: "id-ID-GadisNeural", bahasa: "id-ID", pitch: 1.1 } });
+  res.json({ ok: true, teks: teks, suara: { nama: "MAVIXINTESIX", jenis: "Perempuan", suara: "id-ID-GadisNeural", bahasa: "id-ID", pitch: 1.1 } });
 });
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log("MAVIX INTESIX HIDUP kat port " + PORT));
+app.listen(PORT, () => console.log("MAVIXINTESIX HIDUP kat port " + PORT));
