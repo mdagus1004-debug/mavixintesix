@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MAVIXINTESIX</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif}
+body{background:#0a0f1e;color:white;height:100vh;display:flex;flex-direction:column}
+.header{background:#111a33;padding:12px;display:flex;align-items:center;gap:12px;border-bottom:2px solid #00e5ff}
+.header img{width:50px;height:50px;border-radius:50%;object-fit:cover;border:2px solid #00e5ff}
+.header h1{font-size:18px;color:#00e5ff}
+.header p{font-size:12px;color:#8affff}
+#chat{flex:1;padding:15px;overflow-y:auto;display:flex;flex-direction:column;gap:10px}
+.msg{max-width:80%;padding:10px 14px;border-radius:15px;font-size:15px;line-height:1.4}
+.me{background:#00e5ff;color:#000;align-self:flex-end;border-bottom-right-radius:3px}
+.mavix{background:#1e2a4a;align-self:flex-start;border-bottom-left-radius:3px;border:1px solid #00e5ff33}
+.input-area{display:flex;padding:10px;background:#111a33;gap:8px}
+input{flex:1;padding:12px;border-radius:20px;border:none;outline:none;background:#0a0f1e;color:white}
+button{padding:12px 20px;border-radius:20px;border:none;background:#00e5ff;font-weight:bold}
+</style>
+</head>
+<body>
+<div class="header">
+<img src="mavix.jpg">
+<div><h1>MAVIXINTESIX</h1><p>● Online - Perempuan - Indonesia Saja</p></div>
+</div>
+<div id="chat">
+<div class="msg mavix">Halo Bos! Saya MAVIX. Saya sudah hidup. Bos mau tanya apa hari ini?</div>
+</div>
+<div class="input-area">
+<input id="teks" placeholder="Tulis pesan untuk MAVIX...">
+<button onclick="kirim()">Kirim</button>
+</div>
+<script>
+async function kirim(){
+let input=document.getElementById('teks');
+let teks=input.value.trim();
+if(!teks) return;
+let chat=document.getElementById('chat');
+chat.innerHTML+=`<div class="msg me">${teks}</div>`;
+input.value='';
+chat.scrollTop=chat.scrollHeight;
+try{
+let res=await fetch('/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:teks})});
+let data=await res.json();
+let jawab=data.reply||data.jawaban||data.response||data.pesan||"Maaf Bos, otak saya belum jawab.";
+chat.innerHTML+=`<div class="msg mavix">${jawab}</div>`;
+}catch(e){
+chat.innerHTML+=`<div class="msg mavix">Bos, otak saya belum sambung. Cek server di Render ya.</div>`;
+}
+chat.scrollTop=chat.scrollHeight;
+}
+document.getElementById('teks').addEventListener('keypress',e=>{if(e.key==='Enter') kirim();});
+</script>
+</body>
+</html>
