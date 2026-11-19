@@ -19,12 +19,17 @@ body { height:100vh; display:flex; flex-direction:column; color:white; overflow:
 .lapisan-gelap { position:fixed; top:0; left:0; width:100%; height:100%; background:linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.1), rgba(0,0,0,0.65)); z-index:-1; }
 
 /* MATA BERKEDIP - BAYANG ATAS MATA */
-.kedip {
-  position:fixed; top:38%; left:50%; transform:translateX(-50%);
-  width:220px; height:14px; background:#050818; z-index:0;
-  border-radius:50%; opacity:0; pointer-events:none;
-  animation: kedip 4s infinite;
+/* KEDIP BARU - 2 MATA, TEPAT KAT MATA DALAM VIDEO BOS */
+.kedip-kiri, .kedip-kanan {
+  position:fixed; top:36%; width:42px; height:28px;
+  background:#0a1a3a; z-index:1; border-radius:8px;
+  opacity:0; pointer-events:none;
+  animation: kedipBaru 3s infinite;
+  box-shadow:0 0 10px #0a1a3a;
 }
+.kedip-kiri { left:38%; }
+.kedip-kanan { left:56%; }
+@keyframes kedipBaru { 0%,90%,100%{opacity:0; transform:scaleY(0)} 93%{opacity:1; transform:scaleY(1)} 96%{opacity:0; transform:scaleY(0)} }
 @keyframes kedip { 0%,92%,100%{opacity:0} 94%{opacity:1} 96%{opacity:0} }
 
 /* MULUT GERAK BILA BICARA */
@@ -63,7 +68,8 @@ body { height:100vh; display:flex; flex-direction:column; color:white; overflow:
 
 <img src="mavix.jpg" class="bg-full">
 <div class="lapisan-gelap"></div>
-<div class="kedip"></div>
+<div class="kedip-kiri"></div>
+<div class="kedip-kiri"></div>
 <div class="mulut" id="mulut"></div>
 <div class="tangan" id="tangan">👋</div>
 
