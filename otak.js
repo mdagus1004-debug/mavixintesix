@@ -273,10 +273,9 @@ const OtakKecil = {
     return null;
   },
 
-  async fikir(teks, bagiJawaban) {
-    if(window.sedangBicara && typeof stopMulut === 'function'){
-      stopMulut();
-    }
+    async fikir(teks, bagiJawaban) {
+    if (typeof stopMulut === 'function') stopMulut();
+  
     let jawabanKecil = this.fikirKecil(teks);
     if (jawabanKecil) { this.simpanChat(teks, jawabanKecil); bagiJawaban(jawabanKecil); return; }
     try {
