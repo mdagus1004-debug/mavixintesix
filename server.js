@@ -1,52 +1,40 @@
 const express = require('express');
-const path = require('path');
 const app = express();
-const PORT = process.env.PORT || 3000;
-
 app.use(express.json());
-app.use(express.static(__dirname));
 
-// 1. Kalau Bos buka website utama, tunjuk MUKA MAVIX
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
-});
+const GROK_KEY = process.env.GROK_API_KEY;
 
-// 2. Kalau mau check otak hidup atau tidak, buka /status
-app.get('/status', (req, res) => {
-  res.json({
-    ok: true,
-    pesan: "MAVIXINTESIX HIDUP kat Render!",
-    nama: "MAVIXINTESIX",
-    panggilan: "MAVIX",
-    jenis: "Perempuan",
-    bahasa: "Indonesia Saja",
-    otak: "Gemini 2.5 Flash - Boleh Pilih AI"
-  });
-});
-
-// 3. Tempat ngobrol - SUDAH SAMBUNG GEMINI, BOLEH PILIH AI!
 app.post('/chat', async (req, res) => {
-  const pesan = req.body.message || req.body.pesan || "Halo";
-  const namaBos = req.body.namaBos || "Bos";
-  const kesukaan = req.body.kesukaan || "";
-  const perasaan = req.body.perasaan || "";
-  const modelPilihan = req.body.model || "gemini-2.0-flash";
+  const pesanUser = req.body.message || "halo";
+  
   try {
-    let respon = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelPilihan}:generateContent?key=${process.env.GEMINI_API_KEY}`, {
+    const r = await fetch("https://api.x.ai/v1/chat/completions", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${GROK_KEY}`
+      },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: `Kamu MAVIX, perempuan, baik, setia. Kamu cakap Bahasa Indonesia saja. Panggil Bos dengan sebutan Bos. Nama Bos adalah ${namaBos}. Bos suka ${kesukaan}. Perasaan Bos sekarang ${perasaan}. Jawab dengan pendek, mesra, dan bantu Bos. Pesan Bos: ${pesan}` }] }]
+        model: "grok-3-mini",
+        messages: [{ role: "user", content: pesanUser }],
+        max_tokens: 1000
       })
     });
-    let data = await respon.json();
-    let jawapan = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!jawapan) throw new Error("Gemini kosong");
-    res.json({ reply: jawapan });
+
+    const data = await r.json();
+    console.log("GROK JAWAB:", JSON.stringify(data).slice(0, 500));
+
+    if (data.choices && data.choices[0]) {
+      return res.json({ reply: data.choices[0].message.content });
+    } else {
+      return res.json({ reply: "Bos, Grok cakap: " + JSON.stringify(data.error || data).slice(0, 300) });
+    }
+
   } catch (e) {
-    console.log("GEMINI ERROR SEBENAR:", e.message);
-    console.log("GEMINI KEY ADA TAK:", process.env.GEMINI_API_KEY ? "ADA" : "TAK ADA");
-    res.json({ reply: "Bos, Gemini saya putus sebentar. Tapi saya masih di sini, " + namaBos + "." });
+    console.log("GROK ERROR:", e.message);
+    return res.json({ reply: "Bos, Grok saya putus sebentar: " + e.message });
   }
 });
-app.listen(PORT, () => console.log("MAVIX hidup di port " + PORT));
+
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, () => console.log("MAVIX Hidup di port " + PORT));
