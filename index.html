@@ -7,85 +7,25 @@
 <style>
 * { margin:0; padding:0; box-sizing:border-box; font-family:sans-serif; }
 body { height:100vh; display:flex; flex-direction:column; color:white; overflow:hidden; background:#050818; }
-
-/* PENTAS MAVIX */
-.pentas {
-  position:fixed; top:0; left:0; width:100%; height:100%; z-index:-1;
-  display:flex; align-items:center; justify-content:center;
-  background: radial-gradient(circle at 50% 40%, #0a2a5a 0%, #050818 70%);
-  overflow:hidden;
-}
-/* CAHAYA BELAKANG BERDENYUT MACAM JANTUNG */
-.cahaya {
-  position:absolute; width:350px; height:350px; border-radius:50%;
-  background: radial-gradient(circle, rgba(34,211,238,0.5), transparent 70%);
-  animation: denyut 2.5s ease-in-out infinite;
-}
+.pentas { position:fixed; top:0; left:0; width:100%; height:100%; z-index:-1; display:flex; align-items:center; justify-content:center; background: radial-gradient(circle at 50% 40%, #0a2a5a 0%, #050818 70%); overflow:hidden; }
+.cahaya { position:absolute; width:350px; height:350px; border-radius:50%; background: radial-gradient(circle, rgba(34,211,238,0.5), transparent 70%); animation: denyut 2.5s ease-in-out infinite; }
 @keyframes denyut { 0%,100%{transform:scale(1); opacity:0.6} 50%{transform:scale(1.2); opacity:1} }
-
-/* BADAN UTAMA - TERAPUNG */
-.mavix-body {
-  position:relative; width:340px; height:520px;
-  animation: terapung 3s ease-in-out infinite;
-}
+.mavix-body { position:relative; width:340px; height:520px; animation: terapung 3s ease-in-out infinite; }
 @keyframes terapung { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
-
-/* SETIAP LAPIS PAKAI GAMBAR SAMA, TAPI KITA POTONG PAKAI CLIP */
-.lapis {
-  position:absolute; inset:0;
-  background-image:url('mavix.jpg');
-  background-size:340px 520px; background-position:center; background-repeat:no-repeat;
-}
-
-/* LAPIS 1: KEPALA - GOYANG KIRI KANAN SENDIRI */
-.lapis-kepala {
-  clip-path: polygon(0% 0%, 100% 0%, 100% 38%, 0% 38%);
-  transform-origin:50% 35%;
-  animation: goyangKepala 4s ease-in-out infinite;
-  z-index:3;
-}
+.lapis { position:absolute; inset:0; background-image:url('mavix.jpg'); background-size:340px 520px; background-position:center; background-repeat:no-repeat; }
+.lapis-kepala { clip-path: polygon(0% 0%, 100% 0%, 100% 38%, 0% 38%); transform-origin:50% 35%; animation: goyangKepala 4s ease-in-out infinite; z-index:3; }
 @keyframes goyangKepala { 0%,100%{transform:rotate(0deg)} 25%{transform:rotate(-2deg)} 75%{transform:rotate(2deg)} }
-
-/* LAPIS 2: MATA - KEDIP SENDIRI */
-.lapis-mata {
-  clip-path: polygon(32% 28%, 68% 28%, 68% 36%, 32% 36%);
-  animation: kedipMata 3.5s infinite;
-  z-index:4;
-}
+.lapis-mata { clip-path: polygon(32% 28%, 68% 28%, 68% 36%, 32% 36%); animation: kedipMata 3.5s infinite; z-index:4; }
 @keyframes kedipMata { 0%,92%,100%{transform:scaleY(1); filter:brightness(1)} 94%{transform:scaleY(0.05); filter:brightness(0)} 96%{transform:scaleY(1)} }
-
-/* LAPIS 3: MULUT - BUKA TUTUP BILA CAKAP */
-.lapis-mulut {
-  clip-path: polygon(40% 38%, 60% 38%, 60% 46%, 40% 46%);
-  z-index:4;
-}
+.lapis-mulut { clip-path: polygon(40% 38%, 60% 38%, 60% 46%, 40% 46%); z-index:4; }
 .lapis-mulut.cakap { animation: mulutCakap 0.25s infinite; }
 @keyframes mulutCakap { 0%{transform:scaleY(1)} 50%{transform:scaleY(1.5)} 100%{transform:scaleY(0.8)} }
-
-/* LAPIS 4: TANGAN KIRI - GOYANG SENDIRI */
-.lapis-tangan-kiri {
-  clip-path: polygon(0% 45%, 28% 45%, 28% 75%, 0% 75%);
-  transform-origin:25% 50%;
-  animation: goyangTanganKiri 3s ease-in-out infinite;
-  z-index:2;
-}
+.lapis-tangan-kiri { clip-path: polygon(0% 45%, 28% 45%, 28% 75%, 0% 75%); transform-origin:25% 50%; animation: goyangTanganKiri 3s ease-in-out infinite; z-index:2; }
 @keyframes goyangTanganKiri { 0%,100%{transform:rotate(0deg)} 50%{transform:rotate(8deg)} }
-
-/* LAPIS 5: TANGAN KANAN - LAMBAI BILA TEKAN */
-.lapis-tangan-kanan {
-  clip-path: polygon(72% 45%, 100% 45%, 100% 75%, 72% 75%);
-  transform-origin:75% 50%;
-  z-index:2;
-}
+.lapis-tangan-kanan { clip-path: polygon(72% 45%, 100% 45%, 100% 75%, 72% 75%); transform-origin:75% 50%; z-index:2; }
 .lapis-tangan-kanan.lambai { animation: lambaiTangan 0.5s infinite; }
 @keyframes lambaiTangan { 0%{transform:rotate(0deg)} 50%{transform:rotate(-18deg) translateY(-8px)} 100%{transform:rotate(0deg)} }
-
-/* LAPIS 6: BADAN BAWAH - DIAM, JADI ASAS */
-.lapis-badan {
-  clip-path: polygon(0% 38%, 100% 38%, 100% 100%, 0% 100%);
-  z-index:1;
-}
-
+.lapis-badan { clip-path: polygon(0% 38%, 100% 38%, 100% 100%, 0% 100%); z-index:1; }
 .header { display:flex; align-items:center; gap:12px; padding:12px 15px; background:rgba(5,8,24,0.7); }
 .avatar { width:58px; height:58px; border-radius:50%; flex-shrink:0; border:3px solid #22d3ee; overflow:hidden; cursor:pointer; }
 .avatar img { width:100%; height:100%; object-fit:cover; }
@@ -101,7 +41,6 @@ body { height:100vh; display:flex; flex-direction:column; color:white; overflow:
 </style>
 </head>
 <body>
-
 <div class="pentas">
   <div class="cahaya"></div>
   <div class="mavix-body" id="mavixBody">
@@ -113,31 +52,34 @@ body { height:100vh; display:flex; flex-direction:column; color:white; overflow:
     <div class="lapis lapis-mulut" id="mulutLapis"></div>
   </div>
 </div>
-
 <div class="header">
   <div class="avatar" onclick="lambai()"><img src="mavix.jpg"></div>
-  <div class="judul"><h1>MAVIXINTESIX</h1><p>● Online - Cara 2: 5 Lapis Hidup</p></div>
+  <div class="judul"><h1>MAVIXINTESIX</h1><p>● Online - GPT 120B Hidup</p></div>
 </div>
-
-<div id="chatBox"><div class="msg mavix">Halo Bos! Saya sekarang 5 lapis! Kepala saya goyang, mata saya kedip, tangan saya goyang sendiri!</div></div>
-
+<div id="chatBox"><div class="msg mavix">Halo Bos! Saya MAVIX, dah pakai otak GPT 120B! Kepala saya goyang, mata saya kedip, tangan saya goyang sendiri!</div></div>
 <div class="input-row">
   <input id="input" placeholder="Tulis untuk MAVIX..." onkeypress="if(event.key==='Enter') kirim()">
   <button class="btn" onclick="kirim()">Kirim</button>
   <button class="btn" onclick="lambai()">👋 Lambai</button>
 </div>
 
+<!-- PENTING: otak.js MESTI dulu, baru kod bawah! -->
+<script src="otak.js"></script>
 <script>
 async function kirim(){
   const inp = document.getElementById('input');
   const teks = inp.value.trim(); if(!teks) return;
   tambah('user', teks); inp.value='';
-  // Panggil Otak Kecil dulu, kalau dia tak tahu, dia sendiri akan tanya Groq
+  // Kalau OtakKecil tak ada, jangan crash, terus tanya server
+  if (typeof OtakKecil === 'undefined') {
+    tambah('mavix', 'Bos, otak saya tengah loading... cuba lagi 2 saat ya!');
+    return;
+  }
   OtakKecil.fikir(teks, function(jawab){
     tambah('mavix', jawab); cakap(jawab);
   });
 }
-  function tambah(siapa, teks){
+function tambah(siapa, teks){
   const chat = document.getElementById('chatBox');
   const div = document.createElement('div');
   div.className = 'msg ' + siapa;
@@ -154,13 +96,4 @@ function cakap(teks){
   const m=document.getElementById('mulutLapis');
   m.classList.add('cakap');
   if('speechSynthesis' in window){
-    const u=new SpeechSynthesisUtterance(teks); u.lang='id-ID';
-    u.onend=()=> m.classList.remove('cakap');
-    speechSynthesis.cancel(); speechSynthesis.speak(u);
-    setTimeout(()=> m.classList.remove('cakap'), teks.length*80);
-  } else setTimeout(()=> m.classList.remove('cakap'), 2000);
-}
-</script>
-<script src="otak.js"></script>
-</body>
-</html>
+    const u=new SpeechSynthesisUtterance(te
