@@ -139,10 +139,14 @@ async function kirim(){
     tambah('mavix', jawab); cakap(jawab);
   }catch(e){ tambah('mavix','Bos, otak saya belum sambung.'); }
 }
-function tambah(siapa, teks){
-  const box=document.getElementById('chatBox');
-  const d=document.createElement('div'); d.className='msg '+siapa; d.innerText=teks;
-  box.appendChild(d); box.scrollTop=box.scrollHeight;
+async function kirim(){
+  const inp = document.getElementById('input');
+  const teks = inp.value.trim(); if(!teks) return;
+  tambah('user', teks); inp.value='';
+  // Panggil Otak Kecil dulu, kalau dia tak tahu, dia sendiri akan tanya Groq
+  OtakKecil.fikir(teks, function(jawab){
+    tambah('mavix', jawab); cakap(jawab);
+  });
 }
 function lambai(){
   const t=document.getElementById('tanganKanan');
