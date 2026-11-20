@@ -51,6 +51,8 @@ app.post('/chat', async (req, res) => {
     if (!data.choices || !data.choices[0]) throw new Error("Groq kosong");
     res.json({ reply: data.choices[0].message.content });
   } catch (e) {
+    console.log("GROQ ERROR SEBENAR:", e.message);
+    console.log("GROQ KEY ADA TAK:", process.env.GROQ_API_KEY ? "ADA" : "TAK ADA");
     res.json({ reply: "Bos, Groq saya putus sebentar. Tapi saya masih di sini, " + namaBos + "." });
   }
 });
