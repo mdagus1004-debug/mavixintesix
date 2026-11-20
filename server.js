@@ -4,6 +4,11 @@ app.use(express.json());
 
 const GROQ_KEY = process.env.GROQ_API_KEY;
 
+// NI YANG BOS TAK ADA TADI, KITA TAMBAH NI!
+app.get('/', (req, res) => {
+  res.send("MAVIX DAH HIDUP BOS! GROQ Dah Jalan!");
+});
+
 app.post('/chat', async (req, res) => {
   const pesanUser = req.body.message || "halo";
   try {
