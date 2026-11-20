@@ -63,3 +63,9 @@ function stopMulut() {
 
 window.bicara = bicara;
 window.stopMulut = stopMulut;
+
+// Biar otak.js boleh baca status bicara
+Object.defineProperty(window, 'sedangBicara', {
+  get: function(){ return sedangBicara; },
+  set: function(v){ sedangBicara = v; }
+});
