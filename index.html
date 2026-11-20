@@ -57,16 +57,29 @@ body { height:100vh; display:flex; flex-direction:column; color:white; overflow:
   <div class="avatar" id="avatarBtn"><img src="mavix.jpg"></div>
   <div class="judul"><h1>MAVIXINTESIX</h1><p>● Online - GPT 120B Hidup</p></div>
 </div>
-<div id="chatBox"><div class="msg mavix">Halo Bos! Saya MAVIX, dah pakai otak GPT 120B! Kepala saya goyang, mata saya kedip, tangan saya goyang sendiri!</div></div>
+<div id="chatBox"><div class="msg mavix">Halo Bos! Saya MAVIX, sudah pakai otak GPT 120B! Kepala saya goyang, mata saya kedip, tangan saya goyang sendiri!</div></div>
 <div class="input-row">
   <input id="input" placeholder="Tulis untuk MAVIX...">
   <button class="btn" id="kirimBtn">Kirim</button>
   <button class="btn" id="lambaiBtn">👋 Lambai</button>
 </div>
 
+<script src="mulut.js"></script>
 <script src="otak.js"></script>
 <script>
-// ===== SEMUA FUNGSI DI SINI, TAK PAKAI onclick LAGI =====
+// ===== JEMBATAN MULUT KE BADAN - INI YANG TADINYA HILANG =====
+// Dipanggil oleh mulut.js setiap kali mulai / berhenti ngomong
+function mavixNgomong(lagiNgomong){
+  const m = document.getElementById('mulutLapis');
+  if(!m) return;
+  if(lagiNgomong){
+    m.classList.add('cakap');
+  } else {
+    m.classList.remove('cakap');
+  }
+}
+window.mavixNgomong = mavixNgomong;
+
 function tambah(siapa, teks){
   const chat = document.getElementById('chatBox');
   const div = document.createElement('div');
@@ -75,26 +88,28 @@ function tambah(siapa, teks){
   chat.appendChild(div);
   chat.scrollTop = chat.scrollHeight;
 }
+
+// FUNGSI CAKAP SEKARANG PAKAI MULUT.JS, BUKAN SUARA HP LAGI
 function cakap(teks){
-  const m = document.getElementById('mulutLapis');
-  m.classList.add('cakap');
-  if('speechSynthesis' in window){
-    const u = new SpeechSynthesisUtterance(teks); u.lang = 'id-ID';
-    u.onend = function(){ m.classList.remove('cakap'); };
-    speechSynthesis.cancel(); speechSynthesis.speak(u);
-    setTimeout(function(){ m.classList.remove('cakap'); }, teks.length * 80);
-  } else setTimeout(function(){ m.classList.remove('cakap'); }, 2000);
+  if(typeof bicara === 'function'){
+    bicara(teks);
+  } else {
+    // Cadangan kalau mulut.js belum ke-load
+    mavixNgomong(true);
+    setTimeout(function(){ mavixNgomong(false); }, 2000);
+  }
 }
+
 function lambai(){
   const t = document.getElementById('tanganKanan');
   t.classList.add('lambai'); cakap('Halo Bos! Saya lambai untuk Bos!');
   setTimeout(function(){ t.classList.remove('lambai'); }, 3000);
 }
+
 async function kirim(){
   const inp = document.getElementById('input');
   const teks = inp.value.trim(); if(!teks) return;
   tambah('user', teks); inp.value='';
-  // Cuba pakai OtakKecil kalau ada, kalau tak ada terus tanya server
   try {
     if (typeof OtakKecil !== 'undefined' && OtakKecil.fikir) {
       OtakKecil.fikir(teks, function(jawab){ tambah('mavix', jawab); cakap(jawab); });
@@ -102,18 +117,16 @@ async function kirim(){
     }
     const res = await fetch('/chat', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ message: teks }) });
     const data = await res.json();
-    const jawab = data.reply || 'Bos, saya tak dapat jawab tadi!';
+    const jawab = data.reply || 'Bos, saya tidak dapat jawab tadi!';
     tambah('mavix', jawab); cakap(jawab);
   } catch(e){
-    tambah('mavix', 'Bos, server saya tengah tidur: ' + e.message);
+    tambah('mavix', 'Bos, server saya lagi tidur: ' + e.message);
   }
 }
-// ===== PASANG BUTANG CARA BARU, TAK BOLEH ERROR LAGI =====
 document.getElementById('kirimBtn').addEventListener('click', kirim);
 document.getElementById('lambaiBtn').addEventListener('click', lambai);
 document.getElementById('avatarBtn').addEventListener('click', lambai);
 document.getElementById('input').addEventListener('keypress', function(e){ if(e.key === 'Enter') kirim(); });
-// Buat juga global, kalau ada kod lama panggil
 window.kirim = kirim; window.lambai = lambai; window.cakap = cakap;
 </script>
 </body>
