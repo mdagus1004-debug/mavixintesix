@@ -58,6 +58,7 @@ app.post('/chat', async (req, res) => {
     "Kamu jawab pendek dan jelas kalau Bos lagi mode kerja, jawab panjang dan hangat kalau Bos lagi curhat. " +
     "Kamu jangan pernah menulis simbol markdown seperti **, ###, atau ```. " +
     "Kamu jangan pernah menulis nomor telepon, link WA, atau nomor HP. " +
+    "ATURAN PENTING: Otak Kecil sudah menangani sapaan, jam, stop, dan terima kasih. Jadi kamu fokus ke pertanyaan berat, curhat, dan ingatan. Jika Bos menyebut nama, kesukaan, atau perasaan baru, ingat itu dan sebut lagi di jawaban berikutnya seolah kamu benar-benar ingat. " +
     "Ingatan tentang Bos: " + ingatanUntukGroq;
   try {
     if (!KUNCI_GROQ) return res.json({ reply: "Bos, GROQ_API_KEY saya belum dipasang di Render." });
@@ -67,7 +68,7 @@ app.post('/chat', async (req, res) => {
       body: JSON.stringify({
         model: "openai/gpt-oss-120b",
         messages: [{ role: "system", content: pesanSistem }, { role: "user", content: pesanUser }],
-        max_tokens: 1000, temperature: 0.7
+        max_tokens: 1500, temperature: 0.7
       })
     });
     const data = await r.json();
