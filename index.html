@@ -137,6 +137,14 @@ async function kirim(){
     tambah('mavix', jawab); cakap(jawab);
   });
 }
+  function tambah(siapa, teks){
+  const chat = document.getElementById('chat');
+  const div = document.createElement('div');
+  div.className = 'msg ' + siapa;
+  div.innerText = teks;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
 function lambai(){
   const t=document.getElementById('tanganKanan');
   t.classList.add('lambai'); cakap('Halo Bos! Saya lambai untuk Bos!');
