@@ -30,7 +30,7 @@ app.post('/chat', async (req, res) => {
   const namaBos = req.body.namaBos || "Bos";
   const kesukaan = req.body.kesukaan || "";
   const perasaan = req.body.perasaan || "";
-  const modelPilihan = req.body.model || "gemini-2.5-flash";
+  const modelPilihan = req.body.model || "gemini-2.0-flash";
   try {
     let respon = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelPilihan}:generateContent?key=${process.env.GEMINI_API_KEY}`, {
       method: "POST",
