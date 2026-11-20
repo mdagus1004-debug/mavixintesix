@@ -23,7 +23,7 @@ function gantiMode(modeBaru){
 window.gantiMode = gantiMode;
 
 (function() {
-  let PROXY_GADIS = "https://mavix-speech.mdagus1004.workers.dev";
+  let PROXY_GADIS = "https://mavixintesix-1.onrender.com";
   let audioMulut = null;
   let antrianMulut = [];
   let lagiNgomong = false;
