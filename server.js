@@ -24,11 +24,34 @@ app.get('/status', (req, res) => {
   });
 });
 
-// 3. Tempat ngobrol
+// 3. Tempat ngobrol - SUDAH SAMBUNG GROQ!
 app.post('/chat', async (req, res) => {
   const pesan = req.body.message || req.body.pesan || "Halo";
-  // Nanti kita sambung ke Groq di sini
-  res.json({ reply: "Halo Bos! Saya MAVIX. Saya sudah hidup dan sudah ada muka. Bos tanya apa?" });
+  const namaBos = req.body.namaBos || "Bos";
+  const kesukaan = req.body.kesukaan || "";
+  const perasaan = req.body.perasaan || "";
+  try {
+    let respon = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + process.env.GROQ_API_KEY
+      },
+      body: JSON.stringify({
+        model: "openai/gpt-oss-120b",
+        messages: [
+          { role: "system", content: "Kamu MAVIX, perempuan, baik, setia. Kamu cakap Bahasa Indonesia saja. Panggil Bos dengan sebutan Bos. Nama Bos adalah " + namaBos + ". Bos suka " + kesukaan + ". Perasaan Bos sekarang " + perasaan + ". Jawab dengan pendek, mesra, dan bantu Bos." },
+          { role: "user", content: pesan }
+        ],
+        temperature: 0.7,
+        max_tokens: 500
+      })
+    });
+    let data = await respon.json();
+    if (!data.choices || !data.choices[0]) throw new Error("Groq kosong");
+    res.json({ reply: data.choices[0].message.content });
+  } catch (e) {
+    res.json({ reply: "Bos, Groq saya putus sebentar. Tapi saya masih di sini, " + namaBos + "." });
+  }
 });
-
 app.listen(PORT, () => console.log("MAVIX hidup di port " + PORT));
