@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MAVIXINTESIX - HIDUP</title>
+<link rel="icon" href="data:,">
 <style>
 * { margin:0; padding:0; box-sizing:border-box; font-family:sans-serif; }
 body { height:100vh; display:flex; flex-direction:column; color:white; overflow:hidden; background:#050818; }
@@ -43,7 +44,7 @@ body { height:100vh; display:flex; flex-direction:column; color:white; overflow:
 <body>
 <div class="pentas">
   <div class="cahaya"></div>
-  <div class="mavix-body" id="mavixBody">
+  <div class="mavix-body">
     <div class="lapis lapis-badan"></div>
     <div class="lapis lapis-tangan-kiri"></div>
     <div class="lapis lapis-tangan-kanan" id="tanganKanan"></div>
@@ -53,32 +54,19 @@ body { height:100vh; display:flex; flex-direction:column; color:white; overflow:
   </div>
 </div>
 <div class="header">
-  <div class="avatar" onclick="lambai()"><img src="mavix.jpg"></div>
+  <div class="avatar" id="avatarBtn"><img src="mavix.jpg"></div>
   <div class="judul"><h1>MAVIXINTESIX</h1><p>● Online - GPT 120B Hidup</p></div>
 </div>
 <div id="chatBox"><div class="msg mavix">Halo Bos! Saya MAVIX, dah pakai otak GPT 120B! Kepala saya goyang, mata saya kedip, tangan saya goyang sendiri!</div></div>
 <div class="input-row">
-  <input id="input" placeholder="Tulis untuk MAVIX..." onkeypress="if(event.key==='Enter') kirim()">
-  <button class="btn" onclick="kirim()">Kirim</button>
-  <button class="btn" onclick="lambai()">👋 Lambai</button>
+  <input id="input" placeholder="Tulis untuk MAVIX...">
+  <button class="btn" id="kirimBtn">Kirim</button>
+  <button class="btn" id="lambaiBtn">👋 Lambai</button>
 </div>
 
-<!-- PENTING: otak.js MESTI dulu, baru kod bawah! -->
 <script src="otak.js"></script>
 <script>
-async function kirim(){
-  const inp = document.getElementById('input');
-  const teks = inp.value.trim(); if(!teks) return;
-  tambah('user', teks); inp.value='';
-  // Kalau OtakKecil tak ada, jangan crash, terus tanya server
-  if (typeof OtakKecil === 'undefined') {
-    tambah('mavix', 'Bos, otak saya tengah loading... cuba lagi 2 saat ya!');
-    return;
-  }
-  OtakKecil.fikir(teks, function(jawab){
-    tambah('mavix', jawab); cakap(jawab);
-  });
-}
+// ===== SEMUA FUNGSI DI SINI, TAK PAKAI onclick LAGI =====
 function tambah(siapa, teks){
   const chat = document.getElementById('chatBox');
   const div = document.createElement('div');
@@ -87,13 +75,46 @@ function tambah(siapa, teks){
   chat.appendChild(div);
   chat.scrollTop = chat.scrollHeight;
 }
-function lambai(){
-  const t=document.getElementById('tanganKanan');
-  t.classList.add('lambai'); cakap('Halo Bos! Saya lambai untuk Bos!');
-  setTimeout(()=> t.classList.remove('lambai'), 3000);
-}
 function cakap(teks){
-  const m=document.getElementById('mulutLapis');
+  const m = document.getElementById('mulutLapis');
   m.classList.add('cakap');
   if('speechSynthesis' in window){
-    const u=new SpeechSynthesisUtterance(te
+    const u = new SpeechSynthesisUtterance(teks); u.lang = 'id-ID';
+    u.onend = function(){ m.classList.remove('cakap'); };
+    speechSynthesis.cancel(); speechSynthesis.speak(u);
+    setTimeout(function(){ m.classList.remove('cakap'); }, teks.length * 80);
+  } else setTimeout(function(){ m.classList.remove('cakap'); }, 2000);
+}
+function lambai(){
+  const t = document.getElementById('tanganKanan');
+  t.classList.add('lambai'); cakap('Halo Bos! Saya lambai untuk Bos!');
+  setTimeout(function(){ t.classList.remove('lambai'); }, 3000);
+}
+async function kirim(){
+  const inp = document.getElementById('input');
+  const teks = inp.value.trim(); if(!teks) return;
+  tambah('user', teks); inp.value='';
+  // Cuba pakai OtakKecil kalau ada, kalau tak ada terus tanya server
+  try {
+    if (typeof OtakKecil !== 'undefined' && OtakKecil.fikir) {
+      OtakKecil.fikir(teks, function(jawab){ tambah('mavix', jawab); cakap(jawab); });
+      return;
+    }
+    const res = await fetch('/chat', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ message: teks }) });
+    const data = await res.json();
+    const jawab = data.reply || 'Bos, saya tak dapat jawab tadi!';
+    tambah('mavix', jawab); cakap(jawab);
+  } catch(e){
+    tambah('mavix', 'Bos, server saya tengah tidur: ' + e.message);
+  }
+}
+// ===== PASANG BUTANG CARA BARU, TAK BOLEH ERROR LAGI =====
+document.getElementById('kirimBtn').addEventListener('click', kirim);
+document.getElementById('lambaiBtn').addEventListener('click', lambai);
+document.getElementById('avatarBtn').addEventListener('click', lambai);
+document.getElementById('input').addEventListener('keypress', function(e){ if(e.key === 'Enter') kirim(); });
+// Buat juga global, kalau ada kod lama panggil
+window.kirim = kirim; window.lambai = lambai; window.cakap = cakap;
+</script>
+</body>
+</html>
