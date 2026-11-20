@@ -1,6 +1,6 @@
-// OTAK KECIL MAVIX V4 - Bahasa Indonesia
+// OTAK KECIL MAVIX - Bahasa Indonesia
 // 1: Ingatan Kekal, 2: Hitung Toko, 3: Percakapan, 4: Perintah Beneran
-// SUDAH NYAMBUNG KE mulut.js (bicara / stopMulut) DAN index.html (badan)
+// Sudah nyambung ke mulut.js (bicara / stopMulut / gantiMode) dan index.html
 
 const OtakKecil = {
   namaBos: "", deposit: 0, hargaBarang: 2000,
@@ -9,7 +9,6 @@ const OtakKecil = {
   catatanBos: [], pengingatBos: [],
   daftarHarga: { "robot": 2000, "lampu": 50, "baterai": 100, "kopi": 20, "charger": 80 },
 
-  // ===== INGATAN - SIMPAN DI BUKU (localStorage) =====
   simpanKeBuku: function() {
     let dataIngatan = {
       namaBos: this.namaBos, deposit: this.deposit,
@@ -49,7 +48,6 @@ const OtakKecil = {
     this.simpanKeBuku();
   },
 
-  // ===== HITUNG TOKO =====
   hitungDiskon: function(teks) {
     let t = teks.toLowerCase();
     if (!t.includes("diskon") && !t.includes("%")) return null;
@@ -111,7 +109,6 @@ const OtakKecil = {
     return null;
   },
 
-  // ===== PERASAAN BOS =====
   cekPerasaan: function(teks) {
     let t = teks.toLowerCase();
     if (t.includes("saya sedih") || t.includes("saya galau") || t.includes("saya stres")) {
@@ -141,7 +138,6 @@ const OtakKecil = {
     return null;
   },
 
-  // ===== PERINTAH BENERAN - NYAMBUNG KE BADAN =====
   perintahLampu: function(teks) {
     let t = teks.toLowerCase();
     if (!t.includes("lampu")) return null;
@@ -217,7 +213,6 @@ const OtakKecil = {
     return null;
   },
 
-  // ===== OTAK KECIL BERPIKIR DULU =====
   fikirKecil: function(teks) {
     let t = teks.toLowerCase().trim();
     let panggil = this.namaBos || "Bos";
@@ -253,7 +248,7 @@ const OtakKecil = {
       if (this.riwayatChat.length >= 2) return "Tadi Bos bilang: '" + this.riwayatChat[this.riwayatChat.length - 2].bos + "'.";
       else return "Tadi Bos belum bilang apa-apa.";
     }
-    if (t === "halo" || t === "hai" || t.includes("halo mavix")) {
+    if (t === "halo" || t === "hai" || t === "hai gadis" || t.includes("halo mavix")) {
       if (this.kesukaanBos) return "Halo " + panggil + ", apa kabar? Bos mau " + this.kesukaanBos + " lagi?";
       return "Halo " + panggil + ", apa kabar? Saya kangen Bos nih.";
     }
@@ -271,7 +266,6 @@ const OtakKecil = {
       }
       return "Bos mau tanya harga apa? Ada robot, lampu, baterai, kopi, charger.";
     }
-    // Perintah mode untuk mulut.js
     if (t.includes("mode kerja")) { if(typeof gantiMode === 'function') gantiMode("KERJA"); return "Siap Bos, mode kerja aktif."; }
     if (t.includes("mode ngobrol")) { if(typeof gantiMode === 'function') gantiMode("NGOBROL"); return "Asik, mode ngobrol aktif Bos."; }
     let hasilHitung = this.hitungPintar(teks);
@@ -279,9 +273,7 @@ const OtakKecil = {
     return null;
   },
 
-  // ===== JEMBATAN KE OTAK BESAR =====
   async fikir(teks, bagiJawaban) {
-    // Kalau mulut lagi ngomong, hentikan dulu biar tidak berebut
     if(window.sedangBicara && typeof stopMulut === 'function'){
       stopMulut();
     }
