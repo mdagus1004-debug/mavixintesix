@@ -1,6 +1,7 @@
 const express = require('express');
 const app = express();
 app.use(express.json());
+app.use(express.static('.'));
 
 const GROQ_KEY = process.env.GROQ_API_KEY;
 
