@@ -2,6 +2,10 @@
 const express = require('express');
 const http = require('http');
 const WebSocket = require('ws');
+const { EdgeTTS } = require('node-edge-tts');
+const fs = require('fs');
+const path = require('path');
+const os = require('os');
 const app = express();
 app.use(express.json());
 app.use(express.static('.'));
@@ -11,6 +15,30 @@ const KUNCI_GROQ = process.env.GROQ_API_KEY;
 // ===== CEK SERVER HIDUP =====
 app.get('/tes', (req, res) => {
   res.json({ status: "hidup", pesan: "MAVIX sudah hidup Bos, Otak Besar, Otak Kecil, Mulut, dan Badan sudah nyambung semua!" });
+});
+
+// ===== SUARA EDGE MICROSOFT - CARA BARU =====
+app.get("/suara", async (req, res) => {
+  try {
+    let teks = (req.query.teks || "").toString();
+    if (!teks) return res.status(400).send("tidak ada teks");
+    teks = teks.substring(0, 800);
+    const tts = new EdgeTTS({
+      voice: 'id-ID-GadisNeural',
+      lang: 'id-ID',
+      rate: '+0%',
+      pitch: '+5Hz'
+    });
+    const fileTmp = path.join(os.tmpdir(), 'mavix-' + Date.now() + '.mp3');
+    await tts.ttsPromise(teks, fileTmp);
+    res.setHeader("Content-Type", "audio/mpeg");
+    res.sendFile(fileTmp, () => {
+      try { fs.unlinkSync(fileTmp); } catch(e) {}
+    });
+  } catch (e) {
+    console.log("Edge gagal:", e.message);
+    res.status(500).send("gagal");
+  }
 });
 
 // ===== JALUR CHAT UTAMA =====
@@ -53,7 +81,7 @@ app.post('/chat', async (req, res) => {
   }
 });
 
-// ===== MULUT - JEMBATAN SUARA GADIS KE MICROSOFT =====
+// ===== MULUT LAMA - JEMBATAN WEBSOCKET, DIBIARKAN SAJA DULU =====
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 wss.on('connection', (client, req) => {
