@@ -215,6 +215,22 @@ const OtakKecil = {
 
   fikirKecil: function(teks) {
     let t = teks.toLowerCase().trim();
+
+  if (t.includes('stop') || t.includes('berhenti') || t.includes('diam')) {
+    if (typeof stopMulut === 'function') stopMulut();
+    return "Siap Bos, saya berhenti.";
+  }
+  if (t === 'halo' || t === 'hai' || t.includes('halo mavix')) {
+    return "Halo Bos, saya di sini. Mau dibantu apa?";
+  }
+  if (t.includes('jam berapa') || t.includes('pukul berapa')) {
+    const jam = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+    return "Sekarang jam " + jam + " Bos.";
+  }
+  if (t.includes('terima kasih') || t.includes('makasih')) {
+    return "Sama-sama Bos, senang bisa bantu.";
+  }
+    
     let panggil = this.namaBos || "Bos";
     let perasaan = this.cekPerasaan(teks); if (perasaan) return perasaan;
     let lampu = this.perintahLampu(teks); if (lampu) return lampu;
