@@ -1,12 +1,13 @@
 // OTAK BESAR + MULUT MAVIX - Bahasa Indonesia
 const express = require('express');
-const http = require('http');
-const WebSocket = require('ws');
+const cors = require('cors');
 const { EdgeTTS } = require('node-edge-tts');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+
 const app = express();
+app.use(cors());
 app.use(express.json());
 app.use(express.static('.'));
 
@@ -14,10 +15,10 @@ const KUNCI_GROQ = process.env.GROQ_API_KEY;
 
 // ===== CEK SERVER HIDUP =====
 app.get('/tes', (req, res) => {
-  res.json({ status: "hidup", pesan: "MAVIX sudah hidup Bos, Otak Besar, Otak Kecil, Mulut, dan Badan sudah nyambung semua!" });
+  res.json({ status: "hidup", pesan: "MAVIX sudah hidup Bos!" });
 });
 
-// ===== SUARA EDGE MICROSOFT - CARA BARU =====
+// ===== SUARA EDGE MICROSOFT =====
 app.get("/suara", async (req, res) => {
   try {
     let teks = (req.query.teks || "").toString();
@@ -59,6 +60,7 @@ app.post('/chat', async (req, res) => {
     "Kamu jangan pernah menulis nomor telepon, link WA, atau nomor HP. " +
     "Ingatan tentang Bos: " + ingatanUntukGroq;
   try {
+    if (!KUNCI_GROQ) return res.json({ reply: "Bos, GROQ_API_KEY saya belum dipasang di Render." });
     const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": "Bearer " + KUNCI_GROQ },
@@ -81,20 +83,5 @@ app.post('/chat', async (req, res) => {
   }
 });
 
-// ===== MULUT LAMA - JEMBATAN WEBSOCKET, DIBIARKAN SAJA DULU =====
-const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
-wss.on('connection', (client, req) => {
-  const url = new URL(req.url, 'http://localhost');
-  const id = url.searchParams.get('ConnectionId') || 'id';
-  const edge = new WebSocket('wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1?TrustedClientToken=6A5AA1D4EAFF4E9FB9E23DCC4F7E9424&ConnectionId=' + id);
-  edge.on('open', () => {
-    client.on('message', (m) => { try{ edge.send(m); }catch(e){} });
-  });
-  edge.on('message', (m) => { try{ client.send(m); }catch(e){} });
-  edge.on('close', () => { try{ client.close(); }catch(e){} });
-  client.on('close', () => { try{ edge.close(); }catch(e){} });
-});
-
 const PORT = process.env.PORT || 10000;
-server.listen(PORT, () => console.log("MAVIX Hidup di port " + PORT));
+app.listen(PORT, () => console.log("MAVIX Hidup di port " + PORT));
