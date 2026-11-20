@@ -1,5 +1,6 @@
 // OTAK KECIL MAVIX V4 - Bahasa Indonesia
 // 1: Ingatan Kekal, 2: Hitung Toko, 3: Percakapan, 4: Perintah Beneran
+// SUDAH NYAMBUNG KE mulut.js (bicara / stopMulut) DAN index.html (badan)
 
 const OtakKecil = {
   namaBos: "", deposit: 0, hargaBarang: 2000,
@@ -8,6 +9,7 @@ const OtakKecil = {
   catatanBos: [], pengingatBos: [],
   daftarHarga: { "robot": 2000, "lampu": 50, "baterai": 100, "kopi": 20, "charger": 80 },
 
+  // ===== INGATAN - SIMPAN DI BUKU (localStorage) =====
   simpanKeBuku: function() {
     let dataIngatan = {
       namaBos: this.namaBos, deposit: this.deposit,
@@ -47,6 +49,7 @@ const OtakKecil = {
     this.simpanKeBuku();
   },
 
+  // ===== HITUNG TOKO =====
   hitungDiskon: function(teks) {
     let t = teks.toLowerCase();
     if (!t.includes("diskon") && !t.includes("%")) return null;
@@ -108,10 +111,10 @@ const OtakKecil = {
     return null;
   },
 
+  // ===== PERASAAN BOS =====
   cekPerasaan: function(teks) {
     let t = teks.toLowerCase();
-    let panggil = this.namaBos || "Bos";
-    if (t.includes("saya sedih") || t.includes("saya galau") || t.includes("saya stress")) {
+    if (t.includes("saya sedih") || t.includes("saya galau") || t.includes("saya stres")) {
       this.perasaanBos = "sedih"; this.simpanKeBuku();
       return "Eh kenapa Bos sedih? Cerita dong, saya dengar. Saya di sini, saya tidak ke mana-mana. Bos sudah makan belum?";
     }
@@ -138,16 +141,21 @@ const OtakKecil = {
     return null;
   },
 
+  // ===== PERINTAH BENERAN - NYAMBUNG KE BADAN =====
   perintahLampu: function(teks) {
     let t = teks.toLowerCase();
     if (!t.includes("lampu")) return null;
     let panggil = this.namaBos || "Bos";
     if (t.includes("nyalakan") || t.includes("hidupkan") || t.includes("nyala")) {
       document.body.style.background = "white"; document.body.style.color = "black";
+      let pentas = document.querySelector('.pentas');
+      if(pentas) pentas.style.background = "radial-gradient(circle at 50% 40%, #e0f2fe 0%, #ffffff 70%)";
       return "Oke " + panggil + ", lampu sudah saya nyalakan beneran! Layar Bos sudah terang.";
     }
     if (t.includes("matikan") || t.includes("tutup") || t.includes("mati")) {
       document.body.style.background = "#111111"; document.body.style.color = "white";
+      let pentas = document.querySelector('.pentas');
+      if(pentas) pentas.style.background = "radial-gradient(circle at 50% 40%, #0a2a5a 0%, #050818 70%)";
       return "Oke " + panggil + ", lampu sudah saya matikan beneran! Layar Bos sudah gelap.";
     }
     return null;
@@ -200,12 +208,16 @@ const OtakKecil = {
       if (t.includes("jam") && angka) detik = parseInt(angka[0]) * 3600;
       this.pengingatBos.push({ isi: isi, waktu: new Date().toLocaleString('id-ID') });
       this.simpanKeBuku();
-      setTimeout(() => { alert("MAVIX: Bos! " + isi); }, detik * 1000);
+      setTimeout(() => { 
+        alert("MAVIX: Bos! " + isi); 
+        if(typeof bicara === 'function') bicara("Bos! " + isi);
+      }, detik * 1000);
       return "Oke " + panggil + ", saya ingatkan dalam " + detik + " detik lagi: '" + isi + "'.";
     }
     return null;
   },
 
+  // ===== OTAK KECIL BERPIKIR DULU =====
   fikirKecil: function(teks) {
     let t = teks.toLowerCase().trim();
     let panggil = this.namaBos || "Bos";
@@ -250,7 +262,7 @@ const OtakKecil = {
       if (angka) { this.deposit = parseInt(angka[0]); this.simpanKeBuku(); return "Oke deposit " + this.deposit + " sudah saya simpan."; }
       else return "Depositnya berapa Bos?";
     }
-    if (t.includes("sisa") || t.includes("baki")) {
+    if (t.includes("sisa")) {
       return "Harga " + this.hargaBarang + ", deposit Bos " + this.deposit + ". Sisanya tinggal " + (this.hargaBarang - this.deposit) + ".";
     }
     if (t.includes("harga")) {
@@ -259,12 +271,20 @@ const OtakKecil = {
       }
       return "Bos mau tanya harga apa? Ada robot, lampu, baterai, kopi, charger.";
     }
+    // Perintah mode untuk mulut.js
+    if (t.includes("mode kerja")) { if(typeof gantiMode === 'function') gantiMode("KERJA"); return "Siap Bos, mode kerja aktif."; }
+    if (t.includes("mode ngobrol")) { if(typeof gantiMode === 'function') gantiMode("NGOBROL"); return "Asik, mode ngobrol aktif Bos."; }
     let hasilHitung = this.hitungPintar(teks);
     if (hasilHitung) return hasilHitung;
     return null;
   },
 
+  // ===== JEMBATAN KE OTAK BESAR =====
   async fikir(teks, bagiJawaban) {
+    // Kalau mulut lagi ngomong, hentikan dulu biar tidak berebut
+    if(window.sedangBicara && typeof stopMulut === 'function'){
+      stopMulut();
+    }
     let jawabanKecil = this.fikirKecil(teks);
     if (jawabanKecil) { this.simpanChat(teks, jawabanKecil); bagiJawaban(jawabanKecil); return; }
     try {
@@ -274,7 +294,7 @@ const OtakKecil = {
       });
       if (!res.ok) throw new Error("Groq mati");
       let data = await res.json();
-      let jawaban = data.reply || data.jawapan;
+      let jawaban = data.reply || data.jawaban;
       if (!jawaban) throw new Error("Groq kosong");
       this.simpanChat(teks, jawaban); bagiJawaban(jawaban);
     } catch (e) {
