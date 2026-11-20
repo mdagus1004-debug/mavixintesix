@@ -6,7 +6,7 @@ const app = express();
 app.use(express.json());
 app.use(express.static('.'));
 
-const GROQ_KEY = process.env.GROQ_API_KEY;
+const KUNCI_GROQ = process.env.GROQ_API_KEY;
 
 // ===== CEK SERVER HIDUP =====
 app.get('/tes', (req, res) => {
@@ -33,7 +33,7 @@ app.post('/chat', async (req, res) => {
   try {
     const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${GROQ_KEY}` },
+      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + KUNCI_GROQ },
       body: JSON.stringify({
         model: "openai/gpt-oss-120b",
         messages: [{ role: "system", content: pesanSistem }, { role: "user", content: pesanUser }],
@@ -53,7 +53,7 @@ app.post('/chat', async (req, res) => {
   }
 });
 
-// ===== MULUT - PROXY SUARA GADIS KE MICROSOFT =====
+// ===== MULUT - JEMBATAN SUARA GADIS KE MICROSOFT =====
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 wss.on('connection', (client, req) => {
