@@ -1,84 +1,42 @@
-// OTAK BESAR + MULUT MAVIX - Bahasa Indonesia
-const express = require('express');
-const http = require('http');
-const WebSocket = require('ws');
-const app = express();
-app.use(express.json());
-app.use(express.static('.'));
+// mulut.js - VERSI BROWSER, JANGAN PAKAI require
+let wsMulut = null;
+let audioCtx = null;
+let antrianAudio = [];
 
-const GROQ_KEY = process.env.GROQ_API_KEY;
+function sambungMulut() {
+  // GANTI dengan link Render Bos yang sebenar
+  const URL_RENDER = "wss://mavixintesix.onrender.com";
+  wsMulut = new WebSocket(URL_RENDER);
 
-// ===== CEK SERVER HIDUP =====
-app.get('/tes', (req, res) => {
-  res.json({ status: "hidup", pesan: "MAVIX sudah hidup Bos, Otak Besar, Otak Kecil, Mulut, dan Badan sudah nyambung semua!" });
-});
+  wsMulut.binaryType = "arraybuffer";
 
-// ===== JALUR CHAT UTAMA =====
-app.post('/chat', async (req, res) => {
-  const pesanUser = req.body.message || "halo";
-  const namaBos = req.body.namaBos || "Bos";
-  const kesukaanBos = req.body.kesukaan || "";
-  const perasaanBos = req.body.perasaan || "";
-  let ingatanUntukGroq = "";
-  if (namaBos && namaBos !== "Bos") ingatanUntukGroq += "Nama Bos adalah " + namaBos + ". ";
-  if (kesukaanBos) ingatanUntukGroq += "Bos suka " + kesukaanBos + ". ";
-  if (perasaanBos) ingatanUntukGroq += "Terakhir Bos merasa " + perasaanBos + ". ";
-  const pesanSistem = "Kamu adalah MAVIX, asisten setia milik Bos. " +
-    "Kamu bicara Bahasa Indonesia, gaya santai, akrab, sopan, dan selalu panggil Bos dengan sebutan Bos. " +
-    "Kamu tidak pernah bicara Bahasa Melayu, Bahasa Inggris, atau bahasa lain, kecuali Bos yang minta. " +
-    "Kamu jawab pendek dan jelas kalau Bos lagi mode kerja, jawab panjang dan hangat kalau Bos lagi curhat. " +
-    "Kamu jangan pernah menulis simbol markdown seperti **, ###, atau ```. " +
-    "Kamu jangan pernah menulis nomor telepon, link WA, atau nomor HP. " +
-    "Ingatan tentang Bos: " + ingatanUntukGroq;
-  try {
-    const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${GROQ_KEY}` },
-      body: JSON.stringify({
-        model: "openai/gpt-oss-120b",
-        messages: [{ role: "system", content: pesanSistem }, { role: "user", content: pesanUser }],
-        max_tokens: 1000, temperature: 0.7
-      })
-    });
-    const data = await r.json();
-    if (data.choices && data.choices[0]) {
-      let jawaban = data.choices[0].message.content || "";
-      jawaban = jawaban.replace(/\*\*/g, "").replace(/\*/g, "").replace(/###/g, "").replace(/##/g, "").replace(/#/g, "").replace(/```/g, "").replace(/https?:\/\/wa\.me\/\S+/gi, "").replace(/\+62[\d\s\-()]+/g, "").trim();
-      return res.json({ reply: jawaban });
-    } else {
-      return res.json({ reply: "GROQ bilang: " + JSON.stringify(data.error || data).slice(0, 300) });
-    }
-  } catch (e) {
-    return res.json({ reply: "Bos, Groq saya putus sebentar: " + e.message + ". Tapi saya masih di sini Bos." });
+  wsMulut.onopen = () => {
+    console.log("Mulut dah sambung");
+  };
+
+  wsMulut.onmessage = async (event) => {
+    if (typeof event.data === "string") return;
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const buf = await audioCtx.decodeAudioData(event.data.slice(0));
+    const src = audioCtx.createBufferSource();
+    src.buffer = buf;
+    src.connect(audioCtx.destination);
+    src.start();
+  };
+
+  wsMulut.onclose = () => {
+    setTimeout(sambungMulut, 2000);
+  };
+}
+
+function cakap(teks) {
+  if (!wsMulut || wsMulut.readyState !== 1) {
+    console.log("Mulut belum sambung, cuba lagi...");
+    setTimeout(() => cakap(teks), 500);
+    return;
   }
-});
+  wsMulut.send(JSON.stringify({ teks: teks }));
+}
 
-// ===== MULUT - PROXY SUARA GADIS KE MICROSOFT =====
-const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
-wss.on('connection', (client, req) => {
-  const url = new URL(req.url, 'http://localhost');
-  const id = url.searchParams.get('ConnectionId') || 'id';
-  let antrian = [];
-  let edgeBuka = false;
-  const edge = new WebSocket('wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1?TrustedClientToken=6A5AA1D4EAFF4E9FB9E23DCC4F7E9424&ConnectionId=' + id, {
-    headers: { 'Origin': 'https://azure.microsoft.com', 'User-Agent': 'Mozilla/5.0' }
-  });
-  client.on('message', (m) => {
-    if (edgeBuka) { try { edge.send(m); } catch (e) {} }
-    else antrian.push(m);
-  });
-  edge.on('open', () => {
-    edgeBuka = true;
-    for (let m of antrian) { try { edge.send(m); } catch (e) {} }
-    antrian = [];
-  });
-  edge.on('message', (m) => { try { client.send(m); } catch (e) {} });
-  edge.on('error', (e) => { console.log("EDGE ERROR:", e.message); });
-  edge.on('close', () => { try { client.close(); } catch (e) {} });
-  client.on('close', () => { try { edge.close(); } catch (e) {} });
-  client.on('error', () => {});
-});
-
-const PORT = process.env.PORT || 10000;
-server.listen(PORT, () => console.log("MAVIX Hidup di port " + PORT));
+// Auto sambung bila buka page
+sambungMulut();
