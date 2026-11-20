@@ -132,17 +132,6 @@ async function kirim(){
   const inp = document.getElementById('input');
   const teks = inp.value.trim(); if(!teks) return;
   tambah('user', teks); inp.value='';
-  try{
-    const res = await fetch('/chat', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({message: teks}) });
-    const data = await res.json();
-    const jawab = data.reply || 'Maaf Bos...';
-    tambah('mavix', jawab); cakap(jawab);
-  }catch(e){ tambah('mavix','Bos, otak saya belum sambung.'); }
-}
-async function kirim(){
-  const inp = document.getElementById('input');
-  const teks = inp.value.trim(); if(!teks) return;
-  tambah('user', teks); inp.value='';
   // Panggil Otak Kecil dulu, kalau dia tak tahu, dia sendiri akan tanya Groq
   OtakKecil.fikir(teks, function(jawab){
     tambah('mavix', jawab); cakap(jawab);
