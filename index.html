@@ -95,6 +95,18 @@ function lambai(){
   setTimeout(function(){ t.classList.remove('lambai'); }, 3000);
 }
 
+  // ===== GANTI MODE - FIX DARI OTAK.JS =====
+let modeMavix = "NGOBROL";
+function gantiMode(modeBaru){
+  modeMavix = modeBaru;
+  const judul = document.querySelector('.judul p');
+  if(judul){
+    if(modeBaru === "KERJA") judul.innerText = "● Online - Mode Kerja";
+    else judul.innerText = "● Online - Mode Ngobrol";
+  }
+}
+window.gantiMode = gantiMode;
+
 async function kirim(){
   const inp = document.getElementById('input');
   const teks = inp.value.trim(); if(!teks) return;
