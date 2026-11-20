@@ -20,40 +20,33 @@ app.get('/status', (req, res) => {
     panggilan: "MAVIX",
     jenis: "Perempuan",
     bahasa: "Indonesia Saja",
-    otak: "Groq gpt-oss-120b"
+    otak: "Gemini 2.5 Flash - Boleh Pilih AI"
   });
 });
 
-// 3. Tempat ngobrol - SUDAH SAMBUNG GROQ!
+// 3. Tempat ngobrol - SUDAH SAMBUNG GEMINI, BOLEH PILIH AI!
 app.post('/chat', async (req, res) => {
   const pesan = req.body.message || req.body.pesan || "Halo";
   const namaBos = req.body.namaBos || "Bos";
   const kesukaan = req.body.kesukaan || "";
   const perasaan = req.body.perasaan || "";
+  const modelPilihan = req.body.model || "gemini-2.5-flash";
   try {
-    let respon = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    let respon = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelPilihan}:generateContent?key=${process.env.GEMINI_API_KEY}`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + process.env.GROQ_API_KEY
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "openai/gpt-oss-120b",
-        messages: [
-          { role: "system", content: "Kamu MAVIX, perempuan, baik, setia. Kamu cakap Bahasa Indonesia saja. Panggil Bos dengan sebutan Bos. Nama Bos adalah " + namaBos + ". Bos suka " + kesukaan + ". Perasaan Bos sekarang " + perasaan + ". Jawab dengan pendek, mesra, dan bantu Bos." },
-          { role: "user", content: pesan }
-        ],
-        temperature: 0.7,
-        max_tokens: 500
+        contents: [{ parts: [{ text: `Kamu MAVIX, perempuan, baik, setia. Kamu cakap Bahasa Indonesia saja. Panggil Bos dengan sebutan Bos. Nama Bos adalah ${namaBos}. Bos suka ${kesukaan}. Perasaan Bos sekarang ${perasaan}. Jawab dengan pendek, mesra, dan bantu Bos. Pesan Bos: ${pesan}` }] }]
       })
     });
     let data = await respon.json();
-    if (!data.choices || !data.choices[0]) throw new Error("Groq kosong");
-    res.json({ reply: data.choices[0].message.content });
+    let jawapan = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!jawapan) throw new Error("Gemini kosong");
+    res.json({ reply: jawapan });
   } catch (e) {
-    console.log("GROQ ERROR SEBENAR:", e.message);
-    console.log("GROQ KEY ADA TAK:", process.env.GROQ_API_KEY ? "ADA" : "TAK ADA");
-    res.json({ reply: "Bos, Groq saya putus sebentar. Tapi saya masih di sini, " + namaBos + "." });
+    console.log("GEMINI ERROR SEBENAR:", e.message);
+    console.log("GEMINI KEY ADA TAK:", process.env.GEMINI_API_KEY ? "ADA" : "TAK ADA");
+    res.json({ reply: "Bos, Gemini saya putus sebentar. Tapi saya masih di sini, " + namaBos + "." });
   }
 });
 app.listen(PORT, () => console.log("MAVIX hidup di port " + PORT));
