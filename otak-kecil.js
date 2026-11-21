@@ -1,5 +1,6 @@
-// OTAK KECIL MAVIX V2 - YANG MIKIR, TIDAK SIMPAN SENDIRI
-// Semua simpan pinjam ke otak-ingatan.js
+// OTAK KECIL MAVIX V3 - DIET, HANYA MIKIR GAMPANG
+// Tidak boleh panggil Otak Tengah, tidak boleh panggil Groq.
+// Kalau tidak tahu, jawab null saja, biar Otak Depan yang urus.
 
 const OtakKecil = {
   deposit: 0,
@@ -7,7 +8,6 @@ const OtakKecil = {
   riwayatChat: [],
   daftarHarga: { "robot": 2000, "lampu": 50, "baterai": 100, "kopi": 20, "charger": 80 },
 
-  // Helper: ambil dari Lemari
   getNama: function() { return (typeof ambilIngatan === "function") ? ambilIngatan("nama") : ""; },
   getSuka: function() { return (typeof ambilIngatan === "function") ? ambilIngatan("suka") : ""; },
   getPerasaan: function() { return (typeof ambilIngatan === "function") ? ambilIngatan("perasaan") : ""; },
@@ -37,8 +37,6 @@ const OtakKecil = {
       return "Hari ini " + new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) + " Bos.";
     }
     if (t.includes('terima kasih') || t.includes('makasih')) return "Sama-sama Bos, senang bisa bantu.";
-
-    // --- INI YANG PINJAM KE LEMARI ---
     if (t.includes("nama saya")) {
       let nama = teks.replace(/nama saya/i, "").replace(/adalah/i, "").trim();
       if (nama) { ingat(nama, "nama"); return "Oke, saya sudah ingat. Nama Bos " + nama + "."; }
@@ -71,8 +69,6 @@ const OtakKecil = {
       ingat("capek", "perasaan");
       return "Waduh Bos capek ya? Istirahat dulu Bos.";
     }
-
-    // Hitung tetap di sini, karena ini mikir, bukan ingatan
     if (t.includes("deposit")) {
       let angka = teks.match(/\d+/);
       if (angka) { this.deposit = parseInt(angka[0]); ingat(this.deposit + "", "deposit"); return "Oke deposit " + this.deposit + " sudah saya simpan."; }
@@ -82,29 +78,5 @@ const OtakKecil = {
       return "Harga " + this.hargaBarang + ", deposit Bos " + this.deposit + ". Sisanya tinggal " + (this.hargaBarang - this.deposit) + ".";
     }
     return null;
-  },
-
-  async fikir(teks, bagiJawaban) {
-    if (typeof stopMulut === 'function') stopMulut();
-    let jawabanKecil = this.fikirKecil(teks);
-    if (jawabanKecil) { this.simpanChat(teks, jawabanKecil); bagiJawaban(jawabanKecil); return; }
-
-    // Kalau Otak Kecil tidak tahu, lempar ke Otak Tengah / Besar
-    try {
-      let tengah = await otakTengah(teks);
-      if (tengah) { this.simpanChat(teks, tengah); bagiJawaban(tengah); return; }
-    } catch(e) {}
-    try {
-      let res = await fetch("/chat", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: teks, namaBos: this.getNama(), kesukaan: this.getSuka(), perasaan: this.getPerasaan() })
-      });
-      let data = await res.json();
-      let jawaban = data.reply || "Bos, saya tidak dapat jawab tadi!";
-      this.simpanChat(teks, jawaban); bagiJawaban(jawaban);
-    } catch(e) {
-      let jawabanBackup = "Bos, Groq saya putus sebentar. Tapi saya masih di sini.";
-      this.simpanChat(teks, jawabanBackup); bagiJawaban(jawabanBackup);
-    }
   }
 };
