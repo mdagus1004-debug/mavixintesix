@@ -227,6 +227,12 @@ const OtakKecil = {
     const jam = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
     return "Sekarang jam " + jam + " Bos.";
   }
+
+      if (t.includes('tanggal') || t.includes('hari ini') || t.includes('bulan apa') || t.includes('tahun berapa')) {
+    const sekarang = new Date();
+    const hari = sekarang.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    return "Hari ini " + hari + " Bos.";
+  }
   if (t.includes('terima kasih') || t.includes('makasih')) {
     return "Sama-sama Bos, senang bisa bantu.";
   }
