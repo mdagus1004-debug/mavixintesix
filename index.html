@@ -69,7 +69,6 @@ body { height:100vh; display:flex; flex-direction:column; color:white; overflow:
 <script src="mulut.js"></script>
 <script src="otak-depan.js"></script>
 <script>
-  
 // ===== JEMBATAN MULUT KE BADAN =====
 function mavixNgomong(lagiNgomong){
   const m = document.getElementById('mulutLapis');
@@ -78,6 +77,7 @@ function mavixNgomong(lagiNgomong){
 }
 window.mavixNgomong = mavixNgomong;
 
+// ===== YANG A - SUDAH BETUL =====
 function tambah(siapa, teks){
   const chat = document.getElementById("chatBox");
   const div = document.createElement("div");
@@ -90,19 +90,23 @@ function tambah(siapa, teks){
   chat.appendChild(div);
   chat.scrollTop = chat.scrollHeight;
 }
+window.tambah = tambah;
+
 // Semua suara lewat bicara() dari mulut.js
 function cakap(teks){
   if(typeof bicara === 'function'){ bicara(teks); }
   else { mavixNgomong(true); setTimeout(function(){ mavixNgomong(false); }, 2000); }
 }
+window.cakap = cakap;
 
 function lambai(){
   const t = document.getElementById('tanganKanan');
   t.classList.add('lambai'); cakap('Halo Bos! Saya lambai untuk Bos!');
   setTimeout(function(){ t.classList.remove('lambai'); }, 3000);
 }
+window.lambai = lambai;
 
-  // ===== GANTI MODE - FIX DARI OTAK.JS =====
+// ===== GANTI MODE =====
 let modeMavix = "NGOBROL";
 function gantiMode(modeBaru){
   modeMavix = modeBaru;
@@ -114,28 +118,7 @@ function gantiMode(modeBaru){
 }
 window.gantiMode = gantiMode;
 
-async function kirim(){
-  const inp = document.getElementById('input');
-  const teks = inp.value.trim(); if(!teks) return;
-  tambah('user', teks); inp.value='';
-  try {
-    if (typeof OtakKecil !== 'undefined' && OtakKecil.fikir) {
-      OtakKecil.fikir(teks, function(jawab){ tambah('mavix', jawab); cakap(jawab); });
-      return;
-    }
-    const res = await fetch('/chat', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ message: teks }) });
-    const data = await res.json();
-    const jawab = data.reply || 'Bos, saya tidak dapat jawab tadi!';
-    tambah('mavix', jawab); cakap(jawab);
-  } catch(e){
-    tambah('mavix', 'Bos, server saya lagi tidur: ' + e.message);
-  }
-}
-document.getElementById('kirimBtn').addEventListener('click', kirim);
-document.getElementById('lambaiBtn').addEventListener('click', lambai);
-document.getElementById('avatarBtn').addEventListener('click', lambai);
-document.getElementById('input').addEventListener('keypress', function(e){ if(e.key === 'Enter') kirim(); });
-window.kirim = kirim; window.lambai = lambai; window.cakap = cakap;
+// NOTE: kirim() TIDAK ADA DI SINI LAGI. kirim() sekarang cuma ada di otak-depan.js, biar tidak rebutan.
 </script>
 </body>
 </html>
