@@ -1,4 +1,4 @@
-// ===== OTAK DEPAN - MANAJER MAVIX =====
+// ===== OTAK DEPAN - MANAJER MAVIX V2.1 - SUDAH BETUL 1,2,3 =====
 // Tugasnya: terima chat Bos, tentukan siapa yang jawab, tampilkan.
 
 async function kirim(){
@@ -12,8 +12,10 @@ async function kirim(){
   inp.value = '';
   inp.focus();
 
-  // 2. Simpan ke ingatan kalau ada
-  try { if(typeof simpanIngatan === 'function') simpanIngatan('user', teks); } catch(e){}
+  // 2. [BETUL #1] Simpan ke ingatan kalau ada - DULU SALAH, SEKARANG BETUL
+  // Dulu: simpanIngatan('user', teks) -> salah, lemari tidak faham
+  // Sekarang: ingatOtomatis(teks) -> lemari baca sendiri, kalau penting dia simpan
+  try { if(typeof ingatOtomatis === 'function') ingatOtomatis(teks); } catch(e){}
 
   // 3. Coba OTAK KECIL dulu - untuk halo, siapa kamu, dll. Cepat.
   // Kalau Otak Kecil bisa jawab, dia yang jawab, berhenti di sini.
@@ -28,8 +30,9 @@ async function kirim(){
           cakap(jawab);
         }
       });
-      // Kasih waktu sebentar buat Otak Kecil mikir. Kalau dia jawab, kita berhenti.
-      await new Promise(r => setTimeout(r, 50));
+      // [BETUL #2] Dulu 50ms terlalu cepat, koki belum sempat jawab manajer sudah pergi
+      // Sekarang 200ms, kasi masa koki buka lemari dulu
+      await new Promise(r => setTimeout(r, 200));
       if(sudahDijawab) return;
     }
   } catch(e){}
@@ -57,7 +60,15 @@ async function kirim(){
 
   // 5. Kalau dua-duanya tidak bisa, baru ke OTAK BESAR (server / Groq)
   try {
-    const res = await fetch('/chat', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ message: teks }) });
+    // [BETUL #3] Dulu hantar surat kosong ke Groq, Groq tidak tahu Bos siapa
+    // Sekarang ambil catatan dari lemari dulu, baru gabung dengan pertanyaan Bos
+    let catatan = "";
+    try { if(typeof buatCatatanUntukOtakBesar === 'function') catatan = buatCatatanUntukOtakBesar(); } catch(e){}
+
+    // Gabung: Catatan + Pertanyaan Bos = Groq bisa jawab pakai ingatan
+    const pesanLengkap = catatan ? (catatan + "\n\nPertanyaan Bos: " + teks) : teks;
+
+    const res = await fetch('/chat', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ message: pesanLengkap }) });
     const data = await res.json();
     const jawab = data.reply || 'Bos, saya tidak dapat jawab tadi!';
     tambah('mavix', jawab);
