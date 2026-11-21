@@ -1,3 +1,0 @@
-FROM ghcr.io/muchobien/pocketbase:latest
-EXPOSE 8090
-CMD ["serve", "--http=0.0.0.0:8090", "--dir=/pb/pb_data"]
