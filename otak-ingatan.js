@@ -1,5 +1,6 @@
-// OTAK INGATAN MAVIX V2 - LEMARI SATU-SATUNYA
-// Tugasnya cuma: SIMPAN, CARI, HAPUS. Tidak boleh mikir.
+// OTAK INGATAN MAVIX V2.1 - LEMARI + OTOMATIS + GABUNG
+// Tugasnya: SIMPAN, CARI, HAPUS, INGAT OTOMATIS, BUAT CATATAN UNTUK OTAK BESAR
+// Tidak boleh mikir, cuma simpan dan kasih catatan.
 
 let ingatanMAVIX = [];
 
@@ -12,7 +13,7 @@ function simpanIngatan() {
   try { localStorage.setItem("mavix_ingatan_v2", JSON.stringify(ingatanMAVIX)); } catch(e) {}
 }
 
-// SIMPAN - dipakai Otak Kecil
+// SIMPAN - dipakai Otak Kecil / Otak Depan
 function ingat(apa, kategori, siapa) {
   if (!apa) return "";
   // Kalau sudah ada yang sama, jangan simpan dobel, update saja
@@ -33,7 +34,7 @@ function ingat(apa, kategori, siapa) {
   return "Siap Bos, saya sudah ingat: " + apa;
 }
 
-// CARI - dipakai Otak Kecil
+// CARI - dipakai Otak Kecil / Otak Depan
 function cariIngatan(kataKunci, kategori) {
   let k = kataKunci.toLowerCase();
   return ingatanMAVIX.filter(m => {
@@ -66,6 +67,64 @@ function lupaKategori(kategori) {
   return "Siap Bos, ingatan soal " + kategori + " sudah saya hapus.";
 }
 
+// ===== BARU - TAMBAHAN V2.1 - INI YANG KURANG TADI =====
+
+// 1. INGAT OTOMATIS - Biar Bos tidak perlu suruh suruh
+// Dipanggil otomatis sama otak-depan.js setiap Bos ketik
+// Contoh: Bos ketik "nama saya Budi" -> langsung simpan kategori "nama"
+// Contoh: Bos ketik "saya suka kopi" -> langsung simpan kategori "suka"
+function ingatOtomatis(teks) {
+  if (!teks) return "";
+  let t = teks.toLowerCase().trim();
+  let hasil = "";
+
+  // Nama Bos
+  if (t.includes("nama saya") || t.includes("nama ku") || t.includes("namaku") || t.includes("panggil saya") || t.includes("panggil aku")) {
+    hasil = ingat(teks, "nama", "Bos");
+    return hasil;
+  }
+  // Suka
+  if (t.includes("saya suka") || t.includes("aku suka") || t.includes("suka kopi") || t.includes("suka makan")) {
+    hasil = ingat(teks, "suka", "Bos");
+    return hasil;
+  }
+  // Tidak suka
+  if (t.includes("tidak suka") || t.includes("tak suka") || t.includes("tidak suka pedas") || t.includes("benci")) {
+    hasil = ingat(teks, "tidak_suka", "Bos");
+    return hasil;
+  }
+  // Kerja / tinggal
+  if (t.includes("saya kerja") || t.includes("aku kerja") || t.includes("tinggal di") || t.includes("saya di johor") || t.includes("saya dari")) {
+    hasil = ingat(teks, "tentang_bos", "Bos");
+    return hasil;
+  }
+  // Perasaan
+  if (t.includes("saya sedih") || t.includes("aku sedih") || t.includes("saya senang") || t.includes("saya stress") || t.includes("saya capek")) {
+    hasil = ingat(teks, "perasaan", "Bos");
+    return hasil;
+  }
+  // Janji / ingatkan
+  if (t.includes("ingatkan") || t.includes("ingat ya") || t.includes("jangan lupa") || t.includes("besok")) {
+    hasil = ingat(teks, "janji", "Bos");
+    return hasil;
+  }
+  // Kalau tidak ada yang cocok, simpan sebagai catatan umum saja kalau kalimatnya panjang dan penting
+  // Tapi jangan simpan semua chat, nanti lemari penuh sampah
+  return "";
+}
+
+// 2. BUAT CATATAN UNTUK OTAK BESAR - Ini GABUNG nya Bos
+// Hasilnya contoh: "CATATAN TENTANG BOS: [nama] nama saya Budi - [suka] saya suka kopi"
+// Ini yang dikirim ke Groq, biar Groq bisa jawab pakai ingatan
+function buatCatatanUntukOtakBesar() {
+  if (ingatanMAVIX.length === 0) return "";
+  // Ambil 15 yang paling baru saja, biar tidak kepanjangan
+  let terbaru = ingatanMAVIX.slice(-15);
+  let catatan = terbaru.map(m => "[" + m.kategori + "] " + m.apa).join(" | ");
+  return "CATATAN TENTANG BOS YANG HARUS KAMU INGAT: " + catatan + ". ";
+}
+
+// Biar otak-depan.js dan server.js bisa pakai
 window.ingat = ingat;
 window.cariIngatan = cariIngatan;
 window.ambilIngatan = ambilIngatan;
@@ -73,5 +132,7 @@ window.apaYangSayaIngat = apaYangSayaIngat;
 window.lupaSemua = lupaSemua;
 window.lupaKategori = lupaKategori;
 window.ingatanMAVIX = ingatanMAVIX;
+window.ingatOtomatis = ingatOtomatis;
+window.buatCatatanUntukOtakBesar = buatCatatanUntukOtakBesar;
 
-console.log("otak-ingatan V2 hidup! Lemari siap Bos.");
+console.log("otak-ingatan V2.1 hidup! Lemari + Otomatis + Gabung siap Bos.");
