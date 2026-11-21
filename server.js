@@ -17,3 +17,5 @@ const server = http.createServer((req, res) => {
 
 const PORT = process.env.PORT || 10000;
 server.listen(PORT, () => console.log('MAVIX jalan di ' + PORT));
+
+const PORT = process.env.PORT || 10000;
