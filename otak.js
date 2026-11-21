@@ -294,6 +294,12 @@ const OtakKecil = {
   
     let jawabanKecil = this.fikirKecil(teks);
     if (jawabanKecil) { this.simpanChat(teks, jawabanKecil); bagiJawaban(jawabanKecil); return; }
+
+          // === OTAK TENGAH - WIKIPEDIA ===
+    try {
+      let tengah = await otakTengah(teks);
+      if (tengah) { this.simpanChat(teks, tengah); bagiJawaban(tengah); return; }
+    } catch(e) {}
     try {
       let res = await fetch("/chat", {
         method: "POST", headers: { "Content-Type": "application/json" },
