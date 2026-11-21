@@ -36,7 +36,7 @@ const server = http.createServer(async (req, res) => {
       const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": "Bearer " + KUNCI_GROQ },
-        body: JSON.stringify({ model: "openai/gpt-oss-20b", messages: [{ role: "user", content: "halo" }], max_tokens: 10 })
+        body: JSON.stringify({ model: "openai/gpt-oss-120b", messages: [{ role: "user", content: "halo" }], max_tokens: 10 })
       });
       const data = await r.json();
       res.writeHead(200, { 'Content-Type': 'application/json' });
