@@ -9,7 +9,7 @@ async function kirim() {
   input.focus();
 
   // 1. Tampilkan chat Bos
-  if (typeof tambah === "function") tambah(teks, "bos");
+  if (typeof tambah === "function") tambah("bos", teks);
 
   // 2. Diamkan mulut lama
   if (typeof stopMulut === "function") stopMulut();
@@ -54,7 +54,7 @@ async function kirim() {
   // 6. SIMPAN CHAT + TAMPILKAN + BICARA
   try { if (typeof OtakKecil !== "undefined") OtakKecil.simpanChat(teks, jawaban); } catch(e) {}
 
-  if (typeof tambah === "function") tambah(jawaban, "mavix");
+  if (typeof tambah === "function") tambah("mavix", jawaban);
   if (typeof bicara === "function") bicara(jawaban);
 }
 
