@@ -1,4 +1,4 @@
-// OTAK DEPAN - MANAJER MAVIX V2.2
+// OTAK DEPAN - MANAJER MAVIX V2.3 - KIRIM RINGKASAN ARSIP, BUKAN ARSIP MENTAH
 async function kirim(){
   const inp = document.getElementById('input');
   if(!inp) return;
@@ -39,9 +39,15 @@ async function kirim(){
     try { if(typeof buatCatatanUntukOtakBesar === 'function') catatan = buatCatatanUntukOtakBesar(); } catch(e){}
     let chatTerakhir = "";
     try { if(typeof ambilChatTerakhir === 'function') chatTerakhir = ambilChatTerakhir(4); } catch(e){}
+
+    // ===== BARU V2.3 - AMBIL RINGKASAN 1 BARIS DARI ARSIP, BUKAN ARSIP MENTAH =====
+    let ringkasan = "";
+    try { if(typeof buatRingkasanArsip === 'function') ringkasan = buatRingkasanArsip(); } catch(e){}
+
     let pesanLengkap = "";
     if (catatan) pesanLengkap += catatan + "\n\n";
-    if (chatTerakhir) pesanLengkap += "CHAT TERAKHIR (4 chat, biar kamu boleh sambung kalau Bos cakap lanjutkan):\n" + chatTerakhir + "\n\n";
+    if (ringkasan) pesanLengkap += ringkasan + "\n\n"; // <-- Cuma 1 baris, ~30 token, bukan 2500 token
+    if (chatTerakhir) pesanLengkap += "CHAT TERAKHIR (4 chat penting, biar kamu boleh sambung kalau Bos cakap lanjutkan):\n" + chatTerakhir + "\n\n";
     pesanLengkap += "Pertanyaan Bos: " + teks;
     let modeKirim = (typeof window.modeMavix !== 'undefined' && window.modeMavix) ? window.modeMavix : "NGOBROL";
     const res = await fetch('/chat', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ message: pesanLengkap, mode: modeKirim }) });
