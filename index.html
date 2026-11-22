@@ -62,63 +62,52 @@ body { height:100vh; display:flex; flex-direction:column; color:white; overflow:
   <button class="btn" id="kirimBtn">Kirim</button>
   <button class="btn" id="lambaiBtn">👋 Lambai</button>
 </div>
-
 <script src="otak-ingatan.js"></script>
 <script src="otak-kecil.js"></script>
 <script src="otak-tengah.js"></script>
 <script src="mulut.js"></script>
 <script src="otak-depan.js"></script>
 <script>
-// ===== JEMBATAN MULUT KE BADAN =====
 function mavixNgomong(lagiNgomong){
   const m = document.getElementById('mulutLapis');
   if(!m) return;
   if(lagiNgomong){ m.classList.add('cakap'); } else { m.classList.remove('cakap'); }
 }
 window.mavixNgomong = mavixNgomong;
-
-// ===== YANG A - SUDAH BETUL =====
 function tambah(siapa, teks){
   const chat = document.getElementById("chatBox");
   const div = document.createElement("div");
   div.className = 'msg ' + siapa;
-  if (teks.includes("<button")) {
-    div.innerHTML = teks;
-  } else {
-    div.innerText = teks;
-  }
+  if (teks.includes("<button")) { div.innerHTML = teks; } else { div.innerText = teks; }
   chat.appendChild(div);
   chat.scrollTop = chat.scrollHeight;
 }
 window.tambah = tambah;
-
-// Semua suara lewat bicara() dari mulut.js
 function cakap(teks){
   if(typeof bicara === 'function'){ bicara(teks); }
   else { mavixNgomong(true); setTimeout(function(){ mavixNgomong(false); }, 2000); }
 }
 window.cakap = cakap;
-
 function lambai(){
   const t = document.getElementById('tanganKanan');
   t.classList.add('lambai'); cakap('Halo Bos! Saya lambai untuk Bos!');
   setTimeout(function(){ t.classList.remove('lambai'); }, 3000);
 }
 window.lambai = lambai;
-
-// ===== GANTI MODE =====
 let modeMavix = "NGOBROL";
+window.modeMavix = modeMavix;
 function gantiMode(modeBaru){
+  if (modeBaru === "KERJA") modeBaru = "BACA";
   modeMavix = modeBaru;
+  window.modeMavix = modeMavix;
   const judul = document.querySelector('.judul p');
   if(judul){
-    if(modeBaru === "KERJA") judul.innerText = "● Online - Mode Kerja";
+    if(modeBaru === "BACA") judul.innerText = "● Online - Mode Baca / Kerja - Jawab Pendek";
     else judul.innerText = "● Online - Mode Ngobrol";
   }
+  return "Siap Bos, mode sudah jadi " + modeBaru;
 }
 window.gantiMode = gantiMode;
-
-// NOTE: kirim() TIDAK ADA DI SINI LAGI. kirim() sekarang cuma ada di otak-depan.js, biar tidak rebutan.
 </script>
 </body>
 </html>
