@@ -1,4 +1,4 @@
-// OTAK DEPAN - MANAJER MAVIX V2.3 - PAKAI BICARA, BUKAN CAKAP LAGI
+// OTAK DEPAN - MANAJER MAVIX - BERSIH
 async function kirim(){
   const inp = document.getElementById('input');
   if(!inp) return;
@@ -16,7 +16,7 @@ async function kirim(){
       if (jawabKecil && jawabKecil.trim() !== '') {
         tambah('mavix', jawabKecil);
         try { if(typeof simpanChat === 'function') simpanChat("assistant", jawabKecil); } catch(e){}
-        bicara(jawabKecil);
+        if (typeof bicara === 'function') bicara(jawabKecil);
         return;
       }
     }
@@ -28,7 +28,7 @@ async function kirim(){
       if(jawabTengah && jawabTengah.trim() !== ''){
         tambah('mavix', jawabTengah);
         try { if(typeof simpanChat === 'function') simpanChat("assistant", jawabTengah); } catch(e){}
-        bicara(jawabTengah);
+        if (typeof bicara === 'function') bicara(jawabTengah);
         return;
       }
     }
@@ -39,7 +39,6 @@ async function kirim(){
     try { if(typeof buatCatatanUntukOtakBesar === 'function') catatan = buatCatatanUntukOtakBesar(); } catch(e){}
     let chatTerakhir = "";
     try { if(typeof ambilChatTerakhir === 'function') chatTerakhir = ambilChatTerakhir(4); } catch(e){}
-
     let ringkasan = "";
     try { if(typeof buatRingkasanArsip === 'function') ringkasan = buatRingkasanArsip(); } catch(e){}
 
@@ -49,12 +48,19 @@ async function kirim(){
     if (chatTerakhir) pesanLengkap += "CHAT TERAKHIR (4 chat penting, biar kamu boleh sambung kalau Bos cakap lanjutkan):\n" + chatTerakhir + "\n\n";
     pesanLengkap += "Pertanyaan Bos: " + teks;
     let modeKirim = (typeof window.modeMavix !== 'undefined' && window.modeMavix) ? window.modeMavix : "NGOBROL";
-    const res = await fetch('/chat', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ message: pesanLengkap, mode: modeKirim }) });
+
+    // BARU - Kirim ingatan ke server, biar Groq tidak pelupa lagi
+    let namaBosKirim = "";
+    let kesukaanKirim = "";
+    let perasaanKirim = "";
+    try { if(typeof ambilCatatan === 'function'){ namaBosKirim = ambilCatatan("nama") || ""; kesukaanKirim = ambilCatatan("suka") || ""; perasaanKirim = ambilCatatan("perasaan") || ""; } } catch(e){}
+
+    const res = await fetch('/chat', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ message: pesanLengkap, mode: modeKirim, namaBos: namaBosKirim, kesukaan: kesukaanKirim, perasaan: perasaanKirim }) });
     const data = await res.json();
     const jawab = data.reply || 'Bos, saya tidak dapat jawab tadi!';
     tambah('mavix', jawab);
     try { if(typeof simpanChat === 'function') simpanChat("assistant", jawab); } catch(e){}
-    bicara(jawab);
+    if (typeof bicara === 'function') bicara(jawab);
   } catch(e){
     tambah('mavix', 'Bos, server saya lagi tidur: ' + e.message);
   }
