@@ -1,84 +1,59 @@
-// ===== OTAK DEPAN - MANAJER MAVIX V2.1 - SUDAH BETUL 1,2,3 =====
-// Tugasnya: terima chat Bos, tentukan siapa yang jawab, tampilkan.
-
+// OTAK DEPAN - MANAJER MAVIX V2.2
 async function kirim(){
   const inp = document.getElementById('input');
   if(!inp) return;
   const teks = inp.value.trim();
   if(!teks) return;
-
-  // 1. Tampilkan chat Bos. Ingat: tambah(siapa, teks) - siapa dulu!
   tambah('user', teks);
   inp.value = '';
   inp.focus();
-
-  // 2. [BETUL #1] Simpan ke ingatan kalau ada - DULU SALAH, SEKARANG BETUL
-  // Dulu: simpanIngatan('user', teks) -> salah, lemari tidak faham
-  // Sekarang: ingatOtomatis(teks) -> lemari baca sendiri, kalau penting dia simpan
   try { if(typeof ingatOtomatis === 'function') ingatOtomatis(teks); } catch(e){}
+  try { if(typeof simpanChat === 'function') simpanChat("user", teks); } catch(e){}
 
-  // 3. Coba OTAK KECIL dulu - untuk halo, siapa kamu, dll. Cepat.
-  // Kalau Otak Kecil bisa jawab, dia yang jawab, berhenti di sini.
   try {
-    if (typeof OtakKecil !== 'undefined' && OtakKecil.fikir) {
-      let sudahDijawab = false;
-      // OtakKecil.fikir pakai callback di file Bos
-      OtakKecil.fikir(teks, function(jawab){
-        if(jawab && jawab.trim() !== ''){
-          sudahDijawab = true;
-          tambah('mavix', jawab);
-          cakap(jawab);
-        }
-      });
-      // [BETUL #2] Dulu 50ms terlalu cepat, koki belum sempat jawab manajer sudah pergi
-      // Sekarang 200ms, kasi masa koki buka lemari dulu
-      await new Promise(r => setTimeout(r, 200));
-      if(sudahDijawab) return;
+    if (typeof OtakKecil !== 'undefined' && typeof OtakKecil.fikirKecil === 'function') {
+      let jawabKecil = OtakKecil.fikirKecil(teks);
+      if (jawabKecil && jawabKecil.trim() !== '') {
+        tambah('mavix', jawabKecil);
+        try { if(typeof simpanChat === 'function') simpanChat("assistant", jawabKecil); } catch(e){}
+        cakap(jawabKecil);
+        return;
+      }
     }
   } catch(e){}
 
-  // 4. Kalau Otak Kecil tidak bisa, coba OTAK TENGAH - untuk apa itu robot, wikipedia, dll.
   try {
     if (typeof OtakTengah !== 'undefined' && OtakTengah.fikir) {
       const jawabTengah = await OtakTengah.fikir(teks);
       if(jawabTengah && jawabTengah.trim() !== ''){
         tambah('mavix', jawabTengah);
+        try { if(typeof simpanChat === 'function') simpanChat("assistant", jawabTengah); } catch(e){}
         cakap(jawabTengah);
-        return;
-      }
-    }
-    // Kalau OtakTengah pakai nama lain, misal cariWikipedia
-    if (typeof OtakTengah !== 'undefined' && OtakTengah.cariWikipedia) {
-      const jawabTengah2 = await OtakTengah.cariWikipedia(teks);
-      if(jawabTengah2 && jawabTengah2.trim() !== ''){
-        tambah('mavix', jawabTengah2);
-        cakap(jawabTengah2);
         return;
       }
     }
   } catch(e){}
 
-  // 5. Kalau dua-duanya tidak bisa, baru ke OTAK BESAR (server / Groq)
   try {
-    // [BETUL #3] Dulu hantar surat kosong ke Groq, Groq tidak tahu Bos siapa
-    // Sekarang ambil catatan dari lemari dulu, baru gabung dengan pertanyaan Bos
     let catatan = "";
     try { if(typeof buatCatatanUntukOtakBesar === 'function') catatan = buatCatatanUntukOtakBesar(); } catch(e){}
-
-    // Gabung: Catatan + Pertanyaan Bos = Groq bisa jawab pakai ingatan
-    const pesanLengkap = catatan ? (catatan + "\n\nPertanyaan Bos: " + teks) : teks;
-
-    const res = await fetch('/chat', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ message: pesanLengkap }) });
+    let chatTerakhir = "";
+    try { if(typeof ambilChatTerakhir === 'function') chatTerakhir = ambilChatTerakhir(4); } catch(e){}
+    let pesanLengkap = "";
+    if (catatan) pesanLengkap += catatan + "\n\n";
+    if (chatTerakhir) pesanLengkap += "CHAT TERAKHIR (4 chat, biar kamu boleh sambung kalau Bos cakap lanjutkan):\n" + chatTerakhir + "\n\n";
+    pesanLengkap += "Pertanyaan Bos: " + teks;
+    let modeKirim = (typeof window.modeMavix !== 'undefined' && window.modeMavix) ? window.modeMavix : "NGOBROL";
+    const res = await fetch('/chat', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ message: pesanLengkap, mode: modeKirim }) });
     const data = await res.json();
     const jawab = data.reply || 'Bos, saya tidak dapat jawab tadi!';
     tambah('mavix', jawab);
+    try { if(typeof simpanChat === 'function') simpanChat("assistant", jawab); } catch(e){}
     cakap(jawab);
   } catch(e){
     tambah('mavix', 'Bos, server saya lagi tidur: ' + e.message);
   }
 }
-
-// ===== SAMBUNG TOMBOL - SESUAI ID DI index.html BOS =====
 document.addEventListener('DOMContentLoaded', function(){
   const kirimBtn = document.getElementById('kirimBtn');
   if(kirimBtn) kirimBtn.addEventListener('click', kirim);
@@ -89,5 +64,4 @@ document.addEventListener('DOMContentLoaded', function(){
   const inputEl = document.getElementById('input');
   if(inputEl) inputEl.addEventListener('keypress', function(e){ if(e.key === 'Enter') kirim(); });
 });
-
 window.kirim = kirim;
