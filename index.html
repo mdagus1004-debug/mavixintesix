@@ -31,6 +31,11 @@ body { height:100vh; display:flex; flex-direction:column; color:white; overflow:
 .avatar img { width:100%; height:100%; object-fit:cover; }
 .judul h1 { font-size:22px; color:#22d3ee; }
 .judul p { font-size:13px; color:#4ade80; }
+/* BARU V2.3 - BAR MODE */
+.mode-row { display:flex; gap:8px; padding:8px 10px; background:rgba(5,8,24,0.85); align-items:center; justify-content:center; }
+.mode-btn { flex:1; padding:10px 8px; border:2px solid #2e4a7a; border-radius:20px; background:#1a1a1a; color:#ccc; font-weight:bold; font-size:14px; cursor:pointer; }
+.mode-btn.aktif { background:#22d3ee; color:#000; border-color:#22d3ee; }
+.mode-btn.aktif-baca { background:#4ade80; color:#000; border-color:#4ade80; }
 #chatBox { flex:1; overflow-y:auto; padding:15px; display:flex; flex-direction:column; gap:12px; }
 .msg { max-width:82%; padding:12px 16px; border-radius:18px; font-size:16px; line-height:1.45; }
 .mavix { align-self:flex-start; background:rgba(30,42,74,0.9); border:1px solid #2e4a7a; }
@@ -54,9 +59,16 @@ body { height:100vh; display:flex; flex-direction:column; color:white; overflow:
 </div>
 <div class="header">
   <div class="avatar" id="avatarBtn"><img src="mavix.jpg?v=2"></div>
-  <div class="judul"><h1>MAVIXINTESIX</h1><p>● Online - GPT 120B Hidup</p></div>
+  <div class="judul"><h1>MAVIXINTESIX</h1><p id="statusMode">● Online - Mode Ngobrol</p></div>
 </div>
-<div id="chatBox"><div class="msg mavix">Halo Bos! Saya MAVIX, sudah pakai otak GPT 120B! Kepala saya goyang, mata saya kedip, tangan saya goyang sendiri!</div></div>
+
+<!-- BARU V2.3 - BUTANG MODE, BOS TEKAN SAJA, TAK PERLU TAIP CONSOLE LAGI -->
+<div class="mode-row">
+  <button class="mode-btn" id="btnBaca" onclick="gantiMode('BACA')">📖 Mode Baca<br><small style="font-weight:normal;font-size:11px;">Jawab pendek, jimat token</small></button>
+  <button class="mode-btn aktif" id="btnNgobrol" onclick="gantiMode('NGOBROL')">💬 Mode Ngobrol<br><small style="font-weight:normal;font-size:11px;">Jawab panjang, hangat</small></button>
+</div>
+
+<div id="chatBox"><div class="msg mavix">Halo Bos! Saya MAVIX, sudah pakai otak GPT 120B! Kepala saya goyang, mata saya kedip, tangan saya goyang sendiri! Bos tekan butang Mode Baca kalau Bos nak saya jawab pendek, tekan Mode Ngobrol kalau Bos nak curhat panjang.</div></div>
 <div class="input-row">
   <input id="input" placeholder="Tulis untuk MAVIX...">
   <button class="btn" id="kirimBtn">Kirim</button>
@@ -94,20 +106,58 @@ function lambai(){
   setTimeout(function(){ t.classList.remove('lambai'); }, 3000);
 }
 window.lambai = lambai;
+
+// ===== GANTI MODE - BARU V2.3, PAKAI BUTANG, TAK PERLU CONSOLE LAGI =====
 let modeMavix = "NGOBROL";
 window.modeMavix = modeMavix;
 function gantiMode(modeBaru){
   if (modeBaru === "KERJA") modeBaru = "BACA";
   modeMavix = modeBaru;
   window.modeMavix = modeMavix;
-  const judul = document.querySelector('.judul p');
-  if(judul){
-    if(modeBaru === "BACA") judul.innerText = "● Online - Mode Baca / Kerja - Jawab Pendek";
-    else judul.innerText = "● Online - Mode Ngobrol";
+  try { localStorage.setItem("mode_mavix", modeBaru); } catch(e){}
+
+  // Tukar warna butang, biar Bos tahu mana yang aktif
+  const btnBaca = document.getElementById('btnBaca');
+  const btnNgobrol = document.getElementById('btnNgobrol');
+  const status = document.getElementById('statusMode');
+  if (btnBaca && btnNgobrol) {
+    if (modeBaru === "BACA") {
+      btnBaca.classList.add('aktif-baca');
+      btnBaca.classList.remove('aktif');
+      btnNgobrol.classList.remove('aktif');
+      btnNgobrol.classList.remove('aktif-baca');
+      if (status) status.innerText = "● Online - Mode Baca / Kerja - Jawab Pendek";
+    } else {
+      btnNgobrol.classList.add('aktif');
+      btnNgobrol.classList.remove('aktif-baca');
+      btnBaca.classList.remove('aktif');
+      btnBaca.classList.remove('aktif-baca');
+      if (status) status.innerText = "● Online - Mode Ngobrol";
+    }
   }
+  // Bagi tahu Bos dalam chat juga, biar Bos yakin sudah tukar
+  try { tambah('mavix', modeBaru === "BACA" ? "Siap Bos, sekarang saya Mode Baca. Saya jawab pendek saja, jimat token." : "Siap Bos, sekarang saya Mode Ngobrol. Bos boleh curhat panjang-panjang."); } catch(e){}
   return "Siap Bos, mode sudah jadi " + modeBaru;
 }
 window.gantiMode = gantiMode;
+
+// Kalau Bos tutup HP, buka balik, Mode Bos yang terakhir masih ingat
+try {
+  let modeSimpan = localStorage.getItem("mode_mavix");
+  if (modeSimpan && (modeSimpan === "BACA" || modeSimpan === "NGOBROL")) {
+    // Jangan cakap 2 kali masa load, set diam-diam saja
+    modeMavix = modeSimpan;
+    window.modeMavix = modeMavix;
+    const btnBaca = document.getElementById('btnBaca');
+    const btnNgobrol = document.getElementById('btnNgobrol');
+    const status = document.getElementById('statusMode');
+    if (modeSimpan === "BACA") {
+      if (btnBaca) btnBaca.classList.add('aktif-baca');
+      if (btnNgobrol) btnNgobrol.classList.remove('aktif');
+      if (status) status.innerText = "● Online - Mode Baca / Kerja - Jawab Pendek";
+    }
+  }
+} catch(e){}
 </script>
 </body>
 </html>
