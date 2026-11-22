@@ -13,20 +13,16 @@ async function otakTengah(pesan) {
     const data = await res.json();
 
     if (data.extract) {
-      // 1. Potong jadi pendek - 2 kalimat pertama
       const kalimat = data.extract.split('.');
       const pendek = kalimat.slice(0, 2).join('.') + '.';
       const panjang = data.extract;
 
-      // 2. Kalau pendek = panjang, tidak usah tombol
       if (panjang.length < 300) {
         return "Menurut Wikipedia Bos:\n\n" + panjang;
       }
 
-      // 3. Kalau panjang, buat tombol
-      // Kita simpan yang panjang dalam ID unik
       const idUnik = "wiki_" + Date.now();
-      window[idUnik] = panjang; // Simpan di memori
+      window[idUnik] = panjang;
 
       return `Menurut Wikipedia Bos:\n\n${pendek}\n\n<button onclick="bukaSelengkapnya('${idUnik}', this)" style="background:#25D366;color:white;border:none;padding:6px 12px;border-radius:15px;cursor:pointer;">Baca Selengkapnya ▼</button><div id="isi_${idUnik}" style="display:none;margin-top:10px;">${panjang}<br><br><small>Sumber: Wikipedia</small></div>`;
     }
@@ -34,7 +30,6 @@ async function otakTengah(pesan) {
   return null;
 }
 
-// Fungsi untuk buka / tutup
 function bukaSelengkapnya(id, tombol) {
   const isi = document.getElementById("isi_" + id);
   if (isi.style.display === "none") {
@@ -45,3 +40,9 @@ function bukaSelengkapnya(id, tombol) {
     tombol.innerHTML = "Baca Selengkapnya ▼";
   }
 }
+
+// ===== PENYAMBUNG KE MANAJER - INI YANG DITAMBAH =====
+window.OtakTengah = {
+  fikir: otakTengah,
+  cariWikipedia: otakTengah
+};
