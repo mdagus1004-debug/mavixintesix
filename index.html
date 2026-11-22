@@ -22,7 +22,7 @@ body { height:100vh; display:flex; flex-direction:column; color:white; overflow:
 .user { align-self:flex-end; background:#22d3ee; color:#000; font-weight:500; }
 .input-row { display:flex; gap:8px; padding:10px; background:rgba(5,8,24,0.8); align-items:center; }
 #input { flex:1; padding:13px 16px; border-radius:25px; border:none; outline:none; background:#1a1a1a; color:white; font-size:15px; }
-.btn { padding:12px 18px; border:none; border-radius:25px; font-weight:bold; font-size:15px; cursor:pointer; background:#22d3ee; color:#000; }
+.btn { width:48px; height:48px; border:none; border-radius:50%; font-size:24px; cursor:pointer; background:#22d3ee; color:#000; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
 </style>
 </head>
 <body>
@@ -40,7 +40,7 @@ body { height:100vh; display:flex; flex-direction:column; color:white; overflow:
 <div id="chatBox"></div>
 <div class="input-row">
   <input id="input" placeholder="Tulis untuk MAVIX...">
-  <button class="btn" id="kirimBtn">Kirim</button>
+  <button class="btn" id="kirimBtn">➣</button>
 </div>
 
 <script src="otak-ingatan.js"></script>
