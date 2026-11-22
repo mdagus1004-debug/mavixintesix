@@ -1,6 +1,27 @@
-// OTAK INGATAN MAVIX V2.2 - LEMARI + 4 CHAT
+// OTAK INGATAN MAVIX V3 - LEMARI BESAR ARSIP + MEJA KECIL FILTER + RINGKASAN
+// Lemari Besar = arsip, 100 chat, simpan semua, tidur di localStorage, TIDAK dikirim ke Groq
+// Meja Kecil = riwayatChat4, 4 chat PENTING saja, yang dikirim ke Groq
+
 let ingatanBos = {};
 let riwayatChat4 = [];
+let arsipChat = [];
+
+// ===== KATA SAMPAH - TIDAK BOLEH NAIK MEJA KECIL =====
+// Kalau Bos bilang ini, tetap masuk Arsip, tapi JANGAN masuk Meja Kecil
+// Biar slot Meja Kecil tidak habis buat sampah
+const KATA_SAMPAH = ["halo", "hai", "hi", "ok", "oke", "okay", "hmm", "hmmm", "siap", "ya", "yup", "sip", "terima kasih", "makasih", "thanks", "lanjut", "terus", "test", "tes"];
+
+function isSampah(teks) {
+  if (!teks) return true;
+  let t = teks.toLowerCase().trim();
+  // 1. Kalau terlalu pendek, sampah. Contoh: "ok", "ya", "hi"
+  if (t.length < 3) return true;
+  // 2. Kalau persis sama dengan kata sampah, sampah
+  if (KATA_SAMPAH.includes(t)) return true;
+  // 3. Kalau cuma "halo mavix", "oke bos", itu juga sampah
+  if (t === "halo mavix" || t === "oke bos" || t === "siap bos") return true;
+  return false;
+}
 
 function ingat(nilai, kunci) {
   ingatanBos[kunci] = nilai;
@@ -48,11 +69,13 @@ function apaYangSayaIngat() {
 function lupaSemua() {
   ingatanBos = {};
   riwayatChat4 = [];
+  arsipChat = [];
   try {
     Object.keys(localStorage).forEach(k => {
       if (k.startsWith("ingatanBos_")) localStorage.removeItem(k);
     });
     localStorage.removeItem("chat4_mavix");
+    localStorage.removeItem("arsip_mavix");
   } catch(e){}
   return "Oke Bos, saya sudah lupa semua. Kita kenal lagi dari awal ya.";
 }
@@ -70,11 +93,52 @@ function buatCatatanUntukOtakBesar() {
   return catatan;
 }
 
+// ===== BARU V3 - BIKIN RINGKASAN 1 BARIS DARI ARSIP =====
+// Ini yang dikirim ke Groq, bukan arsip mentah-mentah
+// Token cuma ~30 token, bukan 2500 token
+function buatRingkasanArsip() {
+  try {
+    let simpan = localStorage.getItem("arsip_mavix");
+    if (simpan) arsipChat = JSON.parse(simpan);
+  } catch(e){}
+  if (!arsipChat || arsipChat.length <= 4) return ""; // Kalau arsip masih sedikit, tidak perlu ringkasan, meja kecil sudah cukup
+
+  // Ambil 10 chat penting terakhir dari arsip, yang bukan sampah
+  let penting = arsipChat.filter(c => !isSampah(c.teks)).slice(-10);
+  if (penting.length === 0) return "";
+
+  // Peras jadi 1 baris: ambil kata kunci saja
+  let topik = penting.map(c => c.teks).join(" | ");
+  // Potong biar tidak panjang, max 200 huruf saja
+  if (topik.length > 200) topik = topik.slice(-200);
+  return "RINGKASAN OBROLAN LAMA: " + topik;
+}
+
+// ===== BARU V3 - SIMPAN 2 TEMPAT, 1 FILTER =====
 function simpanChat(siapa, teks) {
+  if (!teks) return;
+
+  // [1] LEMARI BESAR - Simpan SEMUA, tidak difilter, max 100
+  // Ini arsip, tidur di localStorage, TIDAK dikirim ke Groq
+  try {
+    let simpanArsip = localStorage.getItem("arsip_mavix");
+    if (simpanArsip) arsipChat = JSON.parse(simpanArsip);
+  } catch(e){}
+  arsipChat.push({ siapa: siapa, teks: teks });
+  if (arsipChat.length > 100) arsipChat.shift(); // Kalau sudah 101, buang yang paling lama
+  try { localStorage.setItem("arsip_mavix", JSON.stringify(arsipChat)); } catch(e){}
+
+  // [2] MEJA KECIL - Simpan CUMA YANG PENTING, max 4
+  // Ini yang dikirim ke Groq, jadi harus bersih dari sampah
+  if (isSampah(teks)) {
+    // Sampah: jangan naik meja, biar slot meja tidak habis
+    // Tapi tetap update OtakKecil biar tidak error
+    try { if (typeof OtakKecil !== 'undefined') OtakKecil.riwayatChat = riwayatChat4; } catch(e){}
+    return;
+  }
   riwayatChat4.push({ siapa: siapa, teks: teks });
   if (riwayatChat4.length > 4) riwayatChat4.shift();
   try { localStorage.setItem("chat4_mavix", JSON.stringify(riwayatChat4)); } catch(e){}
-  // Biar Otak Kecil yang lama boleh baca juga
   try { if (typeof OtakKecil !== 'undefined') OtakKecil.riwayatChat = riwayatChat4; } catch(e){}
 }
 
@@ -99,5 +163,6 @@ window.ingatOtomatis = ingatOtomatis;
 window.apaYangSayaIngat = apaYangSayaIngat;
 window.lupaSemua = lupaSemua;
 window.buatCatatanUntukOtakBesar = buatCatatanUntukOtakBesar;
+window.buatRingkasanArsip = buatRingkasanArsip;
 window.simpanChat = simpanChat;
 window.ambilChatTerakhir = ambilChatTerakhir;
