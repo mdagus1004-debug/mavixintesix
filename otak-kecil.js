@@ -16,7 +16,7 @@ function pikirKecil(teks) {
 
   // 2. TANYA NAMA - CUMA BACA, TIDAK CATAT
   if (teksKecil.includes("siapa nama saya") || teksKecil.includes("nama saya siapa") || teksKecil.includes("kamu tau nama saya")) {
-    const nama = ambilCatatan("nama"); // <-- Baca dari Lemari saja
+    const nama = (typeof ambilCatatan === 'function' ? ambilCatatan("nama") : null) || (typeof ambilIngatan === 'function' ? ambilIngatan("nama") : null);
     if (nama) {
       return "Nama Bos " + nama + ".";
     } else {
@@ -26,7 +26,7 @@ function pikirKecil(teks) {
 
   // 3. TANYA SUKA - CUMA BACA, TIDAK CATAT
   if (teksKecil.includes("saya suka apa") || teksKecil.includes("apa yang saya suka") || teksKecil.includes("saya sukanya apa")) {
-    const suka = ambilCatatan("suka"); // <-- Baca saja
+    const suka = (typeof ambilCatatan === 'function' ? ambilCatatan("suka") : null) || (typeof ambilIngatan === 'function' ? ambilIngatan("suka") : null);
     if (suka) {
       return "Bos suka " + suka + ".";
     } else {
@@ -36,7 +36,7 @@ function pikirKecil(teks) {
 
   // 4. TANYA PERASAAN - CUMA BACA, TIDAK CATAT
   if (teksKecil.includes("perasaan saya") || teksKecil.includes("gimana perasaan saya") || teksKecil.includes("saya lagi apa")) {
-    const perasaan = ambilCatatan("perasaan"); // <-- Baca saja
+    const perasaan = (typeof ambilCatatan === 'function' ? ambilCatatan("perasaan") : null) || (typeof ambilIngatan === 'function' ? ambilIngatan("perasaan") : null);
     if (perasaan) {
       return "Tadi Bos bilang Bos " + perasaan + ".";
     } else {
@@ -46,7 +46,7 @@ function pikirKecil(teks) {
 
   // 5. TANYA KOTA - CUMA BACA, TIDAK CATAT
   if (teksKecil.includes("saya tinggal di mana") || teksKecil.includes("saya di mana") || teksKecil.includes("rumah saya di mana")) {
-    const kota = ambilCatatan("kota");
+    const kota = (typeof ambilCatatan === 'function' ? ambilCatatan("kota") : null) || (typeof ambilIngatan === 'function' ? ambilIngatan("kota") : null);
     if (kota) {
       return "Bos tinggal di " + kota + ".";
     } else {
@@ -56,7 +56,7 @@ function pikirKecil(teks) {
 
   // 6. TANYA PEKERJAAN - CUMA BACA, TIDAK CATAT
   if (teksKecil.includes("kerja saya apa") || teksKecil.includes("saya kerja apa")) {
-    const pekerjaan = ambilCatatan("pekerjaan");
+    const pekerjaan = (typeof ambilCatatan === 'function' ? ambilCatatan("pekerjaan") : null) || (typeof ambilIngatan === 'function' ? ambilIngatan("pekerjaan") : null);
     if (pekerjaan) {
       return "Bos kerja " + pekerjaan + ".";
     } else {
@@ -95,14 +95,33 @@ function pikirKecil(teks) {
   }
 
   // Kalau tidak kenal, TOLAK. Biar dilempar ke Otak Tengah / Server.
-  // Dia tolak tidak apa-apa, karena nama Bos sudah dicatat oleh catatOtomatis di depan.
   return null;
 }
 
 // ==========================================
-// DAFTARKAN SUPAYA FILE LAIN BISA PINJAM
+// JEMBATAN - INI YANG DULU HILANG, BOS
+// Biar index.html yang panggil OtakKecil.fikirKecil(teks, callback) bisa nyambung
 // ==========================================
 window.pikirKecil = pikirKecil;
-
-// Jembatan nama lama, biar file lama tidak error
 window.fikirKecil = pikirKecil;
+
+window.OtakKecil = {
+  // Bisa dipanggil 2 cara:
+  // 1. OtakKecil.fikirKecil("halo", callback) - cara index.html
+  // 2. OtakKecil.fikirKecil("halo") - cara lama, langsung return string
+  fikirKecil: function(teks, callback) {
+    const jawab = pikirKecil(teks);
+    if (typeof callback === 'function') {
+      if (jawab) callback(jawab);
+      // Kalau jawab null, jangan panggil callback. Biar index.html lanjut ke server.
+      return jawab;
+    }
+    return jawab;
+  },
+  pikirKecil: function(teks, callback) {
+    return this.fikirKecil(teks, callback);
+  },
+  fikir: function(teks, callback) {
+    return this.fikirKecil(teks, callback);
+  }
+};
