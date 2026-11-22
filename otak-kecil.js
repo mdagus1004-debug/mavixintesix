@@ -1,26 +1,20 @@
-// OTAK KECIL MAVIX V3 - DIET, HANYA MIKIR GAMPANG
-// Tidak boleh panggil Otak Tengah, tidak boleh panggil Groq.
-// Kalau tidak tahu, jawab null saja, biar Otak Depan yang urus.
-
+// OTAK KECIL MAVIX V3.1 - DIET, HANYA MIKIR GAMPANG
 const OtakKecil = {
   deposit: 0,
   hargaBarang: 2000,
-  riwayatChat: [],
   daftarHarga: { "robot": 2000, "lampu": 50, "baterai": 100, "kopi": 20, "charger": 80 },
 
   getNama: function() { return (typeof ambilIngatan === "function") ? ambilIngatan("nama") : ""; },
   getSuka: function() { return (typeof ambilIngatan === "function") ? ambilIngatan("suka") : ""; },
   getPerasaan: function() { return (typeof ambilIngatan === "function") ? ambilIngatan("perasaan") : ""; },
 
-  simpanChat: function(teksBos, jawabanSaya) {
-    this.riwayatChat.push({ bos: teksBos, saya: jawabanSaya, waktu: new Date().toLocaleTimeString('id-ID') });
-    if (this.riwayatChat.length > 20) this.riwayatChat.shift();
-  },
-
   fikirKecil: function(teks) {
     let t = teks.toLowerCase().trim();
     let panggil = this.getNama() || "Bos";
 
+    if (t === "lanjutkan" || t === "terus" || t === "teruskan" || t.includes("ceritakan") || t.includes("baca")) {
+      return null;
+    }
     if (t.includes('stop') || t.includes('berhenti') || t.includes('diam')) {
       if (typeof stopMulut === 'function') stopMulut();
       return "Siap Bos, saya berhenti.";
@@ -75,8 +69,11 @@ const OtakKecil = {
       return "Depositnya berapa Bos?";
     }
     if (t.includes("sisa")) {
-      return "Harga " + this.hargaBarang + ", deposit Bos " + this.deposit + ". Sisanya tinggal " + (this.hargaBarang - this.deposit) + ".";
+      let dep = this.getNama() ? ambilIngatan("deposit") : "0";
+      let d = parseInt(dep || "0");
+      return "Harga " + this.hargaBarang + ", deposit Bos " + d + ". Sisanya tinggal " + (this.hargaBarang - d) + ".";
     }
     return null;
   }
 };
+window.OtakKecil = OtakKecil;
