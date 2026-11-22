@@ -1,79 +1,108 @@
-// OTAK KECIL MAVIX V3.1 - DIET, HANYA MIKIR GAMPANG
-const OtakKecil = {
-  deposit: 0,
-  hargaBarang: 2000,
-  daftarHarga: { "robot": 2000, "lampu": 50, "baterai": 100, "kopi": 20, "charger": 80 },
+// ==========================================
+// File: otak-kecil.js - VERSI BAHASA INDONESIA
+// Nama: Otak Kecil / Satpam Depan
+// Tugas: CUMA JAWAB, TIDAK BOLEH CATAT
+// Yang catat cuma catatOtomatis() di otak-ingatan.js
+// ==========================================
 
-  getNama: function() { return (typeof ambilIngatan === "function") ? ambilIngatan("nama") : ""; },
-  getSuka: function() { return (typeof ambilIngatan === "function") ? ambilIngatan("suka") : ""; },
-  getPerasaan: function() { return (typeof ambilIngatan === "function") ? ambilIngatan("perasaan") : ""; },
+function pikirKecil(teks) {
+  if (!teks) return null;
+  const teksKecil = teks.toLowerCase().trim();
 
-  fikirKecil: function(teks) {
-    let t = teks.toLowerCase().trim();
-    let panggil = this.getNama() || "Bos";
-
-    if (t === "lanjutkan" || t === "terus" || t === "teruskan" || t.includes("ceritakan") || t.includes("baca")) {
-      return null;
-    }
-    if (t.includes('stop') || t.includes('berhenti') || t.includes('diam')) {
-      if (typeof stopMulut === 'function') stopMulut();
-      return "Siap Bos, saya berhenti.";
-    }
-    if (t === 'halo' || t === 'hai' || t.includes('halo mavix')) {
-      let suka = this.getSuka();
-      if (suka) return "Halo " + panggil + ", apa kabar? Bos mau " + suka + " lagi?";
-      return "Halo " + panggil + ", apa kabar? Saya kangen Bos nih.";
-    }
-    if (t.includes('jam berapa') || t.includes('pukul berapa')) {
-      return "Sekarang jam " + new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + " Bos.";
-    }
-    if (t.includes('tanggal') || t.includes('hari ini')) {
-      return "Hari ini " + new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) + " Bos.";
-    }
-    if (t.includes('terima kasih') || t.includes('makasih')) return "Sama-sama Bos, senang bisa bantu.";
-    if (t.includes("nama saya")) {
-      let nama = teks.replace(/nama saya/i, "").replace(/adalah/i, "").trim();
-      if (nama) { ingat(nama, "nama"); return "Oke, saya sudah ingat. Nama Bos " + nama + "."; }
-    }
-    if (t.includes("siapa nama saya")) {
-      let nama = this.getNama();
-      if (nama) return "Nama Bos " + nama + ", saya masih ingat.";
-      return "Saya belum tahu nama Bos. Bos namanya siapa?";
-    }
-    if (t.includes("saya suka")) {
-      let suka = teks.replace(/saya suka/i, "").trim();
-      ingat(suka, "suka");
-      return "Oh Bos suka " + suka + " ya? Oke saya ingat.";
-    }
-    if (t.includes("saya sedih") || t.includes("saya galau")) {
-      ingat("sedih", "perasaan");
-      return "Eh kenapa Bos sedih? Cerita dong, saya dengar.";
-    }
-    if (t.includes("saya senang")) {
-      ingat("senang", "perasaan");
-      return "Wahh Bos senang! Saya ikut senang nih! Kenapa Bos senang?";
-    }
-    if (t.includes("apa yang kamu ingat")) {
-      return apaYangSayaIngat();
-    }
-    if (t.includes("lupakan saya") || t.includes("lupa semua")) {
-      return lupaSemua();
-    }
-    if (t.includes("saya capek")) {
-      ingat("capek", "perasaan");
-      return "Waduh Bos capek ya? Istirahat dulu Bos.";
-    }
-    if (t.includes("deposit")) {
-      let angka = teks.match(/\d+/);
-      if (angka) { this.deposit = parseInt(angka[0]); ingat(this.deposit + "", "deposit"); return "Oke deposit " + this.deposit + " sudah saya simpan."; }
-      return "Depositnya berapa Bos?";
-    }
-    if (t.includes("sisa")) {
-      let dep = this.getNama() ? ambilIngatan("deposit") : "0";
-      let d = parseInt(dep || "0");
-      return "Harga " + this.hargaBarang + ", deposit Bos " + d + ". Sisanya tinggal " + (this.hargaBarang - d) + ".";
-    }
-    return null;
+  // 1. SALAM
+  if (teksKecil.includes("halo") || teksKecil.includes("hai") || teksKecil.includes("selamat pagi") || teksKecil.includes("selamat malam") || teksKecil.includes("assalamualaikum")) {
+    return "Halo Bos, ada yang bisa saya bantu?";
   }
-};
-window.OtakKecil = OtakKecil;
+
+  // 2. TANYA NAMA - CUMA BACA, TIDAK CATAT
+  if (teksKecil.includes("siapa nama saya") || teksKecil.includes("nama saya siapa") || teksKecil.includes("kamu tau nama saya")) {
+    const nama = ambilCatatan("nama"); // <-- Baca dari Lemari saja
+    if (nama) {
+      return "Nama Bos " + nama + ".";
+    } else {
+      return "Saya belum tahu nama Bos. Nama Bos siapa?";
+    }
+  }
+
+  // 3. TANYA SUKA - CUMA BACA, TIDAK CATAT
+  if (teksKecil.includes("saya suka apa") || teksKecil.includes("apa yang saya suka") || teksKecil.includes("saya sukanya apa")) {
+    const suka = ambilCatatan("suka"); // <-- Baca saja
+    if (suka) {
+      return "Bos suka " + suka + ".";
+    } else {
+      return "Bos belum pernah bilang Bos suka apa.";
+    }
+  }
+
+  // 4. TANYA PERASAAN - CUMA BACA, TIDAK CATAT
+  if (teksKecil.includes("perasaan saya") || teksKecil.includes("gimana perasaan saya") || teksKecil.includes("saya lagi apa")) {
+    const perasaan = ambilCatatan("perasaan"); // <-- Baca saja
+    if (perasaan) {
+      return "Tadi Bos bilang Bos " + perasaan + ".";
+    } else {
+      return "Bos belum cerita perasaan Bos hari ini.";
+    }
+  }
+
+  // 5. TANYA KOTA - CUMA BACA, TIDAK CATAT
+  if (teksKecil.includes("saya tinggal di mana") || teksKecil.includes("saya di mana") || teksKecil.includes("rumah saya di mana")) {
+    const kota = ambilCatatan("kota");
+    if (kota) {
+      return "Bos tinggal di " + kota + ".";
+    } else {
+      return "Saya belum tahu Bos tinggal di mana.";
+    }
+  }
+
+  // 6. TANYA PEKERJAAN - CUMA BACA, TIDAK CATAT
+  if (teksKecil.includes("kerja saya apa") || teksKecil.includes("saya kerja apa")) {
+    const pekerjaan = ambilCatatan("pekerjaan");
+    if (pekerjaan) {
+      return "Bos kerja " + pekerjaan + ".";
+    } else {
+      return "Bos belum pernah bilang Bos kerja apa.";
+    }
+  }
+
+  // 7. APA KABAR
+  if (teksKecil.includes("apa kabar") || teksKecil.includes("gimana kabar") || teksKecil.includes("kabar kamu")) {
+    return "Kabar saya baik, Bos. Bos sendiri gimana?";
+  }
+
+  // 8. MAU TIDUR / NGANTUK
+  if (teksKecil.includes("mau tidur") || teksKecil.includes("ngantuk") || teksKecil.includes("mau bobo")) {
+    return "Oke Bos, selamat istirahat ya. Jangan lupa minum air.";
+  }
+
+  // 9. LAPAR
+  if (teksKecil.includes("saya lapar")) {
+    return "Wah, Bos lapar ya? Makan dulu, Bos. Jangan tahan lapar.";
+  }
+
+  // 10. MARAH
+  if (teksKecil.includes("saya marah") || teksKecil.includes("saya kesal")) {
+    return "Sabar ya, Bos. Tarik napas dulu. Cerita saja sama saya, kenapa Bos marah?";
+  }
+
+  // 11. TERIMA KASIH
+  if (teksKecil.includes("terima kasih") || teksKecil.includes("makasih") || teksKecil.includes("thanks")) {
+    return "Sama-sama, Bos. Senang bisa bantu.";
+  }
+
+  // 12. SIAPA KAMU
+  if (teksKecil.includes("kamu siapa") || teksKecil.includes("nama kamu")) {
+    return "Saya Mavix, Bos. Asisten Bos.";
+  }
+
+  // Kalau tidak kenal, TOLAK. Biar dilempar ke Otak Tengah / Server.
+  // Dia tolak tidak apa-apa, karena nama Bos sudah dicatat oleh catatOtomatis di depan.
+  return null;
+}
+
+// ==========================================
+// DAFTARKAN SUPAYA FILE LAIN BISA PINJAM
+// ==========================================
+window.pikirKecil = pikirKecil;
+
+// Jembatan nama lama, biar file lama tidak error
+window.fikirKecil = pikirKecil;
