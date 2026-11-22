@@ -1,4 +1,4 @@
-// OTAK INGATAN MAVIX V3 - LEMARI BESAR ARSIP + MEJA KECIL FILTER + RINGKASAN
+// OTAK INGATAN MAVIX V3.3 - LEMARI BERSIH, SUDAH BUANG DEPOSIT
 // Lemari Besar = arsip, 100 chat, simpan semua, tidur di localStorage, TIDAK dikirim ke Groq
 // Meja Kecil = riwayatChat4, 4 chat PENTING saja, yang dikirim ke Groq
 
@@ -7,18 +7,13 @@ let riwayatChat4 = [];
 let arsipChat = [];
 
 // ===== KATA SAMPAH - TIDAK BOLEH NAIK MEJA KECIL =====
-// Kalau Bos bilang ini, tetap masuk Arsip, tapi JANGAN masuk Meja Kecil
-// Biar slot Meja Kecil tidak habis buat sampah
 const KATA_SAMPAH = ["halo", "hai", "hi", "ok", "oke", "okay", "hmm", "hmmm", "siap", "ya", "yup", "sip", "terima kasih", "makasih", "thanks", "lanjut", "terus", "test", "tes"];
 
 function isSampah(teks) {
   if (!teks) return true;
   let t = teks.toLowerCase().trim();
-  // 1. Kalau terlalu pendek, sampah. Contoh: "ok", "ya", "hi"
   if (t.length < 3) return true;
-  // 2. Kalau persis sama dengan kata sampah, sampah
   if (KATA_SAMPAH.includes(t)) return true;
-  // 3. Kalau cuma "halo mavix", "oke bos", itu juga sampah
   if (t === "halo mavix" || t === "oke bos" || t === "siap bos") return true;
   return false;
 }
@@ -56,13 +51,11 @@ function apaYangSayaIngat() {
   let nama = ambilIngatan("nama");
   let suka = ambilIngatan("suka");
   let perasaan = ambilIngatan("perasaan");
-  let deposit = ambilIngatan("deposit");
   let jawab = "Ini yang saya ingat Bos: ";
   if (nama) jawab += "Nama Bos " + nama + ". ";
   if (suka) jawab += "Bos suka " + suka + ". ";
   if (perasaan) jawab += "Terakhir Bos merasa " + perasaan + ". ";
-  if (deposit) jawab += "Deposit Bos " + deposit + ". ";
-  if (!nama && !suka && !perasaan && !deposit) jawab = "Saya belum ingat apa-apa lagi Bos.";
+  if (!nama && !suka && !perasaan) jawab = "Saya belum ingat apa-apa lagi Bos.";
   return jawab;
 }
 
@@ -84,55 +77,37 @@ function buatCatatanUntukOtakBesar() {
   let nama = ambilIngatan("nama");
   let suka = ambilIngatan("suka");
   let perasaan = ambilIngatan("perasaan");
-  let deposit = ambilIngatan("deposit");
   let catatan = "";
   if (nama) catatan += "Nama Bos: " + nama + "\n";
   if (suka) catatan += "Bos suka: " + suka + "\n";
   if (perasaan) catatan += "Perasaan terakhir Bos: " + perasaan + "\n";
-  if (deposit) catatan += "Deposit Bos: " + deposit + "\n";
   return catatan;
 }
 
-// ===== BARU V3 - BIKIN RINGKASAN 1 BARIS DARI ARSIP =====
-// Ini yang dikirim ke Groq, bukan arsip mentah-mentah
-// Token cuma ~30 token, bukan 2500 token
 function buatRingkasanArsip() {
   try {
     let simpan = localStorage.getItem("arsip_mavix");
     if (simpan) arsipChat = JSON.parse(simpan);
   } catch(e){}
-  if (!arsipChat || arsipChat.length <= 4) return ""; // Kalau arsip masih sedikit, tidak perlu ringkasan, meja kecil sudah cukup
-
-  // Ambil 10 chat penting terakhir dari arsip, yang bukan sampah
+  if (!arsipChat || arsipChat.length <= 4) return "";
   let penting = arsipChat.filter(c => !isSampah(c.teks)).slice(-10);
   if (penting.length === 0) return "";
-
-  // Peras jadi 1 baris: ambil kata kunci saja
   let topik = penting.map(c => c.teks).join(" | ");
-  // Potong biar tidak panjang, max 200 huruf saja
   if (topik.length > 200) topik = topik.slice(-200);
   return "RINGKASAN OBROLAN LAMA: " + topik;
 }
 
-// ===== BARU V3 - SIMPAN 2 TEMPAT, 1 FILTER =====
 function simpanChat(siapa, teks) {
   if (!teks) return;
-
-  // [1] LEMARI BESAR - Simpan SEMUA, tidak difilter, max 100
-  // Ini arsip, tidur di localStorage, TIDAK dikirim ke Groq
   try {
     let simpanArsip = localStorage.getItem("arsip_mavix");
     if (simpanArsip) arsipChat = JSON.parse(simpanArsip);
   } catch(e){}
   arsipChat.push({ siapa: siapa, teks: teks });
-  if (arsipChat.length > 100) arsipChat.shift(); // Kalau sudah 101, buang yang paling lama
+  if (arsipChat.length > 100) arsipChat.shift();
   try { localStorage.setItem("arsip_mavix", JSON.stringify(arsipChat)); } catch(e){}
 
-  // [2] MEJA KECIL - Simpan CUMA YANG PENTING, max 4
-  // Ini yang dikirim ke Groq, jadi harus bersih dari sampah
   if (isSampah(teks)) {
-    // Sampah: jangan naik meja, biar slot meja tidak habis
-    // Tapi tetap update OtakKecil biar tidak error
     try { if (typeof OtakKecil !== 'undefined') OtakKecil.riwayatChat = riwayatChat4; } catch(e){}
     return;
   }
