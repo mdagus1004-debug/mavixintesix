@@ -1,4 +1,4 @@
-// OTAK DEPAN - MANAJER MAVIX - BERSIH
+// OTAK DEPAN - MANAJER MAVIX - TANPA LAMBAI
 async function kirim(){
   const inp = document.getElementById('input');
   if(!inp) return;
@@ -10,10 +10,17 @@ async function kirim(){
   try { if(typeof ingatOtomatis === 'function') ingatOtomatis(teks); } catch(e){}
   try { if(typeof simpanChat === 'function') simpanChat("user", teks); } catch(e){}
 
+  // --- OTAK KECIL ---
   try {
     if (typeof OtakKecil !== 'undefined' && typeof OtakKecil.fikirKecil === 'function') {
       let jawabKecil = OtakKecil.fikirKecil(teks);
       if (jawabKecil && jawabKecil.trim() !== '') {
+        if (jawabKecil === "__STOP__") {
+          if (typeof stopMulut === 'function') stopMulut();
+          tambah('mavix', "Oke Bos, saya diam dulu.");
+          try { if(typeof simpanChat === 'function') simpanChat("assistant", "Oke Bos, saya diam dulu."); } catch(e){}
+          return;
+        }
         tambah('mavix', jawabKecil);
         try { if(typeof simpanChat === 'function') simpanChat("assistant", jawabKecil); } catch(e){}
         if (typeof bicara === 'function') bicara(jawabKecil);
@@ -22,6 +29,7 @@ async function kirim(){
     }
   } catch(e){}
 
+  // --- OTAK TENGAH ---
   try {
     if (typeof OtakTengah !== 'undefined' && OtakTengah.fikir) {
       const jawabTengah = await OtakTengah.fikir(teks);
@@ -34,6 +42,7 @@ async function kirim(){
     }
   } catch(e){}
 
+  // --- OTAK BESAR (GROQ) ---
   try {
     let catatan = "";
     try { if(typeof buatCatatanUntukOtakBesar === 'function') catatan = buatCatatanUntukOtakBesar(); } catch(e){}
@@ -45,17 +54,11 @@ async function kirim(){
     let pesanLengkap = "";
     if (catatan) pesanLengkap += catatan + "\n\n";
     if (ringkasan) pesanLengkap += ringkasan + "\n\n";
-    if (chatTerakhir) pesanLengkap += "CHAT TERAKHIR (4 chat penting, biar kamu boleh sambung kalau Bos cakap lanjutkan):\n" + chatTerakhir + "\n\n";
+    if (chatTerakhir) pesanLengkap += "CHAT TERAKHIR (4 chat penting, biar kamu boleh sambung kalau Bos bilang lanjutkan):\n" + chatTerakhir + "\n\n";
     pesanLengkap += "Pertanyaan Bos: " + teks;
     let modeKirim = (typeof window.modeMavix !== 'undefined' && window.modeMavix) ? window.modeMavix : "NGOBROL";
 
-    // BARU - Kirim ingatan ke server, biar Groq tidak pelupa lagi
-    let namaBosKirim = "";
-    let kesukaanKirim = "";
-    let perasaanKirim = "";
-    try { if(typeof ambilCatatan === 'function'){ namaBosKirim = ambilCatatan("nama") || ""; kesukaanKirim = ambilCatatan("suka") || ""; perasaanKirim = ambilCatatan("perasaan") || ""; } } catch(e){}
-
-    const res = await fetch('/chat', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ message: pesanLengkap, mode: modeKirim, namaBos: namaBosKirim, kesukaan: kesukaanKirim, perasaan: perasaanKirim }) });
+    const res = await fetch('/chat', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ message: pesanLengkap, mode: modeKirim }) });
     const data = await res.json();
     const jawab = data.reply || 'Bos, saya tidak dapat jawab tadi!';
     tambah('mavix', jawab);
@@ -68,10 +71,7 @@ async function kirim(){
 document.addEventListener('DOMContentLoaded', function(){
   const kirimBtn = document.getElementById('kirimBtn');
   if(kirimBtn) kirimBtn.addEventListener('click', kirim);
-  const lambaiBtn = document.getElementById('lambaiBtn');
-  if(lambaiBtn) lambaiBtn.addEventListener('click', lambai);
-  const avatarBtn = document.getElementById('avatarBtn');
-  if(avatarBtn) avatarBtn.addEventListener('click', lambai);
+  // lambai sudah dihapus, jadi tidak ada lagi tombol avatar / lambai di sini
   const inputEl = document.getElementById('input');
   if(inputEl) inputEl.addEventListener('keypress', function(e){ if(e.key === 'Enter') kirim(); });
 });
