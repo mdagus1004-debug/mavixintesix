@@ -22,7 +22,8 @@ body { height:100vh; display:flex; flex-direction:column; color:white; overflow:
 .user { align-self:flex-end; background:#22d3ee; color:#000; font-weight:500; }
 .input-row { display:flex; gap:8px; padding:10px; background:rgba(5,8,24,0.8); align-items:center; }
 #input { flex:1; padding:13px 16px; border-radius:25px; border:none; outline:none; background:#1a1a1a; color:white; font-size:15px; }
-.btn { width:48px; height:48px; border:none; border-radius:50%; font-size:24px; cursor:pointer; background:#22d3ee; color:#000; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.btn { width:48px; height:48px; border:none; border-radius:50%; cursor:pointer; background:#22d3ee; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.btn svg { width:26px; height:26px; fill:#000; margin-left:2px; }
 </style>
 </head>
 <body>
@@ -40,7 +41,9 @@ body { height:100vh; display:flex; flex-direction:column; color:white; overflow:
 <div id="chatBox"></div>
 <div class="input-row">
   <input id="input" placeholder="Tulis untuk MAVIX...">
-  <button class="btn" id="kirimBtn">➣</button>
+  <button class="btn" id="kirimBtn">
+    <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+  </button>
 </div>
 
 <script src="otak-ingatan.js"></script>
