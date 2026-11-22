@@ -1,88 +1,65 @@
-// OTAK BESAR + MULUT MAVIX - Bahasa Indonesia
+// OTAK BESAR + MULUT MAVIX V2.2
 const express = require('express');
 const cors = require('cors');
 const { EdgeTTS } = require('node-edge-tts');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-
 const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.static('.'));
-
 const KUNCI_GROQ = process.env.GROQ_API_KEY;
-
-// ===== CEK SERVER HIDUP =====
-app.get('/tes', (req, res) => {
-  res.json({ status: "hidup", pesan: "MAVIX sudah hidup Bos!" });
-});
-
-// ===== SUARA EDGE MICROSOFT =====
+app.get('/tes', (req, res) => { res.json({ status: "hidup", pesan: "MAVIX sudah hidup Bos!" }); });
 app.get("/suara", async (req, res) => {
   try {
     let teks = (req.query.teks || "").toString();
     if (!teks) return res.status(400).send("tidak ada teks");
     teks = teks.substring(0, 800);
-    const tts = new EdgeTTS({
-      voice: 'id-ID-GadisNeural',
-      lang: 'id-ID',
-      rate: '+0%',
-      pitch: '+5Hz'
-    });
+    const tts = new EdgeTTS({ voice: 'id-ID-GadisNeural', lang: 'id-ID', rate: '+0%', pitch: '+5Hz' });
     const fileTmp = path.join(os.tmpdir(), 'mavix-' + Date.now() + '.mp3');
     await tts.ttsPromise(teks, fileTmp);
     res.setHeader("Content-Type", "audio/mpeg");
-    res.sendFile(fileTmp, () => {
-      try { fs.unlinkSync(fileTmp); } catch(e) {}
-    });
-  } catch (e) {
-    console.log("Edge gagal:", e.message);
-    res.status(500).send("gagal");
-  }
+    res.sendFile(fileTmp, () => { try { fs.unlinkSync(fileTmp); } catch(e) {} });
+  } catch (e) { console.log("Edge gagal:", e.message); res.status(500).send("gagal"); }
 });
-
-// ===== JALUR CHAT UTAMA =====
 app.post('/chat', async (req, res) => {
   const pesanUser = req.body.message || "halo";
   const namaBos = req.body.namaBos || "Bos";
   const kesukaanBos = req.body.kesukaan || "";
   const perasaanBos = req.body.perasaan || "";
+  const modeBos = req.body.mode || "NGOBROL";
   let ingatanUntukGroq = "";
   if (namaBos && namaBos !== "Bos") ingatanUntukGroq += "Nama Bos adalah " + namaBos + ". ";
   if (kesukaanBos) ingatanUntukGroq += "Bos suka " + kesukaanBos + ". ";
   if (perasaanBos) ingatanUntukGroq += "Terakhir Bos merasa " + perasaanBos + ". ";
+  let aturanMode = "";
+  if (modeBos === "BACA") { aturanMode = "Bos lagi Mode BACA. Jawab pendek, padat, 1-2 ayat saja, jangan cerita panjang. "; }
+  else { aturanMode = "Bos lagi Mode NGOBROL. Jawab hangat, panjang sikit, macam kawan. "; }
   const pesanSistem = "Kamu adalah MAVIX, asisten setia milik Bos. " +
     "Kamu bicara Bahasa Indonesia, gaya santai, akrab, sopan, dan selalu panggil Bos dengan sebutan Bos. " +
     "Kamu tidak pernah bicara Bahasa Melayu, Bahasa Inggris, atau bahasa lain, kecuali Bos yang minta. " +
-    "Kamu jawab pendek dan jelas kalau Bos lagi mode kerja, jawab panjang dan hangat kalau Bos lagi curhat. " +
+    aturanMode +
     "Kamu jangan pernah menulis simbol markdown seperti **, ###, atau ```. " +
     "Kamu jangan pernah menulis nomor telepon, link WA, atau nomor HP. " +
-    "ATURAN PENTING: Otak Kecil sudah menangani sapaan, jam, stop, dan terima kasih. Jadi kamu fokus ke pertanyaan berat, curhat, dan ingatan. Jika Bos menyebut nama, kesukaan, atau perasaan baru, ingat itu dan sebut lagi di jawaban berikutnya seolah kamu benar-benar ingat. " +
+    "ATURAN PENTING: Otak Kecil sudah menangani sapaan, jam, stop, dan terima kasih. Jadi kamu fokus ke pertanyaan berat, curhat, dan ingatan. " +
+    "ATURAN LANJUTKAN: Kalau Bos cakap 'lanjutkan', 'terus', 'teruskan', jangan ulang dari awal. Sambung cerita dari CHAT TERAKHIR yang saya bagi. Jangan tanya 'lanjutkan apa?'. Terus sambung saja. " +
     "Ingatan tentang Bos: " + ingatanUntukGroq;
   try {
     if (!KUNCI_GROQ) return res.json({ reply: "Bos, GROQ_API_KEY saya belum dipasang di Render." });
+    let maxToken = modeBos === "BACA" ? 300 : 1500;
     const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": "Bearer " + KUNCI_GROQ },
-      body: JSON.stringify({
-        model: "openai/gpt-oss-120b",
-        messages: [{ role: "system", content: pesanSistem }, { role: "user", content: pesanUser }],
-        max_tokens: 1500, temperature: 0.7
-      })
+      body: JSON.stringify({ model: "openai/gpt-oss-120b", messages: [{ role: "system", content: pesanSistem }, { role: "user", content: pesanUser }], max_tokens: maxToken, temperature: 0.7 })
     });
     const data = await r.json();
     if (data.choices && data.choices[0]) {
       let jawaban = data.choices[0].message.content || "";
       jawaban = jawaban.replace(/\*\*/g, "").replace(/\*/g, "").replace(/###/g, "").replace(/##/g, "").replace(/#/g, "").replace(/```/g, "").replace(/https?:\/\/wa\.me\/\S+/gi, "").replace(/\+62[\d\s\-()]+/g, "").trim();
       return res.json({ reply: jawaban });
-    } else {
-      return res.json({ reply: "GROQ bilang: " + JSON.stringify(data.error || data).slice(0, 300) });
-    }
-  } catch (e) {
-    return res.json({ reply: "Bos, Groq saya putus sebentar: " + e.message + ". Tapi saya masih di sini Bos." });
-  }
+    } else { return res.json({ reply: "GROQ bilang: " + JSON.stringify(data.error || data).slice(0, 300) }); }
+  } catch (e) { return res.json({ reply: "Bos, Groq saya putus sebentar: " + e.message + ". Tapi saya masih di sini Bos." }); }
 });
-
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => console.log("MAVIX Hidup di port " + PORT));
