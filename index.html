@@ -38,7 +38,7 @@ body { height:100vh; display:flex; flex-direction:column; color:white; overflow:
   <button id="btnNgobrol" class="aktif" onclick="gantiMode('NGOBROL')">💬 Ngobrol</button>
   <button id="btnBaca" onclick="gantiMode('BACA')">📖 Baca</button>
 </div>
-<div id="chatBox"><div class="msg mavix">Halo Bos! Saya MAVIX, sudah pakai otak GPT 120B!</div></div>
+<div id="chatBox"></div>
 <div class="input-row">
   <input id="input" placeholder="Tulis untuk MAVIX...">
   <button class="btn" id="kirimBtn">Kirim</button>
@@ -81,10 +81,6 @@ function gantiMode(modeBaru){
 window.gantiMode = gantiMode;
 window.tambah = tambah;
 window.mavixNgomong = mavixNgomong;
-try {
-  const modeLama = localStorage.getItem('modeMavix');
-  if(modeLama) gantiMode(modeLama);
-} catch(e){}
 </script>
 </body>
 </html>
