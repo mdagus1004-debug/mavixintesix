@@ -9,11 +9,6 @@
 * { margin:0; padding:0; box-sizing:border-box; font-family:sans-serif; }
 body { height:100vh; display:flex; flex-direction:column; color:white; overflow:hidden; background:#050818; }
 .pentas { position:fixed; top:0; left:0; width:100%; height:100%; z-index:-1; display:flex; align-items:center; justify-content:center; background-image:url('background.jpg'); background-size:cover; background-position:center; overflow:hidden; }
-.cahaya { position:absolute; width:350px; height:350px; border-radius:50%; background: radial-gradient(circle, rgba(34,211,238,0.5), transparent 70%); animation: denyut 2.5s ease-in-out infinite; }
-@keyframes denyut { 0%,100%{transform:scale(1); opacity:0.6} 50%{transform:scale(1.2); opacity:1} }
-.mavix-body { position:relative; width:340px; height:520px; animation: terapung 3s ease-in-out infinite; }
-@keyframes terapung { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
-.mavix-foto { width:340px; height:520px; object-fit:cover; border-radius:20px; }
 .header { display:flex; align-items:center; gap:12px; padding:12px 15px; background:rgba(5,8,24,0.7); }
 .avatar { width:58px; height:58px; border-radius:50%; flex-shrink:0; border:3px solid #22d3ee; overflow:hidden; cursor:pointer; }
 .avatar img { width:100%; height:100%; object-fit:cover; }
@@ -47,7 +42,6 @@ body { height:100vh; display:flex; flex-direction:column; color:white; overflow:
 <div class="input-row">
   <input id="input" placeholder="Tulis untuk MAVIX...">
   <button class="btn" id="kirimBtn">Kirim</button>
-  <button class="btn" id="lambaiBtn">👋 Lambai</button>
 </div>
 
 <script src="otak-ingatan.js"></script>
@@ -69,10 +63,6 @@ function tambah(siapa, teks){
   chat.appendChild(div);
   chat.scrollTop = chat.scrollHeight;
 }
-function lambai(){
-  tambah('mavix', 'Halo Bos! Saya melambai untuk Bos!');
-  if(typeof bicara === 'function') bicara('Halo Bos! Saya melambai untuk Bos!');
-}
 function mavixNgomong(lagiNgomong){
   const foto = document.querySelector('.mavix-foto');
   if(!foto) return;
@@ -90,7 +80,6 @@ function gantiMode(modeBaru){
 }
 window.gantiMode = gantiMode;
 window.tambah = tambah;
-window.lambai = lambai;
 window.mavixNgomong = mavixNgomong;
 try {
   const modeLama = localStorage.getItem('modeMavix');
