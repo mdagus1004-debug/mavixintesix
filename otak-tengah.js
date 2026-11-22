@@ -1,10 +1,13 @@
-// OTAK TENGAH - WIKIPEDIA
+// OTAK TENGAH - WIKIPEDIA - VERSI PERBAIKAN
 async function otakTengah(pesan) {
+  const tRendah = pesan.toLowerCase().trim();
+  // PERBAIKAN: Kalau ini pertanyaan ingatan, jangan ke Wikipedia
+  if (tRendah.includes("nama saya") || tRendah.includes("saya suka") || tRendah.includes("hobi saya") || tRendah.includes("makanan saya") || tRendah.includes("minuman saya") || tRendah.includes("saya tinggal") || tRendah.includes("kerja saya") || tRendah.includes("perasaan saya")) return null;
+  if (tRendah === "lanjutkan" || tRendah === "terus" || tRendah === "teruskan") return null;
+
   const kataFakta = ["apa itu", "siapa", "jelaskan", "definisi", "kapan", "dimana", "di mana", "ibukota", "siapakah", "baca", "tentang", "ceritakan"];
-  const isFakta = kataFakta.some(k => pesan.toLowerCase().includes(k));
+  const isFakta = kataFakta.some(k => tRendah.includes(k));
   if (!isFakta) return null;
-  let t = pesan.toLowerCase().trim();
-  if (t === "lanjutkan" || t === "terus" || t === "teruskan") return null;
   try {
     let cari = pesan.replace(/apa itu|siapa|siapakah|jelaskan|definisi|ibukota|baca|tentang|ceritakan/gi, "").replace(/\?/g, "").trim();
     if (!cari) return null;
