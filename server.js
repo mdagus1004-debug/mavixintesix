@@ -32,7 +32,7 @@ const server = http.createServer(async (req, res) => {
       const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": "Bearer " + KUNCI_GROQ },
-        body: JSON.stringify({ model: "openai/gpt-oss-20b", messages: [{ role: "user", content: "halo" }], max_tokens: 10 })
+        body: JSON.stringify({ model: "openai/gpt-oss-120b", messages: [{ role: "user", content: "halo" }], max_tokens: 10 })
       });
       const data = await r.json();
       res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -51,7 +51,7 @@ const server = http.createServer(async (req, res) => {
       try {
         const j = JSON.parse(body || '{}');
         const pesanUser = j.message || "halo";
-        // INI TAMBALAN SAYA - BIAR GROQ TIDAK AMNESIA
+        // INI TAMBALAN BOS - BIAR GROQ TIDAK AMNESIA
         const namaBos = j.namaBos || "";
         const kesukaanBos = j.kesukaan || "";
         const perasaanBos = j.perasaan || "";
@@ -69,7 +69,7 @@ const server = http.createServer(async (req, res) => {
           method: "POST",
           headers: { "Content-Type": "application/json", "Authorization": "Bearer " + KUNCI_GROQ },
           body: JSON.stringify({
-            model: "openai/gpt-oss-20b",
+            model: "openai/gpt-oss-120b",
             messages: [
               { role: "system", content: "Kamu adalah MAVIX, asisten setia milik Bos. Bicara Bahasa Indonesia, gaya santai, akrab, sopan, selalu panggil Bos dengan sebutan Bos. Jangan pakai simbol markdown seperti **, ###, atau ```. Jangan tulis nomor telepon atau link WA. Otak Kecil sudah menangani sapaan, jam, stop, dan terima kasih. Jadi kamu fokus ke pertanyaan berat, curhat, dan ingatan. Ingatan tentang Bos: " + ingatanUntukGroq },
               { role: "user", content: pesanUser }
