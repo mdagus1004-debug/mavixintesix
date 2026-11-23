@@ -54,52 +54,32 @@ body.siang .btn svg { fill:#fff; }
 .btn { width:48px; height:48px; border:none; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
 .btn svg { width:26px; height:26px; margin-left:2px; }
 
-/* ===== KECIL SAJA, PAS DI TENGAH ===== */
+/* ===== MAVIX HIDUP - PENUH 1 SKRIN, BADAN BERNAFAS + MULUT GERAK ===== */
 #mavixBadan{
-  position:absolute;
-  top:48%; left:50%;
-  transform:translate(-50%,-50%);
-  width:240px; height:240px;
-  background-image:url('mavixintesix.jpg');
-  background-size:cover; background-position:center;
-  border-radius:20px;
-  border:2px solid rgba(34,211,238,0.6);
-  box-shadow:0 0 30px rgba(34,211,238,0.4);
-  overflow:hidden;
-  animation: bernafas 4s ease-in-out infinite;
-}
-@keyframes bernafas{
-  0%,100%{ transform:translate(-50%,-50%) scale(1); filter:brightness(1); }
-  50%{ transform:translate(-50%,-50%) scale(1.03); filter:brightness(1.05); }
-}
-
-/* ===== YANG DI TENGAH ITU JADI MULUTNYA - INI SAJA YANG BARU ===== */
-#mulutTengah{
   position:absolute; top:0; left:0;
   width:100%; height:100%;
   background-image:url('mavixintesix.jpg');
   background-size:cover; background-position:center;
-  /* Potong, ambil tengah saja, atas bawah buang, tinggal sinar tengah itu saja */
-  -webkit-mask-image:linear-gradient(to bottom, transparent 42%, black 48%, black 58%, transparent 64%);
-  mask-image:linear-gradient(to bottom, transparent 42%, black 48%, black 58%, transparent 64%);
-  transform-origin:center;
+  animation: bernafas 4s ease-in-out infinite;
 }
-/* Diam - yang tengah itu diam */
-#mavixBadan #mulutTengah{ animation:none; transform:scaleY(1); }
-/* MAVIX NGOMONG - yang tengah itu saja yang mengembang naik turun */
-#mavixBadan.ngomong #mulutTengah{
-  animation: mulutTengahGerak 0.35s ease-in-out infinite alternate;
-  filter:brightness(1.5) drop-shadow(0 0 10px #22d3ee);
+@keyframes bernafas{
+  0%,100%{ transform:scale(1.05); }
+  50%{ transform:scale(1.08); }
 }
-@keyframes mulutTengahGerak{
-  from{ transform:scaleY(0.8) scaleX(0.98); }
-  to{ transform:scaleY(1.6) scaleX(1.02); }
+#mavixBadan.ngomong{ animation-duration:2.2s; }
+#mavixBadan.dengar{ animation-duration:3s; }
+#mulutMavix{
+  position:absolute; top:46%; left:50%;
+  transform:translate(-50%,-50%);
+  display:flex; gap:6px; align-items:center; justify-content:center;
+  height:60px; z-index:5;
 }
-/* BOS NGOMONG - yang tengah itu gerak sikit saja */
-#mavixBadan.dengar #mulutTengah{
-  animation: mulutTengahGerak 0.7s ease-in-out infinite alternate;
-  filter:brightness(1.2);
+#mulutMavix span{
+  width:7px; background:#22d3ee; border-radius:10px;
+  height:8px; box-shadow:0 0 12px #22d3ee;
+  transition:height 0.12s;
 }
+#mulutMavix.diam span{ height:6px; background:#1e3a5a; box-shadow:none; }
 </style>
 </head>
 <body class="siang">
@@ -123,13 +103,18 @@ body.siang .btn svg { fill:#fff; }
 </div>
 
 <!-- ========== LAYAR 2 - SUARA ========== -->
-<!-- LATAR BELAKANG TETAP GAMBAR ITU, TIDAK DIUBAH -->
-<div id="layar-suara" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:999; background-image:url('mavixintesix.jpg'); background-size:cover; background-position:center; overflow:hidden;">
+<div id="layar-suara" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:999; background:#050818; overflow:hidden;">
+  <div style="position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.25); z-index:2;"></div>
   <button onclick="gantiLayar('chat')" style="position:absolute; top:15px; right:15px; width:40px; height:40px; border-radius:50%; border:none; background:white; color:black; font-size:20px; font-weight:bold; cursor:pointer; z-index:10;">✕</button>
 
-  <!-- KECIL PAS DI TENGAH - Yang di tengah itu jadi mulut -->
+  <!-- BADAN - Gambar kamu penuh 1 skrin, mavixintesix.jpg -->
   <div id="mavixBadan">
-    <div id="mulutTengah"></div>
+    <!-- MULUT - Di tengah dada, atas gelombang biru -->
+    <div id="mulutMavix" class="diam">
+      <span></span><span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span>
+    </div>
   </div>
 
   <div style="position:absolute; bottom:40px; left:0; width:100%; text-align:center; z-index:10;">
@@ -220,18 +205,50 @@ function gantiLayar(nama){
 window.gantiLayar = gantiLayar;
 gantiMode(window.modeMavix);
 
-// ===== YANG DI TENGAH ITU SAJA YANG JADI MULUT =====
+// ===== MULUT GERAK + BADAN BERNAFAS, IKUT MIC =====
 (function(){
-  let badan = document.getElementById('mavixBadan');
-  if(!badan) return;
-  setInterval(function(){
+  let mulut = null;
+  let badan = null;
+  function cari(){
+    mulut = document.getElementById('mulutMavix');
+    badan = document.getElementById('mavixBadan');
+    if(!mulut || !badan) return;
+    gerak();
+  }
+  function gerak(){
+    if(!mulut || !badan) return;
     let sedangNgomong = window.MAVIX && window.MAVIX.sedangNgomong;
     let micNyala = window.MAVIX && window.MAVIX.micNyala;
     let bosNgomong = micNyala && window.MAVIX && window.MAVIX.antrianTerakhir;
+
     badan.classList.remove('ngomong','dengar');
     if(sedangNgomong) badan.classList.add('ngomong');
     else if(bosNgomong) badan.classList.add('dengar');
-  }, 100);
+
+    let bars = mulut.querySelectorAll('span');
+    if(sedangNgomong){
+      mulut.classList.remove('diam');
+      bars.forEach(function(b, i){
+        let tengah = 1 - Math.abs(i - 6) / 7;
+        let rawak = Math.random() * 45 + 10;
+        b.style.height = (rawak * tengah + 8) + 'px';
+        b.style.background = '#22d3ee';
+      });
+    } else if(bosNgomong){
+      mulut.classList.remove('diam');
+      bars.forEach(function(b, i){
+        let tengah = 1 - Math.abs(i - 6) / 7;
+        b.style.height = (Math.random() * 18 * tengah + 6) + 'px';
+        b.style.background = '#ff9800';
+      });
+    } else {
+      mulut.classList.add('diam');
+      bars.forEach(function(b){ b.style.height = '6px'; });
+    }
+    setTimeout(gerak, 100);
+  }
+  setInterval(function(){ if(!mulut) cari(); }, 500);
+  cari();
 })();
 </script>
 </body>
