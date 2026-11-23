@@ -1,101 +1,49 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>MAVIX - Mode Suara</title>
-<style>
-  *{ box-sizing:border-box; margin:0; padding:0; }
-  body{ font-family: system-ui, -apple-system, sans-serif; background:#0f172a; color:#fff; height:100dvh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:16px; text-align:center; }
-  .judul{ font-size:28px; letter-spacing:4px; font-weight:800; }
-  .kecil{ font-size:13px; color:#94a3b8; margin-top:4px; }
-  #gelombang{ width:150px; height:150px; border-radius:50%; background:#1e293b; margin:28px 0; display:flex; align-items:center; justify-content:center; font-size:60px; transition:transform .2s; border:3px solid #334155; }
-  #gelombang.ngomong{ transform:scale(1.12); background:#2563eb; border-color:#60a5fa; }
-  #gelombang.dengar{ background:#dc2626; border-color:#f87171; }
-  #statusSuara{ font-size:15px; color:#e2e8f0; min-height:44px; line-height:1.5; padding:0 10px; }
-  #teksTerakhir{ font-size:13px; color:#94a3b8; margin-top:10px; min-height:20px; }
-  .tombol-besar{ width:100%; max-width:320px; :16px; border-radius:16px; border:none; font-size:17px; font-weight:700; margin-top:18px; }
-  #micBtn{ background:#2563eb; color:#fff; }
-  #micBtn.aktif{ background:#dc2626; }
-  #stopBtn{ background:#334155; color:#fff; }
-  .mode{ display:flex; gap:8px; width:100%; max-width:320px; margin-top:16px; }
-  .mode button{ flex:1; padding:11px; border-radius:12px; :1px solid #334155; background:#1e293b; color:#cbd5e1; }
-  .mode button.aktif{ background:#2563eb; color:#fff; border-color:#2563eb; }
-  .pindah{ margin-top:18px; color:#60a5fa; font-size:13px; text-decoration:none; }
-  #input{ display:none; }
-  #chat{ display:none; }
-  #status{ display:none; }
-  #kirimBtn{ display:none; }
-</style>
-</head>
-<body>
-<div class="judul">MAVIX</div>
-<div class="kecil">Mode Suara Penuh</div>
+// OTAK TENGAH - WIKIPEDIA - VERSI BETUL, TIDAK TANYA WIKIPEDIA SOAL BOS
+async function otakTengah(pesan, mode){
+  const tRendah = pesan.toLowerCase().trim();
+  // Ambil yang terakhir saja
+  let pot = tRendah.split(/[,.\n]| eh | terus | lalu /);
+  let tTerakhir = pot[pot.length - 1].trim();
+  if(tTerakhir === "" && pot.length > 1) tTerakhir = pot[pot.length - 2].trim();
+  if(!tTerakhir) tTerakhir = tRendah;
 
-<div id="gelombang">🎤</div>
-<div id="statusSuara">Siap Bos. Tekan tombol bawah, lalu bicara.</div>
-<div id="teksTerakhir"></div>
+  // === INI YANG BARU, YANG BIKIN FOTO BOS TADI HILANG ===
+  // Kalau soal Bos, jangan tanya Wikipedia. Biar otak kecil yang jawab.
+  // Ini yang dulu kurang: namamu, rumahmu, kamu, bos, aku belum diblok
+  if(tTerakhir.includes("namamu") || tTerakhir.includes("nama kamu") || tTerakhir.includes("nama saya") || tTerakhir.includes("namaku")) return null;
+  if(tTerakhir.includes("rumahmu") || tTerakhir.includes("rumah kamu") || tTerakhir.includes("rumah saya") || tTerakhir.includes("rumahku")) return null;
+  if(tTerakhir.includes("kamu") || tTerakhir.includes("saya") || tTerakhir.includes("aku") || tTerakhir.includes("bos") || tTerakhir.includes("gue") || tTerakhir.includes("lu")) return null;
+  if(tTerakhir.includes("hobi") || tTerakhir.includes("suka") || tTerakhir.includes("makanan") || tTerakhir.includes("minuman") || tTerakhir.includes("kerja") || tTerakhir.includes("perasaan") || tTerakhir.includes("tinggal")) return null;
 
-<button id="micBtn" class="tombol-besar">🎤 TEKAN UNTUK BICARA</button>
-<button id="stopBtn" class="tombol-besar" onclick="berhentiSemua()">⏹ BERHENTI</button>
+  // Kalau cuma 1 kata, bukan urusan Wikipedia
+  if(tTerakhir === "siapa" || tTerakhir === "dimana" || tTerakhir === "di mana" || tTerakhir === "hallo" || tTerakhir === "halo" || tTerakhir === "hai") return null;
+  if(tTerakhir.length < 3) return null;
+  if(tTerakhir === "lanjutkan" || tTerakhir === "terus" || tTerakhir === "teruskan") return null;
 
-<div class="mode">
-  <button id="modeNgobrol" class="aktif" onclick="gantiMode('NGOBROL')">NGOBROL</button>
-  <button id="modeBaca" onclick="gantiMode('BACA')">BACA</button>
-</div>
+  const kataFakta = ["apa itu", "siapa", "jelaskan", "definisi", "kapan", "dimana", "di mana", "ibukota", "siapakah", "baca", "tentang", "ceritakan"];
+  const isFakta = kataFakta.some(k => tTerakhir.includes(k));
+  if(!isFakta) return null;
 
-<a class="pindah" href="index.html">← Kembali ke Mode Ketik</a>
-<input id="input" type="text">
-<div id="chat"></div>
-<div id="status"></div>
-<button id="kirimBtn"></button>
-
-<script src="otak-ingatan.js"></script>
-<script src="otak-kecil.js"></script>
-<script src="otak-tengah.js"></script>
-<script src="mulut.js"></script>
-<script src="telinga.js"></script>
-<script src="otak-depan.js"></script>
-<script>
-  window.modeMavix = "NGOBROL";
-  function gantiMode(mode){
-    window.modeMavix = mode;
-    document.getElementById('modeNgobrol').classList.toggle('aktif', mode === 'NGOBROL');
-    document.getElementById('modeBaca').classList.toggle('aktif', mode === 'BACA');
-  }
-  // Untuk halaman suara, tambah hanya tampilkan teks terakhir, bukan list chat
-  function tambah(siapa, teks){
-    const el = document.getElementById('teksTerakhir');
-    if(el) el.innerText = (siapa === 'user' ? 'Bos: ' : 'Mavix: ') + teks;
-    // Simpan juga ke status, supaya Bos lihat
-    const s = document.getElementById('statusSuara');
-    if(s && siapa === 'mavix') s.innerText = teks;
-  }
-  window.tambah = tambah;
-  function berhentiSemua(){
-    if(window.stopMulut) window.stopMulut();
-    if(window.hentikanDengar) window.hentikanDengar(true);
-    document.getElementById('statusSuara').innerText = "Baik Bos, saya diam.";
-    document.getElementById('gelombang').classList.remove('ngomong');
-    document.getElementById('gelombang').classList.remove('dengar');
-  }
-  // Gelombang mulut: nyala waktu Mavix ngomong
-  document.addEventListener('mavix-mulai-ngomong', () => {
-    document.getElementById('gelombang').classList.add('ngomong');
-    document.getElementById('gelombang').innerText = '🔊';
-  });
-  document.addEventListener('mavix-selesai-ngomong', () => {
-    document.getElementById('gelombang').classList.remove('ngomong');
-    document.getElementById('gelombang').innerText = '🎤';
-  });
-  // Ubah tombol mic, supaya jelas sedang dengar atau tidak
-  const micAsli = document.getElementById('micBtn');
-  // Mic asli di telinga.js pakai id micBtn, jadi kita pakai tombol yang sama
-  window.addEventListener('load', () => {
-    setTimeout(() => {
-      document.getElementById('statusSuara').innerText = "Halo Bos, saya MAVIX. Tekan tombol biru, lalu bicara.";
-    }, 300);
-  });
-</script>
-</body>
-</html>
+  try{
+    let cari = tTerakhir.replace(/apa itu|siapa|siapakah|jelaskan|definisi|ibukota|baca|tentang|ceritakan/gi, "").replace(/\?/g, "").trim();
+    if(!cari) return null;
+    const res = await fetch(`https://id.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(cari)}`);
+    const data = await res.json();
+    if(data.extract){
+      const kalimat = data.extract.split('.');
+      const pendek = kalimat.slice(0, 2).join('.') + '.';
+      const panjang = data.extract;
+      if(mode === "BACA") return "Menurut Wikipedia Bos:\n\n" + pendek;
+      return "Menurut Wikipedia Bos:\n\n" + panjang;
+    }
+  }catch(e){}
+  return null;
+}
+function bukaSelengkapnya(id, tombol){
+  const isi = document.getElementById("isi_" + id);
+  if(!isi) return;
+  if(isi.style.display === "none"){ isi.style.display = "block"; tombol.innerHTML = "Tutup ▲"; }
+  else { isi.style.display = "none"; tombol.innerHTML = "Baca Selengkapnya ▼"; }
+}
+window.OtakTengah = { fikir: otakTengah, cariWikipedia: otakTengah };
+window.bukaSelengkapnya = bukaSelengkapnya;
