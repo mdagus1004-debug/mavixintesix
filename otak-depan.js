@@ -1,5 +1,6 @@
-// OTAK DEPAN - MANAJER MAVIX - TANPA LAMBAI
-// File asli Bos, tidak saya ubah sama sekali di bagian kirim(). Saya hanya tambah kirimPesanSuara() di bawah.
+// OTAK DEPAN - MANAJER MAVIX - VERSI BERSIH
+// Kerja dia: FIKIR SAJA
+// Bila mau kirim ke server, dia baca perintah dari telinga dengan terang
 
 async function kirim(){
   const inp = document.getElementById('input');
@@ -12,7 +13,6 @@ async function kirim(){
   try { if(typeof ingatOtomatis === 'function') ingatOtomatis(teks); } catch(e){}
   try { if(typeof simpanChat === 'function') simpanChat("user", teks); } catch(e){}
 
-  // --- OTAK KECIL ---
   try {
     if (typeof OtakKecil !== 'undefined' && typeof OtakKecil.fikirKecil === 'function') {
       let jawabKecil = OtakKecil.fikirKecil(teks);
@@ -31,7 +31,6 @@ async function kirim(){
     }
   } catch(e){}
 
-  // --- OTAK TENGAH ---
   try {
     if (typeof OtakTengah !== 'undefined' && OtakTengah.fikir) {
       const jawabTengah = await OtakTengah.fikir(teks);
@@ -44,7 +43,6 @@ async function kirim(){
     }
   } catch(e){}
 
-  // --- OTAK BESAR (GROQ) ---
   try {
     let catatan = "";
     try { if(typeof buatCatatanUntukOtakBesar === 'function') catatan = buatCatatanUntukOtakBesar(); } catch(e){}
@@ -53,7 +51,12 @@ async function kirim(){
     let ringkasan = "";
     try { if(typeof buatRingkasanArsip === 'function') ringkasan = buatRingkasanArsip(); } catch(e){}
 
+    // BERSIH: baca perintah dari telinga
+    let konteksPerintah = "";
+    try { if(typeof window.dapatKonteksMavix === "function") konteksPerintah = window.dapatKonteksMavix(); } catch(e){}
+
     let pesanLengkap = "";
+    if (konteksPerintah) pesanLengkap += konteksPerintah + "\n\n";
     if (catatan) pesanLengkap += catatan + "\n\n";
     if (ringkasan) pesanLengkap += ringkasan + "\n\n";
     if (chatTerakhir) pesanLengkap += "CHAT TERAKHIR (4 chat penting, biar kamu boleh sambung kalau Bos bilang lanjutkan):\n" + chatTerakhir + "\n\n";
@@ -70,30 +73,21 @@ async function kirim(){
     tambah('mavix', 'Bos, server saya lagi tidur: ' + e.message);
   }
 }
+
 document.addEventListener('DOMContentLoaded', function(){
   const kirimBtn = document.getElementById('kirimBtn');
   if(kirimBtn) kirimBtn.addEventListener('click', kirim);
-  const inputEl = document.getElementById('input');
-  if(inputEl) inputEl.addEventListener('keypress', function(e){ if(e.key === 'Enter') kirim(); });
 });
 window.kirim = kirim;
 
-// ============================================================
-// TAMBAHAN BARU - KENAPA DITAMBAH?
-// Karena fungsi kirim() yang lama selalu panggil tambah() untuk tampilkan teks.
-// Di layar suara, kita tidak boleh tampilkan teks, kita hanya boleh bicara.
-// Jadi kita buat fungsi kembar, isinya sama persis, tapi tanpa tambah().
-// ============================================================
+// KEMBAR UNTUK SUARA - tanpa tambah(), paksa NGOBROL
 async function kirimPesanSuara(teks){
   if(!teks) return;
   teks = teks.trim();
   if(!teks) return;
-
-  // Tetap ingat dan simpan, supaya kalau balik ke chat, Mavix tidak lupa
   try { if(typeof ingatOtomatis === 'function') ingatOtomatis(teks); } catch(e){}
   try { if(typeof simpanChat === 'function') simpanChat("user", teks); } catch(e){}
 
-  // OTAK KECIL - sama seperti kirim(), tapi tanpa tambah()
   try {
     if (typeof OtakKecil !== 'undefined' && typeof OtakKecil.fikirKecil === 'function') {
       let jawabKecil = OtakKecil.fikirKecil(teks);
@@ -111,7 +105,6 @@ async function kirimPesanSuara(teks){
     }
   } catch(e){}
 
-  // OTAK TENGAH - sama seperti kirim(), tapi tanpa tambah()
   try {
     if (typeof OtakTengah !== 'undefined' && OtakTengah.fikir) {
       const jawabTengah = await OtakTengah.fikir(teks);
@@ -123,8 +116,6 @@ async function kirimPesanSuara(teks){
     }
   } catch(e){}
 
-  // OTAK BESAR - sama seperti kirim(), tapi dipaksa NGOBROL dan tanpa tambah()
-  // KENAPA DIPAKSA NGOBROL? Karena di mode BACA jawaban pendek, tidak enak didengar. Di layar suara, jawaban harus panjang seperti ngobrol.
   try {
     let catatan = "";
     try { if(typeof buatCatatanUntukOtakBesar === 'function') catatan = buatCatatanUntukOtakBesar(); } catch(e){}
@@ -133,7 +124,12 @@ async function kirimPesanSuara(teks){
     let ringkasan = "";
     try { if(typeof buatRingkasanArsip === 'function') ringkasan = buatRingkasanArsip(); } catch(e){}
 
+    // BERSIH: baca perintah dari telinga
+    let konteksPerintah = "";
+    try { if(typeof window.dapatKonteksMavix === "function") konteksPerintah = window.dapatKonteksMavix(); } catch(e){}
+
     let pesanLengkap = "";
+    if (konteksPerintah) pesanLengkap += konteksPerintah + "\n\n";
     if (catatan) pesanLengkap += catatan + "\n\n";
     if (ringkasan) pesanLengkap += ringkasan + "\n\n";
     if (chatTerakhir) pesanLengkap += "CHAT TERAKHIR (4 chat penting, biar kamu boleh sambung kalau Bos bilang lanjutkan):\n" + chatTerakhir + "\n\n";
