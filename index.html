@@ -54,32 +54,29 @@ body.siang .btn svg { fill:#fff; }
 .btn { width:48px; height:48px; border:none; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
 .btn svg { width:26px; height:26px; margin-left:2px; }
 
-/* ===== TAMBAHAN 1 - MAVIX HIDUP: BADAN BERNAFAS + MULUT GERAK ===== */
+/* ===== MAVIX HIDUP - PENUH 1 SKRIN, BADAN BERNAFAS + MULUT GERAK ===== */
 #mavixBadan{
-  position:absolute; top:50%; left:50%;
-  transform:translate(-50%,-55%);
-  width:92%; max-width:440px; aspect-ratio:1/1;
+  position:absolute; top:0; left:0;
+  width:100%; height:100%;
   background-image:url('mavixintesix.jpg');
   background-size:cover; background-position:center;
-  border-radius:25px;
   animation: bernafas 4s ease-in-out infinite;
-  box-shadow:0 0 40px rgba(34,211,238,0.35);
 }
 @keyframes bernafas{
-  0%,100%{ transform:translate(-50%,-55%) scale(1); }
-  50%{ transform:translate(-50%,-55%) scale(1.03); }
+  0%,100%{ transform:scale(1.05); }
+  50%{ transform:scale(1.08); }
 }
-#mavixBadan.ngomong{ animation-duration:2.2s; box-shadow:0 0 60px rgba(34,211,238,0.7); }
-#mavixBadan.dengar{ animation-duration:3s; box-shadow:0 0 50px rgba(255,152,0,0.5); }
+#mavixBadan.ngomong{ animation-duration:2.2s; }
+#mavixBadan.dengar{ animation-duration:3s; }
 #mulutMavix{
-  position:absolute; top:53%; left:50%;
+  position:absolute; top:46%; left:50%;
   transform:translate(-50%,-50%);
-  display:flex; gap:5px; align-items:center; justify-content:center;
-  height:60px;
+  display:flex; gap:6px; align-items:center; justify-content:center;
+  height:60px; z-index:5;
 }
 #mulutMavix span{
-  width:6px; background:#22d3ee; border-radius:10px;
-  height:8px; box-shadow:0 0 10px #22d3ee;
+  width:7px; background:#22d3ee; border-radius:10px;
+  height:8px; box-shadow:0 0 12px #22d3ee;
   transition:height 0.12s;
 }
 #mulutMavix.diam span{ height:6px; background:#1e3a5a; box-shadow:none; }
@@ -105,14 +102,14 @@ body.siang .btn svg { fill:#fff; }
   <button class="btn" id="kirimBtn"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
 </div>
 
-<!-- ========== LAYAR 2 - SUARA - SUDAH ADA BADAN + MULUT ========== -->
+<!-- ========== LAYAR 2 - SUARA ========== -->
 <div id="layar-suara" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:999; background:#050818; overflow:hidden;">
-  <div style="position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.25);"></div>
+  <div style="position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.25); z-index:2;"></div>
   <button onclick="gantiLayar('chat')" style="position:absolute; top:15px; right:15px; width:40px; height:40px; border-radius:50%; border:none; background:white; color:black; font-size:20px; font-weight:bold; cursor:pointer; z-index:10;">✕</button>
 
-  <!-- INI BADANNYA - Gambar kamu yang sama, mavixintesix.jpg - Yang bernafas -->
+  <!-- BADAN - Gambar kamu penuh 1 skrin, mavixintesix.jpg -->
   <div id="mavixBadan">
-    <!-- INI MULUTNYA - Yang di tengah gambar kamu itu, yang warna biru -->
+    <!-- MULUT - Di tengah dada, atas gelombang biru -->
     <div id="mulutMavix" class="diam">
       <span></span><span></span><span></span><span></span><span></span>
       <span></span><span></span><span></span><span></span><span></span>
@@ -127,7 +124,6 @@ body.siang .btn svg { fill:#fff; }
   </div>
 </div>
 
-<!-- TAMBAH() PINDAH KE ATAS - Biar kuping & mulut kenal dia dari awal -->
 <script>
 function tambah(siapa, teks){
   const chat = document.getElementById('chatBox');
@@ -144,7 +140,6 @@ function tambah(siapa, teks){
 window.tambah = tambah;
 </script>
 
-<!-- URUTAN BETUL: ingatan, kecil, tengah, MULUT DULU, BARU TELINGA, depan -->
 <script src="otak-ingatan.js"></script>
 <script src="otak-kecil.js"></script>
 <script src="otak-tengah.js"></script>
@@ -178,7 +173,6 @@ setInterval(function(){ if(localStorage.getItem('modeBackgroundManualHari') !== 
 window.gantiMode = gantiMode;
 document.getElementById('input').addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); document.getElementById('kirimBtn').click(); } });
 
-// ===== GANTI LAYAR - INI YANG BOS MAU =====
 function gantiLayar(nama){
   let pentas = document.querySelector('.pentas');
   let header = document.querySelector('.header');
@@ -211,9 +205,7 @@ function gantiLayar(nama){
 window.gantiLayar = gantiLayar;
 gantiMode(window.modeMavix);
 
-// ===== TAMBAHAN 3 - MULUT GERAK + BADAN BERNAFAS, IKUT MIC =====
-// Dia cuma tengok window.MAVIX.sedangNgomong dan window.MAVIX.micNyala yang sudah ada di mulut.js / telinga.js
-// Jadi mulut.js dan telinga.js tidak perlu diubah lagi
+// ===== MULUT GERAK + BADAN BERNAFAS, IKUT MIC =====
 (function(){
   let mulut = null;
   let badan = null;
@@ -235,7 +227,6 @@ gantiMode(window.modeMavix);
 
     let bars = mulut.querySelectorAll('span');
     if(sedangNgomong){
-      // MAVIX NGOMONG - Mulut gerak besar, laju, warna biru
       mulut.classList.remove('diam');
       bars.forEach(function(b, i){
         let tengah = 1 - Math.abs(i - 6) / 7;
@@ -244,7 +235,6 @@ gantiMode(window.modeMavix);
         b.style.background = '#22d3ee';
       });
     } else if(bosNgomong){
-      // BOS NGOMONG, MAVIX DENGAR - Mulut gerak sikit saja, warna oren
       mulut.classList.remove('diam');
       bars.forEach(function(b, i){
         let tengah = 1 - Math.abs(i - 6) / 7;
@@ -252,7 +242,6 @@ gantiMode(window.modeMavix);
         b.style.background = '#ff9800';
       });
     } else {
-      // DUA-DUA DIAM - Mulut diam, jadi garisan lurus, tapi badan tetap bernafas
       mulut.classList.add('diam');
       bars.forEach(function(b){ b.style.height = '6px'; });
     }
