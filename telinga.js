@@ -1,8 +1,6 @@
-// telinga.js - VERSI TERAKHIR IKUT BOS
-// 1 = Bagi dia 2 detik, 2 detik saja, Bos diam 2 detik, baru kira suara Bos sudah habis
-// 2 = Jangan potong Mavix masa kirim ke otak, biar Mavix terus ngomong teks lama, otak mikir di belakang
-// 3 = TAK PAKAI, SUDAH BUANG
-// TAMPUNG = Simpan dulu, jangan kirim lagi, tunggu lengkap, baru kirim sekali gus
+// telinga.js - VERSI SUDAH DIBETULI, YANG TERAKHIR
+// Yang dibetuli: BUANG ambilTerakhir, HANTAR AYAT PENUH
+// Yang lain tak berubah: 2 detik tetap, tampung tetap, tak potong Mavix tetap
 
 window.MAVIX = window.MAVIX || {};
 window.MAVIX.micNyala = false;
@@ -22,14 +20,6 @@ function setStatus(teks){
   if(a) a.innerText = teks;
   const b = document.getElementById("statusSuara");
   if(b) b.innerText = teks;
-}
-
-function ambilTerakhir(teks){
-  if(!teks) return "";
-  let pot = teks.split(/[,.\n]| eh | terus | lalu /);
-  let akhir = pot[pot.length - 1].trim();
-  if(akhir === "" && pot.length > 1) akhir = pot[pot.length - 2].trim();
-  return akhir || teks.trim();
 }
 
 function iniSuaraMavixSendiri(teksBos, teksMavix){
@@ -71,7 +61,6 @@ function buatTelinga(){
       else hasilSementara += hasil;
     }
 
-    // Bos masih ngomong sikit-sikit, reset timer, jangan proses dulu
     if(hasilSementara && !hasilFinal){
       if(window.MAVIX.timerJawab) clearTimeout(window.MAVIX.timerJawab);
       setStatus("Dengar: " + hasilSementara + "... (Bos masih ngomong, tunggu habis dulu)");
@@ -88,9 +77,6 @@ function buatTelinga(){
       }
 
       // === TAMPUNG = SIMPAN DULU, JANGAN KIRIM LAGI ===
-      // Bos ngomong "Saya" -> tampung jadi "Saya"
-      // Bos sambung "mau tanya" -> tampung jadi "Saya mau tanya"
-      // Bos sambung "harga" -> tampung jadi "Saya mau tanya harga" lengkap
       if(iniTopikBaru(teks) || window.MAVIX.antrianTerakhir === ""){
         window.MAVIX.antrianTerakhir = teks;
       } else {
@@ -103,8 +89,6 @@ function buatTelinga(){
       if(window.MAVIX.timerJawab) clearTimeout(window.MAVIX.timerJawab);
 
       // === NOMBOR 1: TUNGGU BOS DIAM 2 DETIK, 2 DETIK ===
-      // Bos diam 2 detik, baru kira suara Bos sudah habis betul-betul, langsung proses
-      // Tanpa nunggu Mavix habiskan teks bacaannya
       window.MAVIX.timerJawab = setTimeout(function(){
         if(window.MAVIX.antrianTerakhir !== ""){
           const yangBosCakap = window.MAVIX.antrianTerakhir;
@@ -112,12 +96,7 @@ function buatTelinga(){
           window.MAVIX.tampungPesan = "";
           window.MAVIX.adaTampung = false;
           window.MAVIX.waktuBosMulaiNgomong = 0;
-
           setStatus("Suara Bos sudah habis, Bos diam 2 detik, sudah ngerti, langsung proses...");
-
-          // === NOMBOR 2: Jangan potong Mavix di sini ===
-          // Biar Mavix terus ngomong teks lama, otak mikir di belakang
-          // Nanti bila jawaban sudah dapat, bicara() akan potong teks lama
           kirimKeOtak(yangBosCakap);
         }
       }, WAKTU_SUARA_BOS_HABIS);
@@ -170,12 +149,18 @@ function updateTombolMic(){
   if(btn){ btn.style.background = window.MAVIX.micNyala ? "#ff4444" : "#1e90ff"; }
 }
 
+// === INI YANG SUDAH DIBETULI, BOS ===
 function kirimKeOtak(teks){
-  const yangTerakhir = ambilTerakhir(teks);
-  setStatus("Mavix mikir: " + yangTerakhir + " (Mavix terus ngomong teks lama, jangan diam)");
-  if(typeof tambah === "function") tambah('user', yangTerakhir);
-  if(typeof kirimPesanSuara === "function"){ kirimPesanSuara(yangTerakhir); }
-  else if(typeof bicara === "function"){ bicara("Saya dengar Bos bilang: " + yangTerakhir); }
+  // DULU: const yangTerakhir = ambilTerakhir(teks); -> SALAH, DIA POTONG
+  // SEKARANG: HANTAR AYAT PENUH, JANGAN POTONG LAGI
+  // Biar Otak Kecil potong sendiri, biar Otak Tengah potong sendiri
+  // Biar Otak Ingatan simpan semua, nama + suka + tinggal, tak hilang
+  // Biar Otak Besar faham cerita penuh Bos
+  const yangBosCakapPenuh = teks.trim();
+  setStatus("Mavix mikir: " + yangBosCakapPenuh + " (Mavix terus ngomong teks lama, jangan diam)");
+  if(typeof tambah === "function") tambah('user', yangBosCakapPenuh);
+  if(typeof kirimPesanSuara === "function"){ kirimPesanSuara(yangBosCakapPenuh); }
+  else if(typeof bicara === "function"){ bicara("Saya dengar Bos bilang: " + yangBosCakapPenuh); }
 }
 
 window.tekanMic = tekanMic;
