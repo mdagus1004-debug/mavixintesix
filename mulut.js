@@ -1,125 +1,183 @@
-// MULUT MAVIX V2.4 - SUDAH DIPERBAIKI, TIDAK SPAM /suara LAGI
+// MULUT MAVIX V2.3 - VERSI LENGKAP
+// Tugas file ini:
+// 1. Bicara pakai suara dari server.js (EdgeTTS, suara perempuan Indonesia)
+// 2. Kalau server gagal, pakai suara dari HP Bos sebagai cadangan
+// 3. Kalau Bos bilang diam, berhenti langsung, tidak lanjut ngomong
+
 window.MAVIX = window.MAVIX || {};
 window.MAVIX.sedangNgomong = false;
+
 let audioMavix = null;
 let urlAudioLama = null;
 let bicaraKe = 0;
-let antrianKalimat = [];
-let sedangMainAntrian = false;
 
+// --- 1. BERSIHKAN AUDIO LAMA ---
+// Supaya suara lama tidak numpuk dengan suara baru
 function bersihkanAudioLama(){
-  if(urlAudioLama){ try{ URL.revokeObjectURL(urlAudioLama); }catch(e){} urlAudioLama = null; }
-  if(audioMavix){ try{ audioMavix.pause(); audioMavix.src = ""; audioMavix.onended = null; audioMavix.onerror = null; }catch(e){} }
+  if(urlAudioLama){
+    try{ URL.revokeObjectURL(urlAudioLama); }catch(e){}
+    urlAudioLama = null;
+  }
+  if(audioMavix){
+    try{
+      audioMavix.pause();
+      audioMavix.src = "";
+      audioMavix.onended = null;
+      audioMavix.onerror = null;
+    }catch(e){}
+  }
 }
 
+// --- 2. HENTIKAN BICARA ---
+// Dipanggil kalau Bos bilang diam, atau kalau mau ganti kalimat baru
 function hentikanBicara(){
   bicaraKe++;
-  antrianKalimat = [];
-  sedangMainAntrian = false;
   try{ window.speechSynthesis.cancel(); }catch(e){}
   bersihkanAudioLama();
   window.MAVIX.sedangNgomong = false;
   if(window.MAVIX.manajer) window.MAVIX.manajer.selesaiNgomong();
+  // Kasih tahu suara.html, supaya gelombang mulut berhenti
   document.dispatchEvent(new CustomEvent('mavix-selesai-ngomong'));
 }
-function stopMulut(){ hentikanBicara(); }
 
-// Potong jawaban panjang jadi kalimat pendek, supaya server tidak berat
-function potongKalimat(teks){
-  const potong = teks.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [teks];
-  const hasil = [];
-  potong.forEach(k => {
-    let s = k.trim();
-    while(s.length > 350){
-      hasil.push(s.slice(0, 350));
-      s = s.slice(350);
-    }
-    if(s) hasil.push(s);
-  });
-  return hasil.slice(0, 12); // Max 12 kalimat, supaya tidak spam
+function stopMulut(){
+  hentikanBicara();
 }
 
+// --- 3. BICARA - FUNGSI UTAMA ---
 function bicara(teks){
   if(!teks) return;
   const teksBersih = teks.toString().trim();
   if(!teksBersih) return;
+
+  // Hentikan suara lama dulu, baru mulai yang baru
   hentikanBicara();
+
   if(window.MAVIX.manajer) window.MAVIX.manajer.mulaiNgomong();
   window.MAVIX.sedangNgomong = true;
+
+  // Kasih tahu suara.html, supaya gelombang mulut jalan
   document.dispatchEvent(new CustomEvent('mavix-mulai-ngomong'));
-  antrianKalimat = potongKalimat(teksBersih);
-  sedangMainAntrian = true;
-  mainKalimatBerikutnya(bicaraKe);
+
+  const idBicaraIni = bicaraKe;
+  cobaEdgeTTS(teksBersih, idBicaraIni);
 }
 
-async function mainKalimatBerikutnya(idBicaraIni){
-  if(idBicaraIni !== bicaraKe) return;
-  if(antrianKalimat.length === 0){
-    sedangMainAntrian = false;
-    window.MAVIX.sedangNgomong = false;
-    if(window.MAVIX.manajer) window.MAVIX.manajer.selesaiNgomong();
-    document.dispatchEvent(new CustomEvent('mavix-selesai-ngomong'));
-    return;
-  }
-  const kalimat = antrianKalimat.shift();
-  const ok = await cobaSatuKalimat(kalimat, idBicaraIni);
-  if(!ok && idBicaraIni === bicaraKe){
-    // Kalau server gagal, pakai suara HP untuk sisa kalimat, 1 kali saja
-    pakaiSuaraHPUntukSisa(kalimat, idBicaraIni);
-    return;
-  }
-  if(idBicaraIni === bicaraKe) mainKalimatBerikutnya(idBicaraIni);
-}
+// --- 4. COBA SUARA DARI SERVER (EDGETTS) ---
+async function cobaEdgeTTS(teks, idBicaraIni){
+  let sudahFallback = false;
 
-async function cobaSatuKalimat(kalimat, idBicaraIni){
+  // Kalau server lama jawab lebih dari 4 detik, pakai suara HP saja
+  // Supaya Bos tidak menunggu lama
+  const timerFallback = setTimeout(() => {
+    if(!sudahFallback && idBicaraIni === bicaraKe){
+      sudahFallback = true;
+      pakaiSuaraHP(teks, idBicaraIni);
+    }
+  }, 4000);
+
   try{
-    const r = await fetch('/suara?teks=' + encodeURIComponent(kalimat));
-    if(idBicaraIni !== bicaraKe) return true;
-    if(!r.ok) return false;
+    const r = await fetch('/suara?teks=' + encodeURIComponent(teks.slice(0, 800)));
+
+    // Kalau Bos sudah bilang diam / sudah ganti kalimat, berhenti
+    if(idBicaraIni !== bicaraKe){ clearTimeout(timerFallback); return; }
+
+    // Kalau server error, pakai suara HP
+    if(!r.ok){
+      clearTimeout(timerFallback);
+      if(!sudahFallback){ sudahFallback = true; pakaiSuaraHP(teks, idBicaraIni); }
+      return;
+    }
+
     const blob = await r.blob();
-    if(!blob || blob.size < 500) return false;
+    if(idBicaraIni !== bicaraKe){ clearTimeout(timerFallback); return; }
+
+    // Kalau file suara kosong / terlalu kecil, pakai suara HP
+    if(!blob || blob.size < 100){
+      clearTimeout(timerFallback);
+      if(!sudahFallback){ sudahFallback = true; pakaiSuaraHP(teks, idBicaraIni); }
+      return;
+    }
+
+    clearTimeout(timerFallback);
+    sudahFallback = true;
     bersihkanAudioLama();
     urlAudioLama = URL.createObjectURL(blob);
+
     if(!audioMavix){
       audioMavix = document.createElement('audio');
       audioMavix.id = 'audioMavix';
       audioMavix.style.display = 'none';
+      audioMavix.preload = 'auto';
       document.body.appendChild(audioMavix);
     }
+
     audioMavix.src = urlAudioLama;
-    await new Promise((selesai) => {
-      audioMavix.onended = () => { bersihkanAudioLama(); selesai(); };
-      audioMavix.onerror = () => { bersihkanAudioLama(); selesai(); };
-      audioMavix.play().catch(() => selesai());
-      // Kalau 8 detik tidak selesai, paksa lanjut ke kalimat berikut
-      setTimeout(() => { try{ audioMavix.pause(); }catch(e){} selesai(); }, 8000);
-    });
-    return true;
-  }catch(e){ return false; }
+
+    audioMavix.onended = () => {
+      bersihkanAudioLama();
+      window.MAVIX.sedangNgomong = false;
+      if(window.MAVIX.manajer) window.MAVIX.manajer.selesaiNgomong();
+      document.dispatchEvent(new CustomEvent('mavix-selesai-ngomong'));
+    };
+
+    audioMavix.onerror = () => {
+      bersihkanAudioLama();
+      pakaiSuaraHP(teks, idBicaraIni);
+    };
+
+    try{ await audioMavix.play(); }catch(e){ pakaiSuaraHP(teks, idBicaraIni); }
+
+  }catch(e){
+    clearTimeout(timerFallback);
+    if(!sudahFallback && idBicaraIni === bicaraKe){
+      sudahFallback = true;
+      pakaiSuaraHP(teks, idBicaraIni);
+    }
+  }
 }
 
-// Suara HP untuk sisa kalimat, supaya tidak diam
-function pakaiSuaraHPUntukSisa(kalimatPertama, idBicaraIni){
-  if(idBicaraIni !== bicaraKe) return;
-  const sisa = [kalimatPertama, ...antrianKalimat].join(' ');
-  antrianKalimat = [];
+// --- 5. CADANGAN: PAKAI SUARA HP BOS ---
+// Kalau server gagal, pakai ini, supaya Mavix tetap bersuara
+function pakaiSuaraHP(teks, idBicaraIni){
+  if(idBicaraIni !== undefined && idBicaraIni !== bicaraKe) return;
   try{
     if(!window.speechSynthesis){ hentikanBicara(); return; }
     window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(sisa);
-    u.lang = 'id-ID'; u.rate = 1; u.pitch = 1; u.volume = 1;
+    const u = new SpeechSynthesisUtterance(teks);
+    u.lang = 'id-ID';
+    u.rate = 1;
+    u.pitch = 1;
+    u.volume = 1;
     try{
-      const list = window.speechSynthesis.getVoices() || [];
-      const indo = list.find(v => (v.lang || "").toLowerCase().startsWith('id'));
-      if(indo) u.voice = indo;
+      const suaraList = window.speechSynthesis.getVoices() || [];
+      // Cari suara Indonesia dulu, kalau ada
+      const suaraIndo = suaraList.find(v => (v.lang || "").toLowerCase().startsWith('id'));
+      if(suaraIndo) u.voice = suaraIndo;
     }catch(e){}
-    u.onend = () => { if(idBicaraIni !== bicaraKe) return; sedangMainAntrian = false; window.MAVIX.sedangNgomong = false; if(window.MAVIX.manajer) window.MAVIX.manajer.selesaiNgomong(); document.dispatchEvent(new CustomEvent('mavix-selesai-ngomong')); };
-    u.onerror = () => { if(idBicaraIni !== bicaraKe) return; sedangMainAntrian = false; window.MAVIX.sedangNgomong = false; if(window.MAVIX.manajer) window.MAVIX.manajer.selesaiNgomong(); document.dispatchEvent(new CustomEvent('mavix-selesai-ngomong')); };
+    u.onend = () => {
+      if(idBicaraIni !== undefined && idBicaraIni !== bicaraKe) return;
+      window.MAVIX.sedangNgomong = false;
+      if(window.MAVIX.manajer) window.MAVIX.manajer.selesaiNgomong();
+      document.dispatchEvent(new CustomEvent('mavix-selesai-ngomong'));
+    };
+    u.onerror = () => {
+      if(idBicaraIni !== undefined && idBicaraIni !== bicaraKe) return;
+      window.MAVIX.sedangNgomong = false;
+      if(window.MAVIX.manajer) window.MAVIX.manajer.selesaiNgomong();
+      document.dispatchEvent(new CustomEvent('mavix-selesai-ngomong'));
+    };
     window.speechSynthesis.speak(u);
-  }catch(e){ hentikanBicara(); }
+  }catch(e){
+    hentikanBicara();
+  }
 }
 
-if(window.speechSynthesis){ try{ window.speechSynthesis.onvoiceschanged = () => {}; }catch(e){} }
+// Siapkan daftar suara HP
+if(window.speechSynthesis){
+  try{ window.speechSynthesis.onvoiceschanged = () => {}; }catch(e){}
+}
+
 window.bicara = bicara;
 window.hentikanBicara = hentikanBicara;
 window.stopMulut = stopMulut;
