@@ -1,4 +1,4 @@
-// telinga.js - VERSI SUDAH DIBETULI, JANGAN DENGAR SUARA SENDIRI LAGI
+// telinga.js - VERSI SUDAH DIBETULI, JANGAN DENGAR SUARA SENDIRI LAGI + JEDA PINTAR
 window.MAVIX = window.MAVIX || {};
 window.MAVIX.micNyala = false;
 window.MAVIX.recognition = null;
@@ -25,14 +25,13 @@ function iniSuaraMavixSendiri(teksBos){
   if(!teksBos) return false;
   let a = teksBos.toLowerCase().trim();
 
-  // Ambil ayat Mavix yang baru saja dia cakap
+  // Ambil ayat Mavix yang baru saja dia cakap - SEKARANG INI SATU KALIMAT SAJA, sebab mulut sudah pecah jadi kalimat
   let b1 = (window.MAVIX.kalimatSekarang || "").toLowerCase().trim();
   let b2 = (window.MAVIX.teksMavixTerakhir || "").toLowerCase().trim();
   let b = b2 || b1;
   if(!b) return false;
 
   // 1. Kalau ayat Bos SAMA BETUL dengan ayat Mavix, buang terus
-  // Contoh: Bos dengar "halo bos ada yang bisa saya bantu" = ayat Mavix tadi, buang
   if(a === b) return true;
   if(b.includes(a) && a.length > 3) return true;
   if(a.includes(b) && b.length > 3) return true;
@@ -46,7 +45,8 @@ function iniSuaraMavixSendiri(teksBos){
   if(kataBos.length > 0 && (sama / kataBos.length) > 0.7) return true;
 
   // 3. Kalau Bos dengar ini dalam masa 3 detik lepas Mavix ngomong, dan ayat dia hampir sama, buang
-  // Ini untuk cover kalau sedangNgomong sudah jadi false, tapi suara Mavix masih masuk ke mic
+  // Ini yang paling penting untuk JEDA PINTAR. Waktu jeda 600ms itu, sedangNgomong sudah jadi false,
+  // tapi ekor suara Mavix masih ada. Jadi kita buang pakai masa ini.
   let selisih = Date.now() - (window.MAVIX.waktuMavixNgomongTerakhir || 0);
   if(selisih < 3000 && sama > 0) return true;
 
@@ -69,6 +69,14 @@ function buatTelinga(){
   rec.maxAlternatives = 1;
 
   rec.onresult = function(event){
+    // === TAMBAHAN 1 - KUNCI 1 UNTUK JEDA PINTAR ===
+    // Kalau Mavix lagi ngomong satu kalimat, buang semua. Jangan tampilin "Dengar: ..." lagi.
+    // Dia baru boleh dengar waktu Mavix diam, atau waktu jeda 600ms di akhir kalimat.
+    // Waktu jeda itu, sedangNgomong sudah jadi false, jadi yang ini akan lolos, dia akan dengar.
+    if(window.MAVIX.sedangNgomong){
+      return; // <-- HAPUS DI SINI, tengah kalimat, buang terus
+    }
+
     let hasilFinal = "";
     let hasilSementara = "";
     for(let i = event.resultIndex; i < event.results.length; i++){
@@ -78,6 +86,11 @@ function buatTelinga(){
     }
 
     if(hasilSementara && !hasilFinal){
+      // === TAMBAHAN 2 - HAPUS JUGA DI SEMENTARA ===
+      // Kalau yang sementara ini pun sama dengan suara Mavix, buang juga, jangan tampilin tulisan bendera panjang itu
+      if(iniSuaraMavixSendiri(hasilSementara)){
+        return; // <-- HAPUS DI SINI, jangan tampilin
+      }
       if(window.MAVIX.timerJawab) clearTimeout(window.MAVIX.timerJawab);
       setStatus("Dengar: " + hasilSementara + "... (Bos masih ngomong, tunggu habis dulu)");
       return;
@@ -89,9 +102,10 @@ function buatTelinga(){
 
       // === INI YANG BARU, BOS: JANGAN HARAP sedangNgomong SAJA ===
       // Kalau ayat ini sama dengan ayat Mavix tadi, buang terus, tak kira sedangNgomong true ke false
+      // Ini yang jaga JEDA PINTAR. Waktu jeda 600ms, telinga buka, kalau yang masuk itu suara Mavix sendiri, buang di sini.
       if(iniSuaraMavixSendiri(teks)){
         setStatus("Itu suara Mavix sendiri, saya buang saja, bukan suara Bos");
-        return;
+        return; // <-- HAPUS DI SINI, akhir kalimat, buang
       }
 
       if(iniTopikBaru(teks) || window.MAVIX.antrianTerakhir === ""){
