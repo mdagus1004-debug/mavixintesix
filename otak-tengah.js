@@ -1,7 +1,6 @@
-// OTAK TENGAH - WIKIPEDIA - VERSI PERBAIKAN
-async function otakTengah(pesan) {
+// OTAK TENGAH - WIKIPEDIA - BACA PENDEK, NGOBROL PANJANG
+async function otakTengah(pesan, mode) {
   const tRendah = pesan.toLowerCase().trim();
-  // PERBAIKAN: Kalau ini pertanyaan ingatan, jangan ke Wikipedia
   if (tRendah.includes("nama saya") || tRendah.includes("saya suka") || tRendah.includes("hobi saya") || tRendah.includes("makanan saya") || tRendah.includes("minuman saya") || tRendah.includes("saya tinggal") || tRendah.includes("kerja saya") || tRendah.includes("perasaan saya")) return null;
   if (tRendah === "lanjutkan" || tRendah === "terus" || tRendah === "teruskan") return null;
 
@@ -17,9 +16,11 @@ async function otakTengah(pesan) {
       const kalimat = data.extract.split('.');
       const pendek = kalimat.slice(0, 2).join('.') + '.';
       const panjang = data.extract;
-      if (panjang.length < 300) return "Menurut Wikipedia Bos:\n\n" + panjang;
-      const idUnik = "wiki_" + Date.now();
-      return `Menurut Wikipedia Bos:\n\n${pendek}\n\n<button onclick="bukaSelengkapnya('${idUnik}', this)" style="background:#25D366;color:white;border:none;padding:6px 12px;border-radius:15px;cursor:pointer;">Baca Selengkapnya ▼</button><div id="isi_${idUnik}" style="display:none;margin-top:10px;">${panjang}<br><br><small>Sumber: Wikipedia</small></div>`;
+
+      // BACA = pendek saja
+      if (mode === "BACA") return "Menurut Wikipedia Bos:\n\n" + pendek;
+      // NGOBROL = panjang terus
+      return "Menurut Wikipedia Bos:\n\n" + panjang;
     }
   } catch(e) {}
   return null;
