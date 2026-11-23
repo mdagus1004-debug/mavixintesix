@@ -1,101 +1,85 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>MAVIX - Mode Suara</title>
-<style>
-  *{ box-sizing:border-box; margin:0; padding:0; }
-  body{ font-family: system-ui, -apple-system, sans-serif; background:#0f172a; color:#fff; height:100dvh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:16px; text-align:center; }
-  .judul{ font-size:28px; letter-spacing:4px; font-weight:800; }
-  .kecil{ font-size:13px; color:#94a3b8; margin-top:4px; }
-  #gelombang{ width:150px; height:150px; border-radius:50%; background:#1e293b; margin:28px 0; display:flex; align-items:center; justify-content:center; font-size:60px; transition:transform .2s; border:3px solid #334155; }
-  #gelombang.ngomong{ transform:scale(1.12); background:#2563eb; border-color:#60a5fa; }
-  #gelombang.dengar{ background:#dc2626; border-color:#f87171; }
-  #statusSuara{ font-size:15px; color:#e2e8f0; min-height:44px; line-height:1.5; padding:0 10px; }
-  #teksTerakhir{ font-size:13px; color:#94a3b8; margin-top:10px; min-height:20px; }
-  .tombol-besar{ width:100%; max-width:320px; :16px; border-radius:16px; border:none; font-size:17px; font-weight:700; margin-top:18px; }
-  #micBtn{ background:#2563eb; color:#fff; }
-  #micBtn.aktif{ background:#dc2626; }
-  #stopBtn{ background:#334155; color:#fff; }
-  .mode{ display:flex; gap:8px; width:100%; max-width:320px; margin-top:16px; }
-  .mode button{ flex:1; padding:11px; border-radius:12px; :1px solid #334155; background:#1e293b; color:#cbd5e1; }
-  .mode button.aktif{ background:#2563eb; color:#fff; border-color:#2563eb; }
-  .pindah{ margin-top:18px; color:#60a5fa; font-size:13px; text-decoration:none; }
-  #input{ display:none; }
-  #chat{ display:none; }
-  #status{ display:none; }
-  #kirimBtn{ display:none; }
-</style>
-</head>
-<body>
-<div class="judul">MAVIX</div>
-<div class="kecil">Mode Suara Penuh</div>
-
-<div id="gelombang">🎤</div>
-<div id="statusSuara">Siap Bos. Tekan tombol bawah, lalu bicara.</div>
-<div id="teksTerakhir"></div>
-
-<button id="micBtn" class="tombol-besar">🎤 TEKAN UNTUK BICARA</button>
-<button id="stopBtn" class="tombol-besar" onclick="berhentiSemua()">⏹ BERHENTI</button>
-
-<div class="mode">
-  <button id="modeNgobrol" class="aktif" onclick="gantiMode('NGOBROL')">NGOBROL</button>
-  <button id="modeBaca" onclick="gantiMode('BACA')">BACA</button>
-</div>
-
-<a class="pindah" href="index.html">← Kembali ke Mode Ketik</a>
-<input id="input" type="text">
-<div id="chat"></div>
-<div id="status"></div>
-<button id="kirimBtn"></button>
-
-<script src="otak-ingatan.js"></script>
-<script src="otak-kecil.js"></script>
-<script src="otak-tengah.js"></script>
-<script src="mulut.js"></script>
-<script src="telinga.js"></script>
-<script src="otak-depan.js"></script>
-<script>
-  window.modeMavix = "NGOBROL";
-  function gantiMode(mode){
-    window.modeMavix = mode;
-    document.getElementById('modeNgobrol').classList.toggle('aktif', mode === 'NGOBROL');
-    document.getElementById('modeBaca').classList.toggle('aktif', mode === 'BACA');
+// OTAK INGATAN MAVIX V3 - VERSI BETUL, TIDAK SIMPAN PERTANYAAN
+function bersihkanTeksIngatan(teks){
+  if(!teks) return "";
+  let t = teks.toLowerCase().trim();
+  t = t.replace(/\b(banget|sangat|sekali|dong|ya|lho|kok|deh)\b/g, "");
+  t = t.replace(/\b(sebagai|jadi|adalah|itu)\b/g, "");
+  t = t.replace(/\s+/g, " ").trim();
+  return t;
+}
+function simpanObrolan(siapa, teks){
+  try{
+    let arsip = JSON.parse(localStorage.getItem("mavix_arsip") || "[]");
+    arsip.push({ siapa, teks, waktu: Date.now() });
+    if(arsip.length > 50) arsip = arsip.slice(-50);
+    localStorage.setItem("mavix_arsip", JSON.stringify(arsip));
+  }catch(e){}
+}
+function ambilArsip(){ try{ return JSON.parse(localStorage.getItem("mavix_arsip") || "[]"); }catch(e){ return []; } }
+function catat(laci, isi){
+  try{
+    let lemari = JSON.parse(localStorage.getItem("mavix_lemari") || "{}");
+    lemari[laci] = isi;
+    localStorage.setItem("mavix_lemari", JSON.stringify(lemari));
+  }catch(e){}
+}
+function ambilCatatan(laci){
+  try{ let lemari = JSON.parse(localStorage.getItem("mavix_lemari") || "{}"); return lemari[laci] || null; }catch(e){ return null; }
+}
+function catatOtomatis(teks){
+  if(!teks) return;
+  const t = teks.toLowerCase();
+  // JANGAN SIMPAN PERTANYAAN - ini yang dulu bikin ingat "mana" dan "apa"
+  if(t.includes("?")) return;
+  if(t.includes("siapa nama saya") || t.includes("nama saya siapa") || t.includes("saya suka apa") || t.includes("saya di mana") || t.includes("saya tinggal di mana") || t.includes("kerja saya apa") || t.includes("saya kerja apa")) return;
+  let m;
+  m = t.match(/nama saya (?:adalah )?([^,?.]+)/); if(m) catat("nama", bersihkanTeksIngatan(m[1]));
+  m = t.match(/saya suka ([^,?.]+)/); if(m){
+    // Jangan simpan kalau yang disuka itu "apa"
+    const v = bersihkanTeksIngatan(m[1]);
+    if(v && v !== "apa" && v !== "mana") catat("suka", v);
   }
-  // Untuk halaman suara, tambah hanya tampilkan teks terakhir, bukan list chat
-  function tambah(siapa, teks){
-    const el = document.getElementById('teksTerakhir');
-    if(el) el.innerText = (siapa === 'user' ? 'Bos: ' : 'Mavix: ') + teks;
-    // Simpan juga ke status, supaya Bos lihat
-    const s = document.getElementById('statusSuara');
-    if(s && siapa === 'mavix') s.innerText = teks;
+  m = t.match(/hobi saya (?:adalah )?([^,?.]+)/); if(m) catat("hobi", bersihkanTeksIngatan(m[1]));
+  m = t.match(/makanan favorit saya (?:adalah )?([^,?.]+)|makanan saya (?:adalah )?([^,?.]+)|saya suka makan ([^,?.]+)/); if(m) catat("makanan", bersihkanTeksIngatan(m[1]||m[2]||m[3]));
+  m = t.match(/minuman favorit saya (?:adalah )?([^,?.]+)|minuman saya (?:adalah )?([^,?.]+)|saya suka minum ([^,?.]+)/); if(m) catat("minuman", bersihkanTeksIngatan(m[1]||m[2]||m[3]));
+  m = t.match(/saya tinggal di ([^,?.]+)|rumah saya di ([^,?.]+)/); if(m) catat("kota", bersihkanTeksIngatan(m[1]||m[2]));
+  m = t.match(/saya kerja (?:sebagai )?([^,?.]+)|pekerjaan saya (?:adalah )?([^,?.]+)/); if(m){
+    const v = bersihkanTeksIngatan(m[1]||m[2]);
+    if(v && v !== "apa") catat("pekerjaan", v);
   }
-  window.tambah = tambah;
-  function berhentiSemua(){
-    if(window.stopMulut) window.stopMulut();
-    if(window.hentikanDengar) window.hentikanDengar(true);
-    document.getElementById('statusSuara').innerText = "Baik Bos, saya diam.";
-    document.getElementById('gelombang').classList.remove('ngomong');
-    document.getElementById('gelombang').classList.remove('dengar');
-  }
-  // Gelombang mulut: nyala waktu Mavix ngomong
-  document.addEventListener('mavix-mulai-ngomong', () => {
-    document.getElementById('gelombang').classList.add('ngomong');
-    document.getElementById('gelombang').innerText = '🔊';
-  });
-  document.addEventListener('mavix-selesai-ngomong', () => {
-    document.getElementById('gelombang').classList.remove('ngomong');
-    document.getElementById('gelombang').innerText = '🎤';
-  });
-  // Ubah tombol mic, supaya jelas sedang dengar atau tidak
-  const micAsli = document.getElementById('micBtn');
-  // Mic asli di telinga.js pakai id micBtn, jadi kita pakai tombol yang sama
-  window.addEventListener('load', () => {
-    setTimeout(() => {
-      document.getElementById('statusSuara').innerText = "Halo Bos, saya MAVIX. Tekan tombol biru, lalu bicara.";
-    }, 300);
-  });
-</script>
-</body>
-</html>
+  m = t.match(/saya (sedih|senang|marah|lelah|capek|lapar|ngantuk|kesal|bahagia)/); if(m) catat("perasaan", m[1]);
+}
+function buatCatatanUntukOtakBesar(){
+  const nama = ambilCatatan("nama"), suka = ambilCatatan("suka"), hobi = ambilCatatan("hobi"), makanan = ambilCatatan("makanan"), minuman = ambilCatatan("minuman"), kota = ambilCatatan("kota"), pekerjaan = ambilCatatan("pekerjaan"), perasaan = ambilCatatan("perasaan");
+  let s = "CATATAN TENTANG BOS:\n";
+  if(nama) s += "- Nama: " + nama + "\n";
+  if(suka) s += "- Suka: " + suka + "\n";
+  if(hobi) s += "- Hobi: " + hobi + "\n";
+  if(makanan) s += "- Makanan favorit: " + makanan + "\n";
+  if(minuman) s += "- Minuman favorit: " + minuman + "\n";
+  if(kota) s += "- Tinggal di: " + kota + "\n";
+  if(pekerjaan) s += "- Pekerjaan: " + pekerjaan + "\n";
+  if(perasaan) s += "- Perasaan terakhir: " + perasaan + "\n";
+  if(s === "CATATAN TENTANG BOS:\n") return "";
+  return s;
+}
+function ambilChatTerakhir(jumlah){
+  const arsip = ambilArsip().slice(-(jumlah || 4));
+  return arsip.map(a => (a.siapa === "user" ? "Bos: " : "Mavix: ") + a.teks).join("\n");
+}
+function buatRingkasanArsip(){
+  const arsip = ambilArsip();
+  if(arsip.length === 0) return "";
+  const terakhir = arsip.slice(-10).map(a => (a.siapa === "user" ? "Bos: " : "Mavix: ") + a.teks).join("\n");
+  return "RINGKASAN ARSIP TERAKHIR:\n" + terakhir;
+}
+window.simpanChat = simpanObrolan;
+window.catat = catat;
+window.ambilCatatan = ambilCatatan;
+window.ambilIngatan = ambilCatatan;
+window.ingatOtomatis = catatOtomatis;
+window.catatOtomatis = catatOtomatis;
+window.buatCatatanUntukOtakBesar = buatCatatanUntukOtakBesar;
+window.ambilChatTerakhir = ambilChatTerakhir;
+window.buatRingkasanArsip = buatRingkasanArsip;
+window.bersihkanTeksIngatan = bersihkanTeksIngatan;
