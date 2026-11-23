@@ -1,122 +1,96 @@
-// telinga.js - FINAL
-window.MAVIX = window.MAVIX || {};
-window.MAVIX.micNyala = false;
-window.MAVIX.recognition = null;
-window.MAVIX.sudahSapa = false;
+// telinga.js - FINAL: Tekan badan V Mavix = Mic
+
 let tombolMic = null;
-let lagiProsesTekan = false;
+let sedangMendengar = false;
+let sedangNgomong = false;
+let recognition = null;
 
-function setStatus(teks) {
-  const el = document.getElementById('status');
-  if (el) el.textContent = teks;
-}
-
-function matikanMicOtomatis() {
-  window.MAVIX.micNyala = false;
-  if (window.MAVIX.recognition) {
-    try { window.MAVIX.recognition.stop(); } catch(e) {}
-  }
-  if (tombolMic) tombolMic.style.background = '#1e90ff';
-  setStatus('Tekan mic untuk ngobrol lagi');
-}
-
-function buatRecognition() {
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) { setStatus('Browser tidak dukung mic'); return null; }
-  const rec = new SR();
-  rec.lang = 'id-ID';
-  rec.continuous = false;
-  rec.interimResults = true;
-  rec.onresult = (event) => {
-    let teksFinal = '';
-    let teksSementara = '';
-    for (let i = event.resultIndex; i < event.results.length; i++) {
-      if (event.results[i].isFinal) teksFinal += event.results[i][0].transcript;
-      else teksSementara += event.results[i][0].transcript;
-    }
-    if (teksSementara.trim()) setStatus('Dengar: ' + teksSementara.trim());
-    if (teksFinal.trim()) {
-      const kirim = teksFinal.trim();
-      setStatus('Proses: ' + kirim);
-      try { rec.stop(); } catch(e) {}
-      if (typeof kirimPesanSuara === 'function') kirimPesanSuara(kirim);
-    }
-  };
-  rec.onend = () => {
-    if (window.MAVIX.micNyala && !window.MAVIX.sedangNgomong && !window.MAVIX.sudahKirim) {
-      try { rec.start(); } catch(e) {}
-    }
-  };
-  rec.onerror = (e) => {
-    if (e.error === 'not-allowed') {
-      setStatus('Mic ditolak, izinkan mic di browser Bos');
-      window.MAVIX.micNyala = false;
-    }
-  };
-  return rec;
-}
-
-function mulaiDengar() {
-  window.MAVIX.sudahKirim = false;
-  if (!window.MAVIX.recognition) window.MAVIX.recognition = buatRecognition();
-  try {
-    window.MAVIX.recognition.start();
-    setStatus('Lagi dengerin Bos...');
-  } catch(e) {}
-}
-
-function tekanMic() {
-  if (lagiProsesTekan) return;
-  lagiProsesTekan = true;
-  setTimeout(() => { lagiProsesTekan = false; }, 800);
-  if (!tombolMic) tombolMic = document.getElementById('tombolMic');
-
-  // Lagi ngomong, Bos potong / selah / stop - sekali klik
-  if (window.MAVIX.sedangNgomong) {
-    hentikanBicara();
-    window.MAVIX.micNyala = true;
-    window.MAVIX.sudahKirim = false;
-    if (tombolMic) tombolMic.style.background = '#ff4444';
-    bicara('Mavix mendengarkan...', () => {
-      mulaiDengar();
-    });
-    return;
-  }
-
-  // Lagi dengar, Bos tekan = MATI
-  if (window.MAVIX.micNyala) {
-    matikanMicOtomatis();
-    hentikanBicara();
-    return;
-  }
-
-  // Mic mati, Bos tekan = MULAI
-  window.MAVIX.micNyala = true;
-  window.MAVIX.sudahKirim = false;
-  if (tombolMic) tombolMic.style.background = '#ff4444';
-
-  if (!window.MAVIX.sudahSapa) {
-    window.MAVIX.sudahSapa = true;
-    bicara('Ya, Mavix di sini. Mau cerita apa?', () => {
-      mulaiDengar();
-    });
-  } else {
-    bicara('Mavix mendengarkan...', () => {
-      mulaiDengar();
-    });
-  }
-}
-
-window.tekanMic = tekanMic;
-window.MAVIX.tekanMic = tekanMic;
-window.MAVIX.matikanMicOtomatis = matikanMicOtomatis;
-
+// Pasang fungsi tekan ke badan V
 function pasangTombolMic() {
   tombolMic = document.getElementById('tombolMic');
+
+  // Tombol lama tetap ada tapi disembunyikan
   if (tombolMic && !tombolMic.dataset.sudahPasang) {
     tombolMic.dataset.sudahPasang = 'ya';
     tombolMic.addEventListener('click', tekanMic);
   }
+
+  // Ini yang baru - Tekan badan V = tekan mic
+  const badanMavix = document.getElementById('gambarMavix');
+  if (badanMavix && !badanMavix.dataset.sudahPasang) {
+    badanMavix.dataset.sudahPasang = 'ya';
+    badanMavix.addEventListener('click', tekanMic);
+  }
 }
-pasangTombolMic();
+
+// Bila badan V ditekan
+function tekanMic() {
+  // Kalau Mavix tengah ngomong, potong dia
+  if (sedangNgomong) {
+    potongNgomong();
+    return;
+  }
+
+  // Kalau dah tengah mendengar, jangan buat 2 kali
+  if (sedangMendengar) return;
+
+  mulaiDengar();
+}
+
+function mulaiDengar() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    alert('Browser ini tak support mic. Pakai Chrome ya Bos.');
+    return;
+  }
+
+  if (!recognition) {
+    recognition = new SpeechRecognition();
+    recognition.lang = 'id-ID';
+    recognition.interimResults = false;
+    recognition.continuous = false;
+
+    recognition.onresult = function(event) {
+      const teks = event.results[0][0].transcript;
+      sedangMendengar = false;
+      // Hantar ke otak
+      if (typeof kirimKeOtak === 'function') {
+        kirimKeOtak(teks);
+      }
+    };
+
+    recognition.onend = function() {
+      sedangMendengar = false;
+    };
+
+    recognition.onerror = function() {
+      sedangMendengar = false;
+    };
+  }
+
+  try {
+    sedangMendengar = true;
+    recognition.start();
+  } catch (e) {
+    sedangMendengar = false;
+  }
+}
+
+// Dipanggil dari otak-depan.js bila Mavix mula ngomong
+function setSedangNgomong(status) {
+  sedangNgomong = status;
+}
+
+// Potong suara Mavix bila badan V ditekan lagi
+function potongNgomong() {
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+  }
+  sedangNgomong = false;
+  sedangMendengar = false;
+  // Lepas potong, terus dengar balik
+  setTimeout(mulaiDengar, 200);
+}
+
+// Jalan bila page dibuka
 document.addEventListener('DOMContentLoaded', pasangTombolMic);
