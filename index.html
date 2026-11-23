@@ -5,22 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MAVIXINTESIX - HIDUP</title>
 <link rel="icon" type="image/png" href="favicon.png">
-
-<script>
-  window.addEventListener('load', function(){
-    setTimeout(function(){
-      let img = new Image();
-      img.src = 'mavixintesix.jpg';
-    }, 1000);
-  });
-</script>
-
 <style>
 * { margin:0; padding:0; box-sizing:border-box; font-family:sans-serif; }
 body { height:100vh; display:flex; flex-direction:column; overflow:hidden; }
 .pentas { position:fixed; top:0; left:0; width:100%; height:100%; z-index:-1; display:flex; align-items:center; justify-content:center; background-size:cover; background-position:center; overflow:hidden; }
-
-/* ===== MODE MALAM ===== */
 body.malam { background:#050818; color:white; }
 body.malam .pentas { background-image:url('background.jpg'); }
 body.malam .header { background:rgba(5,8,24,0.7); }
@@ -35,8 +23,6 @@ body.malam .input-row { background:rgba(5,8,24,0.8); }
 body.malam #input { background:#1a1a1a; color:white; border:none; }
 body.malam .btn { background:#22d3ee; }
 body.malam .btn svg { fill:#000; }
-
-/* ===== MODE SIANG ===== */
 body.siang { background:#F2F6FF; color:#111827; }
 body.siang .pentas { background-image:url('background-siang.jpg'); }
 body.siang .header { background:rgba(255,255,255,0.85); }
@@ -51,8 +37,6 @@ body.siang .input-row { background:rgba(255,255,255,0.9); }
 body.siang #input { background:#FFFFFF; color:#111827; border:1px solid #D1D5DB; }
 body.siang .btn { background:#0EA5E9; }
 body.siang .btn svg { fill:#fff; }
-
-/* ===== YANG SAMA - TIDAK DIUBAH ===== */
 .header { display:flex; align-items:center; gap:12px; padding:12px 15px; }
 .avatar { width:58px; height:58px; border-radius:50%; flex-shrink:0; border:3px solid; overflow:hidden; cursor:pointer; }
 .avatar img { width:100%; height:100%; object-fit:cover; }
@@ -73,7 +57,7 @@ body.siang .btn svg { fill:#fff; }
 </head>
 <body class="siang">
 
-<!-- ========== LAYAR 1 - ASLI BOS, TIDAK ADA YANG DIBUANG ========== -->
+<!-- ========== LAYAR 1 - CHAT ========== -->
 <div class="pentas"></div>
 <div class="header">
   <div class="avatar" id="avatarBtn"><img src="mavix.jpg?v=2"></div>
@@ -88,106 +72,66 @@ body.siang .btn svg { fill:#fff; }
 <div id="chatBox"></div>
 <div class="input-row">
   <input id="input" placeholder="Tulis untuk MAVIX...">
-  <button class="btn" id="kirimBtn">
-    <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
-  </button>
+  <button class="btn" id="kirimBtn"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
 </div>
 
-<!-- ========== LAYAR 2 - SUARA FULL SCREEN - SUDAH BERSIH ========== -->
-<!-- Sudah dibuang: 1. Tulisan MAVIX - MODE SUARA, 2. Gelombang putih di tengah -->
-<!-- Tombol keluar sudah pindah ke pojok kanan atas -->
-<div id="layar-suara" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:999; background-image:url('mavixintesix.jpg'); background-size:cover; background-position:center; background-repeat:no-repeat;">
+<!-- ========== LAYAR 2 - SUARA ========== -->
+<div id="layar-suara" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:999; background-image:url('mavixintesix.jpg'); background-size:cover; background-position:center;">
   <div style="position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.25);"></div>
-
-  <!-- TOMBOL KELUAR - POJOK KANAN ATAS PALING POJOK -->
   <button onclick="gantiLayar('chat')" style="position:absolute; top:15px; right:15px; width:40px; height:40px; border-radius:50%; border:none; background:white; color:black; font-size:20px; font-weight:bold; cursor:pointer; z-index:10;">✕</button>
-
   <div style="position:absolute; bottom:40px; left:0; width:100%; text-align:center;">
-    <button id="btnMic" onclick="mulaDengar()" style="width:80px; height:80px; border-radius:50%; border:3px solid white; background:#1e90ff; color:white; font-size:35px; cursor:pointer;">🎤</button>
-    <div id="statusSuara" style="color:white; margin-top:10px; text-shadow:0 1px 5px black;">Tekan mic, lalu bicara</div>
+    <button id="btnMic" onclick="tekanMic()" style="width:80px; height:80px; border-radius:50%; border:3px solid white; background:#1e90ff; color:white; font-size:35px; cursor:pointer;">🎤</button>
+    <div id="status" style="color:white; margin-top:10px; text-shadow:0 1px 5px black;">Tekan mic, lalu bicara</div>
+    <div id="statusSuara" style="display:none;"></div>
   </div>
 </div>
 
+<!-- URUTAN BETUL: ingatan, kecil, tengah, telinga, mulut, depan -->
 <script src="otak-ingatan.js"></script>
 <script src="otak-kecil.js"></script>
 <script src="otak-tengah.js"></script>
+<script src="telinga.js"></script>
 <script src="mulut.js"></script>
 <script src="otak-depan.js"></script>
-<script src="telinga.js"></script>
 <script>
-  
 function tambah(siapa, teks){
   const chat = document.getElementById('chatBox');
+  if(!chat) return;
   const div = document.createElement('div');
   div.className = 'msg ' + siapa;
-  if (teks.includes('<button') || teks.includes('<div id="isi_')) {
-    div.innerHTML = teks.replace(/\n/g, '<br>');
-  } else {
-    div.innerText = teks;
-  }
+  if (teks.includes('<button') || teks.includes('<div id="isi_')) { div.innerHTML = teks.replace(/\n/g, '<br>'); }
+  else { div.innerText = teks; }
   chat.appendChild(div);
   chat.scrollTop = chat.scrollHeight;
 }
-function mavixNgomong(lagiNgomong){
-  const foto = document.querySelector('.mavix-foto');
-  if(!foto) return;
-  foto.style.transform = lagiNgomong ? 'scale(1.03)' : 'scale(1)';
-}
-window.modeMavix = "NGOBROL";
+window.modeMavix = localStorage.getItem('modeMavix') || "NGOBROL";
 function gantiMode(modeBaru){
   window.modeMavix = modeBaru;
   localStorage.setItem('modeMavix', modeBaru);
   document.getElementById('btnNgobrol').classList.toggle('aktif', modeBaru === 'NGOBROL');
   document.getElementById('btnBaca').classList.toggle('aktif', modeBaru === 'BACA');
 }
-
-// ===== AUTO SIANG / MALAM IKUT JAM - ASLI BOS, TIDAK DIUBAH =====
 function terapkanMode(mode){
-  const body = document.body;
-  body.classList.remove('siang','malam');
-  body.classList.add(mode);
+  document.body.classList.remove('siang','malam');
+  document.body.classList.add(mode);
   document.getElementById('btnMode').innerText = mode === 'siang' ? '☀️' : '🌙';
 }
-function modeAutoIkutJam(){
-  const jam = new Date().getHours();
-  if(jam >= 6 && jam < 18) return 'siang';
-  return 'malam';
-}
+function modeAutoIkutJam(){ const jam = new Date().getHours(); return (jam >= 6 && jam < 18) ? 'siang' : 'malam'; }
 function gantiBackgroundManual(){
   const sekarang = document.body.classList.contains('siang') ? 'malam' : 'siang';
   terapkanMode(sekarang);
   localStorage.setItem('modeBackground', sekarang);
   localStorage.setItem('modeBackgroundManualHari', new Date().toDateString());
 }
-
 const manualHari = localStorage.getItem('modeBackgroundManualHari');
-const hariIni = new Date().toDateString();
-if(manualHari === hariIni){
-  terapkanMode(localStorage.getItem('modeBackground') || 'siang');
-} else {
-  terapkanMode(modeAutoIkutJam());
-  localStorage.removeItem('modeBackground');
-}
-setInterval(function(){
-  const manualHari2 = localStorage.getItem('modeBackgroundManualHari');
-  if(manualHari2 !== new Date().toDateString()){
-    terapkanMode(modeAutoIkutJam());
-  }
-}, 60000);
-
+if(manualHari === new Date().toDateString()){ terapkanMode(localStorage.getItem('modeBackground') || 'siang'); }
+else { terapkanMode(modeAutoIkutJam()); localStorage.removeItem('modeBackground'); }
+setInterval(function(){ if(localStorage.getItem('modeBackgroundManualHari') !== new Date().toDateString()) terapkanMode(modeAutoIkutJam()); }, 60000);
 window.gantiMode = gantiMode;
 window.tambah = tambah;
-window.mavixNgomong = mavixNgomong;
+document.getElementById('input').addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); document.getElementById('kirimBtn').click(); } });
 
-// FIX ENTER - ASLI BOS, TIDAK DIUBAH
-document.getElementById('input').addEventListener('keydown', function(e){
-  if(e.key === 'Enter'){
-    e.preventDefault();
-    document.getElementById('kirimBtn').click();
-  }
-});
-
-// ===== GANTI LAYAR CHAT / SUARA - SESUAI FILE BOS =====
+// ===== GANTI LAYAR - INI YANG BOS MAU =====
 function gantiLayar(nama){
   let pentas = document.querySelector('.pentas');
   let header = document.querySelector('.header');
@@ -195,7 +139,6 @@ function gantiLayar(nama){
   let chatBox = document.getElementById('chatBox');
   let inputRow = document.querySelector('.input-row');
   let suara = document.getElementById('layar-suara');
-
   if(nama === 'chat'){
     if(pentas) pentas.style.display = 'flex';
     if(header) header.style.display = 'flex';
@@ -204,7 +147,7 @@ function gantiLayar(nama){
     if(inputRow) inputRow.style.display = 'flex';
     if(suara) suara.style.display = 'none';
     if(typeof stopMulut === "function") stopMulut();
-    window.modeMavix = "NGOBROL";
+    // Balik ke Layar 1, jangan paksa. Biar Bos pilih sendiri BACA / NGOBROL di Layar 1
   }
   if(nama === 'suara'){
     if(pentas) pentas.style.display = 'none';
@@ -213,51 +156,15 @@ function gantiLayar(nama){
     if(chatBox) chatBox.style.display = 'none';
     if(inputRow) inputRow.style.display = 'none';
     if(suara) suara.style.display = 'block';
+    // PINDAH KE LAYAR 2, OTOMATIS JADI NGOBROL - INI YANG BOS MAU
     window.modeMavix = "NGOBROL";
+    localStorage.setItem('modeMavix', "NGOBROL");
+    document.getElementById('btnNgobrol').classList.add('aktif');
+    document.getElementById('btnBaca').classList.remove('aktif');
   }
 }
 window.gantiLayar = gantiLayar;
-
-let sedangDengar = null;
-let micKunci = false;
-function mulaDengar(){
-  if(micKunci) return;
-  let SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if(!SR){
-    alert('HP Bos tidak support dengar suara, pakai Chrome ya Bos');
-    return;
-  }
-  if(sedangDengar){ try{ sedangDengar.stop(); }catch(e){} }
-
-  let dengar = new SR();
-  dengar.lang = 'id-ID';
-  dengar.interimResults = false;
-  dengar.continuous = false;
-
-  micKunci = true;
-  document.getElementById('statusSuara').innerText = 'Mendengar... bicara Bos...';
-  document.getElementById('btnMic').style.background = 'red';
-
-  dengar.onresult = function(e){
-    let teksBos = e.results[0][0].transcript;
-    document.getElementById('statusSuara').innerText = 'Bos bilang: ' + teksBos;
-    if(typeof kirimPesanSuara === "function"){
-      kirimPesanSuara(teksBos);
-    }
-  };
-  dengar.onend = function(){
-    micKunci = false;
-    document.getElementById('btnMic').style.background = '#1e90ff';
-  };
-  dengar.onerror = function(){
-    micKunci = false;
-    document.getElementById('statusSuara').innerText = 'Tekan mic, lalu bicara';
-    document.getElementById('btnMic').style.background = '#1e90ff';
-  };
-
-  sedangDengar = dengar;
-  dengar.start();
-}
+gantiMode(window.modeMavix);
 </script>
 </body>
 </html>
