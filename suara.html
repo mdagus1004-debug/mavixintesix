@@ -2,98 +2,54 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MAVIXINTESIX - SUARA</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>MAVIX - Mode Suara</title>
 <style>
-* { margin:0; padding:0; box-sizing:border-box; font-family:sans-serif; }
-body { height:100vh; overflow:hidden; background:#000; }
-#layar-suara{
-  position:fixed; top:0; left:0; width:100%; height:100%;
-  background-image:url('mavixintesix.jpg');
-  background-size:cover; background-position:center;
-  overflow:hidden;
-  animation: bernafas 5s ease-in-out infinite;
-  cursor:pointer;
-  pointer-events:auto;
-}
-@keyframes bernafas{
-  0%,100%{ transform:scale(1.03); }
-  50%{ transform:scale(1.0); }
-}
-
-/* === MULUT GELOMBANG - POSISI HASIL ANALISIS GAMBAR === */
-#mulut-gelombang{
-  position:absolute;
-  top:37.5%; /* 37.5% = NGAM ATAS MULUT ASAL, BAWAH HURUF V */
-  left:50%;
-  transform:translate(-50%, -50%);
-  width:34vw;
-  max-width:230px;
-  height:52px;
-  display:flex; align-items:center; justify-content:center; gap:3px;
-  background:transparent;
-  padding:0;
-  pointer-events:none; /* BIAR TAK HALANG TEKANAN BADAN V */
-}
-#mulut-gelombang span{
-  width:4px; height:8px;
-  background:#00e5ff;
-  border-radius:3px;
-  box-shadow:0 0 10px #00e5ff, 0 0 20px #00e5ff;
-  transition:height 0.1s;
-}
-/* KALAU MAVIX BICARA, BARU GOYANG */
-#mulut-gelombang.ngomong span{
-  animation:goyangMulut 0.35s ease-in-out infinite alternate;
-}
-#mulut-gelombang.ngomong span:nth-child(2){ animation-delay:0.05s; }
-#mulut-gelombang.ngomong span:nth-child(3){ animation-delay:0.1s; }
-#mulut-gelombang.ngomong span:nth-child(4){ animation-delay:0.15s; }
-#mulut-gelombang.ngomong span:nth-child(5){ animation-delay:0.2s; }
-#mulut-gelombang.ngomong span:nth-child(6){ animation-delay:0.1s; }
-#mulut-gelombang.ngomong span:nth-child(7){ animation-delay:0.05s; }
-#mulut-gelombang.ngomong span:nth-child(8){ animation-delay:0.15s; }
-#mulut-gelombang.ngomong span:nth-child(9){ animation-delay:0.1s; }
-#mulut-gelombang.ngomong span:nth-child(10){ animation-delay:0s; }
-@keyframes goyangMulut{
-  0%{ height:6px; }
-  100%{ height:42px; }
-}
-
-/* DISEMBUNYIKAN SAJA - FUNGSI TETAP JALAN, BOS TEKAN BADAN V SAJA */
-#wadah-tombol{
-  display: none !important;
-}
-#tombolMic{
-  width:80px; height:80px; border-radius:50%;
-  border:3px solid white; background:#1e90ff; color:white;
-  font-size:35px; cursor:pointer; pointer-events:auto; touch-action:manipulation;
-}
-#btnKeluar{
-  position:fixed; top:15px; right:15px; width:40px; height:40px;
-  border-radius:50%; border:none; background:white; color:black;
-  font-size:20px; font-weight:bold; cursor:pointer; z-index:9999;
-}
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{ font-family: system-ui, -apple-system, sans-serif; background:#0f172a; color:#fff; height:100dvh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:16px; text-align:center; }
+  .judul{ font-size:28px; letter-spacing:4px; font-weight:800; }
+  .kecil{ font-size:13px; color:#94a3b8; margin-top:4px; }
+  #gelombang{ width:150px; height:150px; border-radius:50%; background:#1e293b; margin:28px 0; display:flex; align-items:center; justify-content:center; font-size:60px; transition:transform .2s; border:3px solid #334155; }
+  #gelombang.ngomong{ transform:scale(1.12); background:#2563eb; border-color:#60a5fa; }
+  #gelombang.dengar{ background:#dc2626; border-color:#f87171; }
+  #statusSuara{ font-size:15px; color:#e2e8f0; min-height:44px; line-height:1.5; padding:0 10px; }
+  #teksTerakhir{ font-size:13px; color:#94a3b8; margin-top:10px; min-height:20px; }
+  .tombol-besar{ width:100%; max-width:320px; padding:16px; border-radius:16px; border:none; font-size:17px; font-weight:700; margin-top:18px; }
+  #micBtn{ background:#2563eb; color:#fff; }
+  #micBtn.aktif{ background:#dc2626; }
+  #stopBtn{ background:#334155; color:#fff; }
+  .mode{ display:flex; gap:8px; width:100%; max-width:320px; margin-top:16px; }
+  .mode button{ flex:1; padding:11px; border-radius:12px; border:1px solid #334155; background:#1e293b; color:#cbd5e1; }
+  .mode button.aktif{ background:#2563eb; color:#fff; border-color:#2563eb; }
+  .pindah{ margin-top:18px; color:#60a5fa; font-size:13px; text-decoration:none; }
+  #input{ display:none; }
+  #chat{ display:none; }
+  #status{ display:none; }
+  #kirimBtn{ display:none; }
 </style>
 </head>
 <body>
-<div id="layar-suara">
-  <!-- MULUT PALSU YANG BISA GOYANG -->
-  <div id="mulut-gelombang">
-    <span></span><span></span><span></span><span></span><span></span>
-    <span></span><span></span><span></span><span></span><span></span>
-  </div>
+<div class="judul">MAVIX</div>
+<div class="kecil">Mode Suara Penuh</div>
+
+<div id="gelombang">🎤</div>
+<div id="statusSuara">Siap Bos. Tekan tombol bawah, lalu bicara.</div>
+<div id="teksTerakhir"></div>
+
+<button id="micBtn" class="tombol-besar">🎤 TEKAN UNTUK BICARA</button>
+<button id="stopBtn" class="tombol-besar" onclick="berhentiSemua()">⏹ BERHENTI</button>
+
+<div class="mode">
+  <button id="modeNgobrol" class="aktif" onclick="gantiMode('NGOBROL')">NGOBROL</button>
+  <button id="modeBaca" onclick="gantiMode('BACA')">BACA</button>
 </div>
-<button id="btnKeluar" onclick="window.location.href='index.html'">✕</button>
-<div id="wadah-tombol">
-  <button id="tombolMic">🎤</button>
-  <div id="status" style="color:white; margin-top:10px; text-shadow:0 1px 5px black;">Tekan mic, lalu bicara</div>
-  <div id="statusSuara" style="display:none;"></div>
-</div>
-<script>
-function tambah(siapa, teks){}
-window.tambah = tambah;
-</script>
+
+<a class="pindah" href="index.html">← Kembali ke Mode Ketik</a>
+<input id="input" type="text">
+<div id="chat"></div>
+<div id="status"></div>
+<button id="kirimBtn"></button>
+
 <script src="otak-ingatan.js"></script>
 <script src="otak-kecil.js"></script>
 <script src="otak-tengah.js"></script>
@@ -101,20 +57,45 @@ window.tambah = tambah;
 <script src="telinga.js"></script>
 <script src="otak-depan.js"></script>
 <script>
-window.modeMavix = "NGOBROL";
-localStorage.setItem('modeMavix', "NGOBROL");
-</script>
-<script>
-// PENGAWAL MULUT - KALAU sedangNgomong = TRUE, GOYANG. KALAU FALSE, DIAM
-setInterval(() => {
-  const mulut = document.getElementById('mulut-gelombang');
-  if (!mulut) return;
-  if (window.MAVIX && window.MAVIX.sedangNgomong) {
-    mulut.classList.add('ngomong');
-  } else {
-    mulut.classList.remove('ngomong');
+  window.modeMavix = "NGOBROL";
+  function gantiMode(mode){
+    window.modeMavix = mode;
+    document.getElementById('modeNgobrol').classList.toggle('aktif', mode === 'NGOBROL');
+    document.getElementById('modeBaca').classList.toggle('aktif', mode === 'BACA');
   }
-}, 100);
+  // Untuk halaman suara, tambah hanya tampilkan teks terakhir, bukan list chat
+  function tambah(siapa, teks){
+    const el = document.getElementById('teksTerakhir');
+    if(el) el.innerText = (siapa === 'user' ? 'Bos: ' : 'Mavix: ') + teks;
+    // Simpan juga ke status, supaya Bos lihat
+    const s = document.getElementById('statusSuara');
+    if(s && siapa === 'mavix') s.innerText = teks;
+  }
+  window.tambah = tambah;
+  function berhentiSemua(){
+    if(window.stopMulut) window.stopMulut();
+    if(window.hentikanDengar) window.hentikanDengar(true);
+    document.getElementById('statusSuara').innerText = "Baik Bos, saya diam.";
+    document.getElementById('gelombang').classList.remove('ngomong');
+    document.getElementById('gelombang').classList.remove('dengar');
+  }
+  // Gelombang mulut: nyala waktu Mavix ngomong
+  document.addEventListener('mavix-mulai-ngomong', () => {
+    document.getElementById('gelombang').classList.add('ngomong');
+    document.getElementById('gelombang').innerText = '🔊';
+  });
+  document.addEventListener('mavix-selesai-ngomong', () => {
+    document.getElementById('gelombang').classList.remove('ngomong');
+    document.getElementById('gelombang').innerText = '🎤';
+  });
+  // Ubah tombol mic, supaya jelas sedang dengar atau tidak
+  const micAsli = document.getElementById('micBtn');
+  // Mic asli di telinga.js pakai id micBtn, jadi kita pakai tombol yang sama
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      document.getElementById('statusSuara').innerText = "Halo Bos, saya MAVIX. Tekan tombol biru, lalu bicara.";
+    }, 300);
+  });
 </script>
 </body>
 </html>
