@@ -1,10 +1,14 @@
-// telinga.js - FINAL: 1x Jawab Langsung Mati, Anti Double, Tanpa Omongan "Mendengarkan"
+// telinga.js - FINAL MAVIX
+// Klik 1: "Ya, Mavix di sini. Mau cerita apa?"
+// Klik nyelah / klik lagi: "Mavix mendengarkan"
+
 window.MAVIX = window.MAVIX || {};
 window.MAVIX.micNyala = false;
 window.MAVIX.recognition = null;
 
 let tombolMic = null;
 let lagiProsesTekan = false;
+let sudahPernahSapa = false;
 
 function setStatus(teks) {
   const el = document.getElementById('status');
@@ -83,7 +87,6 @@ function stopDengarSaja() {
   }
 }
 
-// TAMBALAN 1 - BUNGKUS BIAR TIDAK CRASH KALAU mulut.js BELUM SIAP
 function amanHentikanBicara() {
   if (typeof hentikanBicara === 'function') {
     try { hentikanBicara(); } catch(e) {}
@@ -91,11 +94,11 @@ function amanHentikanBicara() {
     window.speechSynthesis.cancel();
   }
 }
+
 function amanBicara(teks, cb) {
   if (typeof bicara === 'function') {
     try { bicara(teks, cb); return; } catch(e) {}
   }
-  // Kalau bicara gagal, terus dengar saja, jangan diam
   if (cb) cb();
 }
 
@@ -106,44 +109,52 @@ function tekanMic(e) {
   setTimeout(() => { lagiProsesTekan = false; }, 800);
   if (!tombolMic) tombolMic = document.getElementById('tombolMic');
 
-  // Lagi ngomong, Bos tekan = POTONG, LANGSUNG DIAM
+  // 1. MAVIX TENGAH NGOMONG, BOS KLIK MAU NYELAH
   if (window.MAVIX.sedangNgomong) {
     amanHentikanBicara();
     window.MAVIX.micNyala = true;
     window.MAVIX.sudahKirim = false;
-    setStatus('Lagi dengerin Bos...');
-    mulaiDengar();
+    amanBicara('Mavix mendengarkan', () => {
+      setStatus('Lagi dengerin Bos...');
+      mulaiDengar();
+    });
     return;
   }
 
-  // Lagi dengar, Bos tekan = MATI
+  // 2. MAVIX TENGAH DENGAR, BOS KLIK MAU STOP
   if (window.MAVIX.micNyala) {
     matikanMicOtomatis();
     amanHentikanBicara();
     return;
   }
 
-  // Mic mati, Bos tekan = SAPA, MULAI LAGI
+  // 3. MIC MATI, BOS KLIK MAU NGOBROL
   window.MAVIX.micNyala = true;
   window.MAVIX.sudahKirim = false;
   if (tombolMic) tombolMic.style.background = '#ff4444';
-  amanBicara('Ya, Mavix di sini. Mau cerita apa?', () => {
-    mulaiDengar();
-  });
+
+  if (!sudahPernahSapa) {
+    sudahPernahSapa = true;
+    amanBicara('Ya, Mavix di sini. Mau cerita apa?', () => {
+      mulaiDengar();
+    });
+  } else {
+    amanBicara('Mavix mendengarkan', () => {
+      mulaiDengar();
+    });
+  }
 }
 
 window.tekanMic = tekanMic;
 window.MAVIX.tekanMic = tekanMic;
 window.MAVIX.matikanMicOtomatis = matikanMicOtomatis;
 
-// TAMBALAN 2 - PASANG DUA-DUA, BADAN V + TOMBOL MIC BAWAH
 function pasangTombolMic() {
   tombolMic = document.getElementById('tombolMic');
   if (tombolMic && !tombolMic.dataset.sudahPasang) {
     tombolMic.dataset.sudahPasang = 'ya';
     tombolMic.addEventListener('click', tekanMic);
   }
-  // INI YANG HILANG TADI - PASANG BADAN V JUGA
   const layar = document.getElementById('layar-suara');
   if (layar && !layar.dataset.sudahPasang) {
     layar.dataset.sudahPasang = 'ya';
