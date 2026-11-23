@@ -1,4 +1,4 @@
-// OTAK BESAR + MULUT MAVIX V2.3 - VERSI BERSIH, SUDAH DIPERBAIKI
+// OTAK BESAR + MULUT MAVIX V2.4 - SUDAH DIPERBAIKI SUARA 500
 const express = require('express');
 const cors = require('cors');
 const { EdgeTTS } = require('node-edge-tts');
@@ -13,18 +13,37 @@ const KUNCI_GROQ = process.env.GROQ_API_KEY;
 
 app.get('/tes', (req, res) => { res.json({ status: "hidup", pesan: "MAVIX sudah hidup Bos!" }); });
 
+// --- SUARA, 2 CARA ---
 app.get("/suara", async (req, res) => {
   try{
-    let teks = (req.query.teks || "").toString();
+    let teks = (req.query.teks || "").toString().trim();
     if(!teks) return res.status(400).send("tidak ada teks");
-    teks = teks.substring(0, 800);
-    const fileTmp = path.join(os.tmpdir(), 'mavix-' + Date.now() + '.mp3');
-    const tts = new EdgeTTS();
-    await tts.synthesize(teks, 'id-ID-GadisNeural', fileTmp);
-    if(!fs.existsSync(fileTmp)) return res.status(500).send("gagal");
+    // Potong pendek, supaya tidak berat. Max 400 huruf saja per panggil.
+    teks = teks.substring(0, 400);
+
+    // CARA 1: Coba EdgeTTS dulu
+    try{
+      const fileTmp = path.join(os.tmpdir(), 'mavix-' + Date.now() + '.mp3');
+      const tts = new EdgeTTS();
+      await tts.synthesize(teks, 'id-ID-GadisNeural', fileTmp);
+      if(fs.existsSync(fileTmp) && fs.statSync(fileTmp).size > 1000){
+        res.setHeader("Content-Type", "audio/mpeg");
+        return res.sendFile(fileTmp, () => { try{ fs.unlinkSync(fileTmp); }catch(e){} });
+      }
+      try{ fs.unlinkSync(fileTmp); }catch(e){}
+    }catch(e){ console.log("Edge gagal, coba cara 2:", e.message); }
+
+    // CARA 2: Google TTS, cadangan kalau Edge gagal
+    // Ini yang bikin tidak 500 lagi
+    const urlGoogle = "https://translate.google.com/translate_tts?ie=UTF-8&q=" + encodeURIComponent(teks) + "&tl=id&client=tw-ob";
+    const r = await fetch(urlGoogle, { headers: { "User-Agent": "Mozilla/5.0" } });
+    if(!r.ok) return res.status(500).send("gagal");
+    const buf = Buffer.from(await r.arrayBuffer());
+    if(buf.length < 1000) return res.status(500).send("gagal");
     res.setHeader("Content-Type", "audio/mpeg");
-    res.sendFile(fileTmp, () => { try{ fs.unlinkSync(fileTmp); }catch(e){} });
-  }catch(e){ console.log("Edge gagal:", e.message); res.status(500).send("gagal"); }
+    return res.send(buf);
+
+  }catch(e){ console.log("Suara gagal total:", e.message); res.status(500).send("gagal"); }
 });
 
 app.post('/chat', async (req, res) => {
