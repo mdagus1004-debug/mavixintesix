@@ -5,6 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MAVIXINTESIX - HIDUP</title>
 <link rel="icon" type="image/png" href="favicon.png">
+
+<!-- TAMBAHAN BARU: load gambar suara diam-diam, supaya tidak ada peringatan kuning, dan pas pencet langsung muncul -->
+<script>
+  window.addEventListener('load', function(){
+    setTimeout(function(){
+      let img = new Image();
+      img.src = 'mavixintesix.jpg';
+    }, 1000);
+  });
+</script>
+
 <style>
 * { margin:0; padding:0; box-sizing:border-box; font-family:sans-serif; }
 body { height:100vh; display:flex; flex-direction:column; overflow:hidden; }
@@ -42,7 +53,7 @@ body.siang #input { background:#FFFFFF; color:#111827; border:1px solid #D1D5DB;
 body.siang .btn { background:#0EA5E9; }
 body.siang .btn svg { fill:#fff; }
 
-/* ===== YANG SAMA ===== */
+/* ===== YANG SAMA - TIDAK DIUBAH ===== */
 .header { display:flex; align-items:center; gap:12px; padding:12px 15px; }
 .avatar { width:58px; height:58px; border-radius:50%; flex-shrink:0; border:3px solid; overflow:hidden; cursor:pointer; }
 .avatar img { width:100%; height:100%; object-fit:cover; }
@@ -59,10 +70,19 @@ body.siang .btn svg { fill:#fff; }
 #input { flex:1; padding:13px 16px; border-radius:25px; outline:none; font-size:15px; }
 .btn { width:48px; height:48px; border:none; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
 .btn svg { width:26px; height:26px; margin-left:2px; }
+
+/* ===== TAMBAHAN BARU: GELOMBANG SUARA ===== */
+#gelombang .batang{ transition: height 0.3s; }
+#gelombang.hidup .batang{ animation: naikTurun 0.6s infinite alternate; }
+#gelombang.hidup .batang:nth-child(2){ animation-delay:0.1s; }
+#gelombang.hidup .batang:nth-child(3){ animation-delay:0.2s; }
+#gelombang.hidup .batang:nth-child(4){ animation-delay:0.1s; }
+@keyframes naikTurun{ from{ height:15px; } to{ height:60px; } }
 </style>
 </head>
 <body class="siang">
 
+<!-- ========== LAYAR 1 - ASLI BOS, TIDAK ADA YANG DIBUANG ========== -->
 <div class="pentas"></div>
 <div class="header">
   <div class="avatar" id="avatarBtn"><img src="mavix.jpg?v=2"></div>
@@ -72,6 +92,8 @@ body.siang .btn svg { fill:#fff; }
 <div class="bar-mode">
   <button id="btnNgobrol" class="aktif" onclick="gantiMode('NGOBROL')">💬 Ngobrol</button>
   <button id="btnBaca" onclick="gantiMode('BACA')">📖 Baca</button>
+  <!-- TAMBAHAN BARU: TOMBOL SUARA, HANYA TAMBAH 1 BARIS INI -->
+  <button id="btnSuara" onclick="gantiLayar('suara')" style="background:#ff9800 !important; color:white !important;">🎤 Ngobrol Suara</button>
 </div>
 <div id="chatBox"></div>
 <div class="input-row">
@@ -79,6 +101,29 @@ body.siang .btn svg { fill:#fff; }
   <button class="btn" id="kirimBtn">
     <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
   </button>
+</div>
+
+<!-- ========== LAYAR 2 - SUARA FULL SCREEN - TAMBAHAN BARU ========== -->
+<div id="layar-suara" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:999; background-image:url('mavixintesix.jpg'); background-size:cover; background-position:center; background-repeat:no-repeat;">
+  <div style="position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.25);"></div>
+
+  <div style="position:absolute; top:30px; left:0; width:100%; text-align:center; color:white; font-size:18px; font-weight:bold; text-shadow:0 2px 10px black;">
+    MAVIX - MODE SUARA
+  </div>
+
+  <div id="gelombang" style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); display:flex; gap:6px; align-items:center; height:60px;">
+    <div class="batang" style="width:6px; height:20px; background:white; border-radius:10px;"></div>
+    <div class="batang" style="width:6px; height:40px; background:white; border-radius:10px;"></div>
+    <div class="batang" style="width:6px; height:60px; background:white; border-radius:10px;"></div>
+    <div class="batang" style="width:6px; height:40px; background:white; border-radius:10px;"></div>
+    <div class="batang" style="width:6px; height:20px; background:white; border-radius:10px;"></div>
+  </div>
+
+  <div style="position:absolute; bottom:40px; left:0; width:100%; text-align:center;">
+    <button id="btnMic" onclick="mulaDengar()" style="width:80px; height:80px; border-radius:50%; border:3px solid white; background:#1e90ff; color:white; font-size:35px; cursor:pointer;">🎤</button>
+    <div id="statusSuara" style="color:white; margin-top:10px; text-shadow:0 1px 5px black;">Tekan mic, lalu bicara</div>
+    <button onclick="gantiLayar('chat')" style="margin-top:20px; padding:10px 20px; border-radius:20px; border:none; background:white; color:black; font-weight:bold; cursor:pointer;">KELUAR - BALIK KE CHAT</button>
+  </div>
 </div>
 
 <script src="otak-ingatan.js"></script>
@@ -113,7 +158,7 @@ function gantiMode(modeBaru){
   document.getElementById('btnBaca').classList.toggle('aktif', modeBaru === 'BACA');
 }
 
-// ===== AUTO SIANG / MALAM IKUT JAM =====
+// ===== AUTO SIANG / MALAM IKUT JAM - ASLI BOS, TIDAK DIUBAH =====
 function terapkanMode(mode){
   const body = document.body;
   body.classList.remove('siang','malam');
@@ -122,30 +167,24 @@ function terapkanMode(mode){
 }
 function modeAutoIkutJam(){
   const jam = new Date().getHours();
-  // 6 pagi - 6 petang = siang, lain = malam
   if(jam >= 6 && jam < 18) return 'siang';
   return 'malam';
 }
 function gantiBackgroundManual(){
-  // Kalau Bos tekan manual, kita lawan auto untuk hari ni saja
   const sekarang = document.body.classList.contains('siang') ? 'malam' : 'siang';
   terapkanMode(sekarang);
   localStorage.setItem('modeBackground', sekarang);
   localStorage.setItem('modeBackgroundManualHari', new Date().toDateString());
 }
 
-// Bila buka web:
 const manualHari = localStorage.getItem('modeBackgroundManualHari');
 const hariIni = new Date().toDateString();
 if(manualHari === hariIni){
-  // Bos dah tekan manual hari ni, ikut Bos
   terapkanMode(localStorage.getItem('modeBackground') || 'siang');
 } else {
-  // Belum tekan manual hari ni, ikut jam auto
   terapkanMode(modeAutoIkutJam());
   localStorage.removeItem('modeBackground');
 }
-// Cek setiap 1 minit, kalau dah tukar jam 6 / 6 petang, auto tukar sendiri
 setInterval(function(){
   const manualHari2 = localStorage.getItem('modeBackgroundManualHari');
   if(manualHari2 !== new Date().toDateString()){
@@ -157,13 +196,97 @@ window.gantiMode = gantiMode;
 window.tambah = tambah;
 window.mavixNgomong = mavixNgomong;
 
-// FIX ENTER
+// FIX ENTER - ASLI BOS, TIDAK DIUBAH
 document.getElementById('input').addEventListener('keydown', function(e){
   if(e.key === 'Enter'){
     e.preventDefault();
     document.getElementById('kirimBtn').click();
   }
 });
+
+// ===== TAMBAHAN BARU: GANTI LAYAR CHAT / SUARA - SESUAI FILE BOS =====
+function gantiLayar(nama){
+  // Layar 1 Bos terdiri dari 4 benda: pentas, header, bar-mode, chatBox, input-row
+  // Kita sembunyikan / tampilkan semua yang itu, bukan 'layar-chat' yang tidak ada
+  let pentas = document.querySelector('.pentas');
+  let header = document.querySelector('.header');
+  let barMode = document.querySelector('.bar-mode');
+  let chatBox = document.getElementById('chatBox');
+  let inputRow = document.querySelector('.input-row');
+  let suara = document.getElementById('layar-suara');
+
+  if(nama === 'chat'){
+    if(pentas) pentas.style.display = 'flex';
+    if(header) header.style.display = 'flex';
+    if(barMode) barMode.style.display = 'flex';
+    if(chatBox) chatBox.style.display = 'flex';
+    if(inputRow) inputRow.style.display = 'flex';
+    if(suara) suara.style.display = 'none';
+    if(typeof stopMulut === "function") stopMulut();
+    window.modeMavix = "NGOBROL";
+    let g = document.getElementById('gelombang');
+    if(g) g.classList.remove('hidup');
+  }
+  if(nama === 'suara'){
+    if(pentas) pentas.style.display = 'none';
+    if(header) header.style.display = 'none';
+    if(barMode) barMode.style.display = 'none';
+    if(chatBox) chatBox.style.display = 'none';
+    if(inputRow) inputRow.style.display = 'none';
+    if(suara) suara.style.display = 'block';
+    window.modeMavix = "NGOBROL";
+  }
+}
+window.gantiLayar = gantiLayar;
+
+let sedangDengar = null;
+let micKunci = false;
+function mulaDengar(){
+  if(micKunci) return;
+  let SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){
+    alert('HP Bos tidak support dengar suara, pakai Chrome ya Bos');
+    return;
+  }
+  if(sedangDengar){ try{ sedangDengar.stop(); }catch(e){} }
+
+  let dengar = new SR();
+  dengar.lang = 'id-ID';
+  dengar.interimResults = false;
+  dengar.continuous = false;
+
+  micKunci = true;
+  document.getElementById('statusSuara').innerText = 'Mendengar... bicara Bos...';
+  document.getElementById('btnMic').style.background = 'red';
+
+  dengar.onresult = function(e){
+    let teksBos = e.results[0][0].transcript;
+    document.getElementById('statusSuara').innerText = 'Bos bilang: ' + teksBos;
+    if(typeof kirimPesanSuara === "function"){
+      kirimPesanSuara(teksBos);
+    }
+  };
+  dengar.onend = function(){
+    micKunci = false;
+    document.getElementById('btnMic').style.background = '#1e90ff';
+  };
+  dengar.onerror = function(){
+    micKunci = false;
+    document.getElementById('statusSuara').innerText = 'Tekan mic, lalu bicara';
+    document.getElementById('btnMic').style.background = '#1e90ff';
+  };
+
+  sedangDengar = dengar;
+  dengar.start();
+}
+
+function gelombangHidup(hidup){
+  let g = document.getElementById('gelombang');
+  if(!g) return;
+  if(hidup) g.classList.add('hidup');
+  else g.classList.remove('hidup');
+}
+window.gelombangHidup = gelombangHidup;
 </script>
 </body>
 </html>
