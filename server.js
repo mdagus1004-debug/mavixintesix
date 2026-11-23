@@ -19,7 +19,6 @@ app.get("/suara", async (req, res) => {
     if(!teks) return res.status(400).send("tidak ada teks");
     teks = teks.substring(0, 800);
     const fileTmp = path.join(os.tmpdir(), 'mavix-' + Date.now() + '.mp3');
-    // Perbaikan: pakai synthesize, bukan ttsPromise
     const tts = new EdgeTTS();
     await tts.synthesize(teks, 'id-ID-GadisNeural', fileTmp);
     if(!fs.existsSync(fileTmp)) return res.status(500).send("gagal");
