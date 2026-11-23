@@ -1,12 +1,17 @@
-// MULUT MAVIX V2.4 - BACA PENDEK, NGOBROL PANJANG
+// MULUT MAVIX V2.5 - BERSIH
+// Kerja dia: NGOMONG SAJA
+// Bila mula / habis, dia kasih tahu telinga dengan terang
+
 let audioSekarang = null;
 let sedangBicara = false;
 let antrianSuara = [];
 let sedangMainAntrian = false;
+
 function bersihkanTeksUntukSuara(teks) {
   if (!teks) return "";
   return teks.replace(/\*\*(.*?)\*\*/g, "$1").replace(/\*(.*?)\*/g, "$1").replace(/#{1,6}\s?/g, "").replace(/\(.*?\)/g, "").replace(/\[.*?\]\(.*?\)/g, "$1").replace(/https?:\/\/\S+/g, "").replace(/\s+/g, " ").trim();
 }
+
 function potongTeksPanjang(teks) {
   teks = bersihkanTeksUntukSuara(teks);
   if (!teks) return [];
@@ -24,6 +29,7 @@ function potongTeksPanjang(teks) {
   if (sekarang) keping.push(sekarang.trim());
   return keping;
 }
+
 async function mainAntrian() {
   if (sedangMainAntrian) return;
   sedangMainAntrian = true;
@@ -37,7 +43,10 @@ async function mainAntrian() {
   sedangMainAntrian = false;
   sedangBicara = false;
   if (typeof mavixNgomong === "function") mavixNgomong(false);
+  // BERSIH: kasih tahu telinga, sudah habis ngomong
+  if (typeof window.setMavixNgomong === "function") window.setMavixNgomong(false);
 }
+
 function cakapSatuKeping(teks) {
   return new Promise(async (selesai) => {
     if (!teks) { selesai(true); return; }
@@ -53,6 +62,7 @@ function cakapSatuKeping(teks) {
     } catch (e) { bicaraHP(teks, function(){ selesai(true); }); }
   });
 }
+
 function bicaraHP(teks, selesai) {
   if (!("speechSynthesis" in window)) { if (selesai) selesai(); return; }
   window.speechSynthesis.cancel();
@@ -62,21 +72,23 @@ function bicaraHP(teks, selesai) {
   ucap.onerror = function() { if (selesai) selesai(); };
   window.speechSynthesis.speak(ucap);
 }
+
 async function bicara(teks) {
   stopMulut();
   teks = bersihkanTeksUntukSuara(teks);
   if (!teks) return;
-  // PERBAIKAN: Kalau BACA, baca 2 ayat pertama saja
   if (window.modeMavix === "BACA") {
     let ayat = teks.split(/(?<=[.!?])\s+/);
     teks = ayat.slice(0, 2).join(" ");
   }
-  // Kalau NGOBROL, biar semua, jangan dipotong
   antrianSuara = potongTeksPanjang(teks);
   sedangBicara = true;
   if (typeof mavixNgomong === "function") mavixNgomong(true);
+  // BERSIH: kasih tahu telinga, Mavix mula ngomong
+  if (typeof window.setMavixNgomong === "function") window.setMavixNgomong(true, teks);
   await mainAntrian();
 }
+
 function stopMulut() {
   sedangBicara = false;
   sedangMainAntrian = false;
@@ -84,7 +96,10 @@ function stopMulut() {
   if (audioSekarang) { try{ audioSekarang.pause(); }catch(e){} audioSekarang = null; }
   if ("speechSynthesis" in window) window.speechSynthesis.cancel();
   if (typeof mavixNgomong === "function") mavixNgomong(false);
+  // BERSIH: kasih tahu telinga, Mavix sudah diam
+  if (typeof window.setMavixNgomong === "function") window.setMavixNgomong(false);
 }
+
 window.bicara = bicara;
 window.stopMulut = stopMulut;
 window.potongTeksPanjang = potongTeksPanjang;
