@@ -1,4 +1,4 @@
-// OTAK DEPAN - MANAJER MAVIX - VERSI BERSIH
+// OTAK DEPAN - MANAJER MAVIX - VERSI BERSIH + AUTO MATI
 async function kirim(){
   const inp = document.getElementById('input');
   if(!inp) return;
@@ -59,9 +59,22 @@ async function kirim(){
 }
 document.addEventListener('DOMContentLoaded', function(){ const b = document.getElementById('kirimBtn'); if(b) b.addEventListener('click', kirim); });
 window.kirim = kirim;
+
+function jawabSuara(jawaban){
+  if(typeof tambah === 'function') tambah('mavix', jawaban);
+  try{ if(typeof simpanChat === 'function') simpanChat("assistant", jawaban); }catch(e){}
+  if(typeof bicara === 'function'){
+    bicara(jawaban, () => {
+      if(window.MAVIX && window.MAVIX.matikanMicOtomatis){
+        window.MAVIX.matikanMicOtomatis();
+      }
+    });
+  }
+}
+
 async function kirimPesanSuara(teks){
   if(!teks) return; teks = teks.trim(); if(!teks) return;
-  // JANGAN tambah('user') di sini lagi, telinga.js sudah tambah
+  if(window.MAVIX) window.MAVIX.sudahKirim = true;
   try{ if(typeof ingatOtomatis === 'function') ingatOtomatis(teks); }catch(e){}
   try{ if(typeof simpanChat === 'function') simpanChat("user", teks); }catch(e){}
   try{
@@ -70,13 +83,10 @@ async function kirimPesanSuara(teks){
       if(j && j.trim() !== ''){
         if(j === "__STOP__"){
           if(typeof stopMulut === 'function') stopMulut();
-          if(typeof bicara === 'function') bicara("Oke Bos, saya diam dulu.");
-          try{ if(typeof simpanChat === 'function') simpanChat("assistant", "Oke Bos, saya diam dulu."); }catch(e){}
+          jawabSuara("Oke Bos, saya diam dulu.");
           return;
         }
-        try{ if(typeof simpanChat === 'function') simpanChat("assistant", j); }catch(e){}
-        if(typeof tambah === 'function') tambah('mavix', j);
-        if(typeof bicara === 'function') bicara(j);
+        jawabSuara(j);
         return;
       }
     }
@@ -86,9 +96,7 @@ async function kirimPesanSuara(teks){
       let modeS = (typeof window.modeMavix !== 'undefined' && window.modeMavix) ? window.modeMavix : "NGOBROL";
       const jt = await OtakTengah.fikir(teks, modeS);
       if(jt && jt.trim() !== ''){
-        try{ if(typeof simpanChat === 'function') simpanChat("assistant", jt); }catch(e){}
-        if(typeof tambah === 'function') tambah('mavix', jt);
-        if(typeof bicara === 'function') bicara(jt);
+        jawabSuara(jt);
         return;
       }
     }
@@ -104,14 +112,11 @@ async function kirimPesanSuara(teks){
     if(ringkasan) pesanLengkap += ringkasan + "\n\n";
     if(chatTerakhir) pesanLengkap += "CHAT TERAKHIR:\n" + chatTerakhir + "\n\n";
     pesanLengkap += "Pertanyaan Bos: " + teks;
-    // BETUL: ikut mode yang Bos pencet, jangan paksa NGOBROL
     let modeKirim = (typeof window.modeMavix !== 'undefined' && window.modeMavix) ? window.modeMavix : "NGOBROL";
     const res = await fetch('/chat', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ message: pesanLengkap, mode: modeKirim }) });
     const data = await res.json();
     const jawab = data.reply || 'Bos, saya tidak dapat jawab tadi!';
-    try{ if(typeof simpanChat === 'function') simpanChat("assistant", jawab); }catch(e){}
-    if(typeof tambah === 'function') tambah('mavix', jawab);
-    if(typeof bicara === 'function') bicara(jawab);
+    jawabSuara(jawab);
   }catch(e){ if(typeof bicara === 'function') bicara('Bos, server saya lagi tidur: ' + e.message); }
 }
 window.kirimPesanSuara = kirimPesanSuara;
