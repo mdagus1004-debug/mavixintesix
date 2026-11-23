@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MAVIXINTESIX - SUARA</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; font-family:sans-serif; }
+body { height:100vh; overflow:hidden; background:#000; }
+
+/* 1 GAMBAR SAJA, PENUH - Gambar robot itu */
+#layar-suara{
+  position:fixed; top:0; left:0; width:100%; height:100%;
+  background-image:url('mavixintesix.jpg');
+  background-size:cover; background-position:center;
+  overflow:hidden;
+  animation: bernafas 4s ease-in-out infinite;
+}
+@keyframes bernafas{
+  0%,100%{ transform:scale(1.05); }
+  50%{ transform:scale(1.08); }
+}
+
+/* MULUT - Yang di tengah dada itu saja */
+#mulutTengah{
+  position:absolute; top:0; left:0; width:100%; height:100%;
+  background-image:url('mavixintesix.jpg');
+  background-size:cover; background-position:center;
+  -webkit-mask-image:linear-gradient(to bottom, transparent 40%, black 46%, black 52%, transparent 58%);
+  mask-image:linear-gradient(to bottom, transparent 40%, black 46%, black 52%, transparent 58%);
+  transform-origin:center; z-index:3;
+}
+#layar-suara #mulutTengah{ animation:none; transform:scaleY(1); }
+#layar-suara.ngomong #mulutTengah{
+  animation: mulutGerak 0.35s ease-in-out infinite alternate;
+  filter:brightness(1.5) drop-shadow(0 0 15px #22d3ee);
+}
+@keyframes mulutGerak{
+  from{ transform:scaleY(0.85); }
+  to{ transform:scaleY(1.5); }
+}
+#layar-suara.dengar #mulutTengah{
+  animation: mulutGerak 0.7s ease-in-out infinite alternate;
+  filter:brightness(1.2);
+}
+
+/* GELOMBANG LISTRIK DI KEPALA - Pendek, segaris, putih terang */
+#gelombangListrik{
+  position:absolute;
+  top:12%; left:50%; transform:translateX(-50%);
+  width:38%; height:26px; z-index:5; pointer-events:none;
+  filter:drop-shadow(0 0 6px #fff) drop-shadow(0 0 14px #fff) drop-shadow(0 0 22px #a5f3fc);
+  animation: putihKedip 1.6s ease-in-out infinite;
+}
+#gelombangListrik svg{ width:100%; height:100%; overflow:visible; }
+#gel1{
+  stroke:#ffffff; stroke-width:5; stroke-linecap:round; stroke-linejoin:round; fill:none;
+  stroke-dasharray:180; stroke-dashoffset:180;
+  animation: putihJalan 1.6s linear infinite;
+}
+@keyframes putihJalan{
+  from{ stroke-dashoffset:180; }
+  to{ stroke-dashoffset:0; }
+}
+@keyframes putihKedip{
+  0%,100%{ opacity:0.7; transform:translateX(-50%) scaleY(1); }
+  50%{ opacity:1; transform:translateX(-50%) scaleY(1.3); }
+}
+#layar-suara.ngomong #gel1{ animation-duration:0.7s; stroke-width:6; }
+#layar-suara.ngomong #gelombangListrik{ animation-duration:0.7s; }
+#layar-suara.dengar #gel1{ stroke:#ffffff; animation-duration:1.2s; }
+</style>
+</head>
+<body>
+<div id="layar-suara">
+  <div id="mulutTengah"></div>
+
+  <!-- Gelombang listrik pendek, putih terang, di kepala -->
+  <div id="gelombangListrik">
+    <svg viewBox="0 0 100 20" preserveAspectRatio="none">
+      <path id="gel1" d="M2 10 L18 10 L24 3 L32 17 L38 10 L58 10 L64 4 L72 16 L78 10 L98 10" />
+    </svg>
+  </div>
+
+  <!-- INI PINTU BALIK KE FILE 1 -->
+  <button onclick="window.location.href='index.html'" style="position:absolute; top:15px; right:15px; width:40px; height:40px; border-radius:50%; border:none; background:white; color:black; font-size:20px; font-weight:bold; cursor:pointer; z-index:10;">✕</button>
+
+  <div style="position:absolute; bottom:40px; left:0; width:100%; text-align:center; z-index:10;">
+    <button id="btnMic" onclick="tekanMic()" style="width:80px; height:80px; border-radius:50%; border:3px solid white; background:#1e90ff; color:white; font-size:35px; cursor:pointer;">🎤</button>
+    <div id="status" style="color:white; margin-top:10px; text-shadow:0 1px 5px black;">Tekan mic, lalu bicara</div>
+    <div id="statusSuara" style="display:none;"></div>
+  </div>
+</div>
+
+<script>
+function tambah(siapa, teks){ /* di file suara, chat tidak dipakai, tapi biar otak tidak error */ }
+window.tambah = tambah;
+</script>
+<script src="otak-ingatan.js"></script>
+<script src="otak-kecil.js"></script>
+<script src="otak-tengah.js"></script>
+<script src="mulut.js"></script>
+<script src="telinga.js"></script>
+<script src="otak-depan.js"></script>
+<script>
+window.modeMavix = "NGOBROL";
+localStorage.setItem('modeMavix', "NGOBROL");
+(function(){
+  let suara = document.getElementById('layar-suara');
+  if(!suara) return;
+  setInterval(function(){
+    let sedangNgomong = window.MAVIX && window.MAVIX.sedangNgomong;
+    let micNyala = window.MAVIX && window.MAVIX.micNyala;
+    let bosNgomong = micNyala && window.MAVIX && window.MAVIX.antrianTerakhir;
+    suara.classList.remove('ngomong','dengar');
+    if(sedangNgomong) suara.classList.add('ngomong');
+    else if(bosNgomong) suara.classList.add('dengar');
+  }, 100);
+})();
+</script>
+</body>
+</html>
