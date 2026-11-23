@@ -3,53 +3,46 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>MAVIX - Mode Suara</title>
+<title>MAVIX - Teman Ngobrol Bos</title>
 <style>
   *{ box-sizing:border-box; margin:0; padding:0; }
-  body{ font-family: system-ui, -apple-system, sans-serif; background:#0f172a; color:#fff; height:100dvh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:16px; text-align:center; }
-  .judul{ font-size:28px; letter-spacing:4px; font-weight:800; }
-  .kecil{ font-size:13px; color:#94a3b8; margin-top:4px; }
-  #gelombang{ width:150px; height:150px; border-radius:50%; background:#1e293b; margin:28px 0; display:flex; align-items:center; justify-content:center; font-size:60px; transition:transform .2s; border:3px solid #334155; }
-  #gelombang.ngomong{ transform:scale(1.12); background:#2563eb; border-color:#60a5fa; }
-  #gelombang.dengar{ background:#dc2626; border-color:#f87171; }
-  #statusSuara{ font-size:15px; color:#e2e8f0; min-height:44px; line-height:1.5; padding:0 10px; }
-  #teksTerakhir{ font-size:13px; color:#94a3b8; margin-top:10px; min-height:20px; }
-  .tombol-besar{ width:100%; max-width:320px; :16px; border-radius:16px; border:none; font-size:17px; font-weight:700; margin-top:18px; }
-  #micBtn{ background:#2563eb; color:#fff; }
-  #micBtn.aktif{ background:#dc2626; }
-  #stopBtn{ background:#334155; color:#fff; }
-  .mode{ display:flex; gap:8px; width:100%; max-width:320px; margin-top:16px; }
-  .mode button{ flex:1; padding:11px; border-radius:12px; :1px solid #334155; background:#1e293b; color:#cbd5e1; }
+  body{ font-family: system-ui, -apple-system, sans-serif; background:#0f172a; color:#fff; height:100dvh; display:flex; flex-direction:column; background-image:url('mavixintesix.jpg'); background-size:cover; background-position:center; background-repeat:no-repeat; }
+  .kepala{ padding:14px 16px; background:rgba(15,23,42,0.85); display:flex; justify-content:space-between; align-items:center; }
+  .kepala b{ font-size:20px; letter-spacing:2px; }
+  .kepala span{ font-size:12px; color:#94a3b8; }
+  .mode{ display:flex; gap:8px; padding:10px 12px; background:rgba(15,23,42,0.85); border-top:1px solid #334155; }
+  .mode button{ flex:1; padding:10px; border:1px solid #334155; background:#0f172a; color:#cbd5e1; border-radius:12px; font-size:14px; }
   .mode button.aktif{ background:#2563eb; color:#fff; border-color:#2563eb; }
-  .pindah{ margin-top:18px; color:#60a5fa; font-size:13px; text-decoration:none; }
-  #input{ display:none; }
-  #chat{ display:none; }
-  #status{ display:none; }
-  #kirimBtn{ display:none; }
+  #chat{ flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:10px; }
+  .pesan{ max-width:85%; padding:11px 14px; border-radius:16px; font-size:15px; line-height:1.5; word-wrap:break-word; }
+  .pesan.user{ align-self:flex-end; background:#2563eb; color:#fff; border-bottom-right-radius:4px; }
+  .pesan.mavix{ align-self:flex-start; background:rgba(30,41,59,0.92); color:#e2e8f0; border-bottom-left-radius:4px; }
+  #status{ text-align:center; font-size:12px; color:#e2e8f0; padding:6px; min-height:22px; text-shadow:0 1px 3px #000; }
+  .bawah{ padding:10px 12px 14px; background:rgba(15,23,42,0.85); display:flex; gap:8px; align-items:center; }
+  #input{ flex:1; padding:13px 14px; border-radius:24px; border:1px solid #334155; background:#0f172a; color:#fff; font-size:15px; outline:none; }
+  #micBtn{ width:48px; height:48px; border-radius:50%; border:none; background:#334155; color:#fff; font-size:20px; flex-shrink:0; }
+  #micBtn.aktif{ background:#dc2626; }
+  #kirimBtn{ width:48px; height:48px; border-radius:50%; border:none; background:#2563eb; color:#fff; font-size:18px; flex-shrink:0; }
+  .pindah{ display:block; text-align:center; padding:8px; color:#60a5fa; font-size:13px; text-decoration:none; background:rgba(15,23,42,0.85); border-top:1px solid #334155; }
 </style>
 </head>
 <body>
-<div class="judul">MAVIX</div>
-<div class="kecil">Mode Suara Penuh</div>
-
-<div id="gelombang">🎤</div>
-<div id="statusSuara">Siap Bos. Tekan tombol bawah, lalu bicara.</div>
-<div id="teksTerakhir"></div>
-
-<button id="micBtn" class="tombol-besar">🎤 TEKAN UNTUK BICARA</button>
-<button id="stopBtn" class="tombol-besar" onclick="berhentiSemua()">⏹ BERHENTI</button>
-
+<div class="kepala">
+  <div><b>MAVIX</b><br><span>Teman Ngobrol Bos</span></div>
+  <span id="jamKepala">--:--</span>
+</div>
 <div class="mode">
   <button id="modeNgobrol" class="aktif" onclick="gantiMode('NGOBROL')">NGOBROL</button>
   <button id="modeBaca" onclick="gantiMode('BACA')">BACA</button>
 </div>
-
-<a class="pindah" href="index.html">← Kembali ke Mode Ketik</a>
-<input id="input" type="text">
 <div id="chat"></div>
-<div id="status"></div>
-<button id="kirimBtn"></button>
-
+<div id="status">Siap Bos.</div>
+<div class="bawah">
+  <button id="micBtn" title="Tekan untuk bicara">🎤</button>
+  <input id="input" type="text" placeholder="Ketik di sini Bos..." autocomplete="off">
+  <button id="kirimBtn" title="Kirim">➤</button>
+</div>
+<a class="pindah" href="suara.html">Pindah ke Mode Suara Penuh →</a>
 <script src="otak-ingatan.js"></script>
 <script src="otak-kecil.js"></script>
 <script src="otak-tengah.js"></script>
@@ -63,38 +56,23 @@
     document.getElementById('modeNgobrol').classList.toggle('aktif', mode === 'NGOBROL');
     document.getElementById('modeBaca').classList.toggle('aktif', mode === 'BACA');
   }
-  // Untuk halaman suara, tambah hanya tampilkan teks terakhir, bukan list chat
   function tambah(siapa, teks){
-    const el = document.getElementById('teksTerakhir');
-    if(el) el.innerText = (siapa === 'user' ? 'Bos: ' : 'Mavix: ') + teks;
-    // Simpan juga ke status, supaya Bos lihat
-    const s = document.getElementById('statusSuara');
-    if(s && siapa === 'mavix') s.innerText = teks;
+    const chat = document.getElementById('chat');
+    const d = document.createElement('div');
+    d.className = 'pesan ' + (siapa === 'user' ? 'user' : 'mavix');
+    d.innerText = teks;
+    chat.appendChild(d);
+    chat.scrollTop = chat.scrollHeight;
   }
   window.tambah = tambah;
-  function berhentiSemua(){
-    if(window.stopMulut) window.stopMulut();
-    if(window.hentikanDengar) window.hentikanDengar(true);
-    document.getElementById('statusSuara').innerText = "Baik Bos, saya diam.";
-    document.getElementById('gelombang').classList.remove('ngomong');
-    document.getElementById('gelombang').classList.remove('dengar');
+  function updateJam(){
+    const el = document.getElementById('jamKepala');
+    if(el) el.innerText = new Date().toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit' });
   }
-  // Gelombang mulut: nyala waktu Mavix ngomong
-  document.addEventListener('mavix-mulai-ngomong', () => {
-    document.getElementById('gelombang').classList.add('ngomong');
-    document.getElementById('gelombang').innerText = '🔊';
-  });
-  document.addEventListener('mavix-selesai-ngomong', () => {
-    document.getElementById('gelombang').classList.remove('ngomong');
-    document.getElementById('gelombang').innerText = '🎤';
-  });
-  // Ubah tombol mic, supaya jelas sedang dengar atau tidak
-  const micAsli = document.getElementById('micBtn');
-  // Mic asli di telinga.js pakai id micBtn, jadi kita pakai tombol yang sama
+  updateJam();
+  setInterval(updateJam, 30000);
   window.addEventListener('load', () => {
-    setTimeout(() => {
-      document.getElementById('statusSuara').innerText = "Halo Bos, saya MAVIX. Tekan tombol biru, lalu bicara.";
-    }, 300);
+    setTimeout(() => tambah('mavix', 'Halo Bos, saya MAVIX. Bos mau cerita apa hari ini?'), 300);
   });
 </script>
 </body>
