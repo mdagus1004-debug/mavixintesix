@@ -1,8 +1,8 @@
-// telinga.js - FINAL: Opening beda, Lanjutan beda
+// telinga.js - FINAL
 window.MAVIX = window.MAVIX || {};
 window.MAVIX.micNyala = false;
 window.MAVIX.recognition = null;
-window.MAVIX.sudahSapa = false; // TAMBAHAN: Untuk bedakan pertama dan lanjutan
+window.MAVIX.sudahSapa = false;
 let tombolMic = null;
 let lagiProsesTekan = false;
 
@@ -71,13 +71,15 @@ function tekanMic() {
   setTimeout(() => { lagiProsesTekan = false; }, 800);
   if (!tombolMic) tombolMic = document.getElementById('tombolMic');
 
-  // Lagi ngomong, Bos tekan = POTONG, LANGSUNG DIAM, TIDAK NGOMONG APA-APA
+  // Lagi ngomong, Bos potong / selah / stop - sekali klik
   if (window.MAVIX.sedangNgomong) {
     hentikanBicara();
     window.MAVIX.micNyala = true;
     window.MAVIX.sudahKirim = false;
-    setStatus('Lagi dengerin Bos...');
-    mulaiDengar();
+    if (tombolMic) tombolMic.style.background = '#ff4444';
+    bicara('Mavix mendengarkan...', () => {
+      mulaiDengar();
+    });
     return;
   }
 
@@ -93,21 +95,16 @@ function tekanMic() {
   window.MAVIX.sudahKirim = false;
   if (tombolMic) tombolMic.style.background = '#ff4444';
 
-  // ===== INI YANG DIBETULKAN BOS =====
-  // Kalau BELUM pernah sapa, ini opening pertama
   if (!window.MAVIX.sudahSapa) {
     window.MAVIX.sudahSapa = true;
     bicara('Ya, Mavix di sini. Mau cerita apa?', () => {
       mulaiDengar();
     });
   } else {
-    // Kalau SUDAH pernah sapa, ini lanjutan, jangan sapa lagi
-    // Langsung bilang "Mavix mendengarkan..."
     bicara('Mavix mendengarkan...', () => {
       mulaiDengar();
     });
   }
-  // ===== SAMPAI SINI =====
 }
 
 window.tekanMic = tekanMic;
