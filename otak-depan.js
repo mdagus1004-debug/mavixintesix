@@ -1,4 +1,21 @@
 // OTAK DEPAN - MANAJER MAVIX - VERSI BERSIH + AUTO MATI
+// PERBAIKAN NOMOR 2: Kirim namaBos, kesukaan, perasaan ke server
+
+function ambilDataBosDariCatatan(catatan){
+  let nama = "", suka = "", rasa = "";
+  try{
+    if(catatan){
+      let m1 = catatan.match(/Nama\s*:\s*([^\n]+)/i);
+      if(m1) nama = m1[1].trim();
+      let m2 = catatan.match(/Suka\s*:\s*([^\n]+)/i);
+      if(m2) suka = m2[1].trim();
+      let m3 = catatan.match(/Perasaan\s*:\s*([^\n]+)/i);
+      if(m3) rasa = m3[1].trim();
+    }
+  }catch(e){}
+  return { namaBos: nama, kesukaan: suka, perasaan: rasa };
+}
+
 async function kirim(){
   const inp = document.getElementById('input');
   if(!inp) return;
@@ -49,7 +66,9 @@ async function kirim(){
     if(chatTerakhir) pesanLengkap += "CHAT TERAKHIR:\n" + chatTerakhir + "\n\n";
     pesanLengkap += "Pertanyaan Bos: " + teks;
     let modeKirim = (typeof window.modeMavix !== 'undefined' && window.modeMavix) ? window.modeMavix : "NGOBROL";
-    const res = await fetch('/chat', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ message: pesanLengkap, mode: modeKirim }) });
+    // DIUBAH NOMOR 2 - 1
+    let dataBos = ambilDataBosDariCatatan(catatan);
+    const res = await fetch('/chat', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ message: pesanLengkap, mode: modeKirim, namaBos: dataBos.namaBos, kesukaan: dataBos.kesukaan, perasaan: dataBos.perasaan }) });
     const data = await res.json();
     const jawab = data.reply || 'Bos, saya tidak dapat jawab tadi!';
     tambah('mavix', jawab);
@@ -113,7 +132,9 @@ async function kirimPesanSuara(teks){
     if(chatTerakhir) pesanLengkap += "CHAT TERAKHIR:\n" + chatTerakhir + "\n\n";
     pesanLengkap += "Pertanyaan Bos: " + teks;
     let modeKirim = (typeof window.modeMavix !== 'undefined' && window.modeMavix) ? window.modeMavix : "NGOBROL";
-    const res = await fetch('/chat', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ message: pesanLengkap, mode: modeKirim }) });
+    // DIUBAH NOMOR 2 - 2
+    let dataBos = ambilDataBosDariCatatan(catatan);
+    const res = await fetch('/chat', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ message: pesanLengkap, mode: modeKirim, namaBos: dataBos.namaBos, kesukaan: dataBos.kesukaan, perasaan: dataBos.perasaan }) });
     const data = await res.json();
     const jawab = data.reply || 'Bos, saya tidak dapat jawab tadi!';
     jawabSuara(jawab);
