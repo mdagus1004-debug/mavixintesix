@@ -1,4 +1,4 @@
-// MULUT MAVIX V2.3 - BACA PANJANG SAMPAI HABIS
+// MULUT MAVIX V2.4 - BACA PENDEK, NGOBROL PANJANG
 let audioSekarang = null;
 let sedangBicara = false;
 let antrianSuara = [];
@@ -66,6 +66,12 @@ async function bicara(teks) {
   stopMulut();
   teks = bersihkanTeksUntukSuara(teks);
   if (!teks) return;
+  // PERBAIKAN: Kalau BACA, baca 2 ayat pertama saja
+  if (window.modeMavix === "BACA") {
+    let ayat = teks.split(/(?<=[.!?])\s+/);
+    teks = ayat.slice(0, 2).join(" ");
+  }
+  // Kalau NGOBROL, biar semua, jangan dipotong
   antrianSuara = potongTeksPanjang(teks);
   sedangBicara = true;
   if (typeof mavixNgomong === "function") mavixNgomong(true);
