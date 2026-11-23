@@ -14,7 +14,6 @@ body { height:100vh; overflow:hidden; background:#000; }
   background-size:cover; background-position:center;
   overflow:hidden;
   animation: bernafas 5s ease-in-out infinite;
-  /* DIPERBAIKI: Gambar tidak boleh nangkep klik, biar klik tembus ke tombol */
   pointer-events:none;
 }
 @keyframes bernafas{
@@ -22,7 +21,6 @@ body { height:100vh; overflow:hidden; background:#000; }
   50%{ transform:scale(1.0); }
 }
 
-/* Tombol di atas gambar */
 #wadah-tombol{
   position:fixed; bottom:40px; left:0; width:100%; text-align:center;
   z-index:9999;
@@ -45,10 +43,8 @@ body { height:100vh; overflow:hidden; background:#000; }
 <body>
 <div id="layar-suara"></div>
 
-<!-- Tombol keluar, di luar gambar -->
 <button id="btnKeluar" onclick="window.location.href='index.html'">✕</button>
 
-<!-- Tombol mic, di luar gambar, di atas gambar -->
 <div id="wadah-tombol">
   <button id="tombolMic">🎤</button>
   <div id="status" style="color:white; margin-top:10px; text-shadow:0 1px 5px black;">Tekan mic, lalu bicara</div>
@@ -68,26 +64,6 @@ window.tambah = tambah;
 <script>
 window.modeMavix = "NGOBROL";
 localStorage.setItem('modeMavix', "NGOBROL");
-
-// DARURAT: Kalau telinga.js gagal, tombol tetap jalan
-// Ini yang bikin tombol tidak mati total lagi
-setTimeout(() => {
-  const btn = document.getElementById('tombolMic');
-  if (btn && !btn.dataset.sudahPasang) {
-    btn.dataset.sudahPasang = 'ya';
-    btn.addEventListener('click', () => {
-      console.log('Tombol ditekan, tekanMic ada?', typeof tekanMic);
-      if (typeof tekanMic === 'function') {
-        tekanMic();
-      } else if (window.MAVIX && typeof window.MAVIX.tekanMic === 'function') {
-        window.MAVIX.tekanMic();
-      } else {
-        document.getElementById('status').textContent = 'ERROR: telinga.js tidak ke-load, cek nama file';
-        alert('telinga.js tidak ke-load Bos, cek nama file di folder');
-      }
-    });
-  }
-}, 500);
 </script>
 </body>
 </html>
