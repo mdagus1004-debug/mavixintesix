@@ -5,8 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MAVIX</title>
 
-<!-- Gambar Bos cuma 200KB, jadi ringan, tapi tetap kita preload supaya langsung muncul -->
-<link rel="preload" as="image" href="mavixintesix.jpg">
+<!-- PERBAIKAN: preload yang lama dibuang, karena bikin peringatan kuning di Chrome -->
+<!-- Gantinya load diam-diam setelah web terbuka, jadi pas pencet NGOBROL SUARA, gambar langsung muncul -->
+<script>
+  window.addEventListener('load', function(){
+    setTimeout(function(){
+      let img = new Image();
+      img.src = 'mavixintesix.jpg';
+    }, 1000);
+  });
+</script>
 
 <style>
   body{ font-family: Arial, sans-serif; margin:0; padding:0; background:#111; color:white; }
