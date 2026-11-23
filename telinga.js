@@ -1,7 +1,4 @@
-// telinga.js - VERSI SUDAH DIBETULI, YANG TERAKHIR
-// Yang dibetuli: BUANG ambilTerakhir, HANTAR AYAT PENUH
-// Yang lain tak berubah: 2 detik tetap, tampung tetap, tak potong Mavix tetap
-
+// telinga.js - VERSI SUDAH DIBETULI, JANGAN DENGAR SUARA SENDIRI LAGI
 window.MAVIX = window.MAVIX || {};
 window.MAVIX.micNyala = false;
 window.MAVIX.recognition = null;
@@ -11,8 +8,9 @@ window.MAVIX.adaTampung = window.MAVIX.adaTampung || false;
 window.MAVIX.timerJawab = null;
 window.MAVIX.antrianTerakhir = "";
 window.MAVIX.waktuBosMulaiNgomong = window.MAVIX.waktuBosMulaiNgomong || 0;
+window.MAVIX.teksMavixTerakhir = window.MAVIX.teksMavixTerakhir || "";
+window.MAVIX.waktuMavixNgomongTerakhir = window.MAVIX.waktuMavixNgomongTerakhir || 0;
 
-// === NOMBOR 1: BAGI DIA 2 DETIK, 2 DETIK SAJA ===
 const WAKTU_SUARA_BOS_HABIS = 2000; // 2 detik
 
 function setStatus(teks){
@@ -22,17 +20,36 @@ function setStatus(teks){
   if(b) b.innerText = teks;
 }
 
-function iniSuaraMavixSendiri(teksBos, teksMavix){
-  if(!teksBos || !teksMavix) return false;
+// === INI YANG SUDAH DIBETULI, BOS - YANG INI YANG BIKIN MUTER TADI ===
+function iniSuaraMavixSendiri(teksBos){
+  if(!teksBos) return false;
   let a = teksBos.toLowerCase().trim();
-  let b = teksMavix.toLowerCase().trim();
+
+  // Ambil ayat Mavix yang baru saja dia cakap
+  let b1 = (window.MAVIX.kalimatSekarang || "").toLowerCase().trim();
+  let b2 = (window.MAVIX.teksMavixTerakhir || "").toLowerCase().trim();
+  let b = b2 || b1;
+  if(!b) return false;
+
+  // 1. Kalau ayat Bos SAMA BETUL dengan ayat Mavix, buang terus
+  // Contoh: Bos dengar "halo bos ada yang bisa saya bantu" = ayat Mavix tadi, buang
+  if(a === b) return true;
   if(b.includes(a) && a.length > 3) return true;
+  if(a.includes(b) && b.length > 3) return true;
+
+  // 2. Kalau 70% kata sama dengan ayat Mavix, buang
   let kataBos = a.split(" ");
   let sama = 0;
   for(let k of kataBos){
     if(k.length > 2 && b.includes(k)) sama++;
   }
   if(kataBos.length > 0 && (sama / kataBos.length) > 0.7) return true;
+
+  // 3. Kalau Bos dengar ini dalam masa 3 detik lepas Mavix ngomong, dan ayat dia hampir sama, buang
+  // Ini untuk cover kalau sedangNgomong sudah jadi false, tapi suara Mavix masih masuk ke mic
+  let selisih = Date.now() - (window.MAVIX.waktuMavixNgomongTerakhir || 0);
+  if(selisih < 3000 && sama > 0) return true;
+
   return false;
 }
 
@@ -54,7 +71,6 @@ function buatTelinga(){
   rec.onresult = function(event){
     let hasilFinal = "";
     let hasilSementara = "";
-
     for(let i = event.resultIndex; i < event.results.length; i++){
       let hasil = event.results[i][0].transcript.trim();
       if(event.results[i].isFinal) hasilFinal += hasil;
@@ -71,12 +87,13 @@ function buatTelinga(){
       let teks = hasilFinal.trim();
       if(!teks) return;
 
-      if(window.MAVIX.sedangNgomong && iniSuaraMavixSendiri(teks, window.MAVIX.kalimatSekarang)){
+      // === INI YANG BARU, BOS: JANGAN HARAP sedangNgomong SAJA ===
+      // Kalau ayat ini sama dengan ayat Mavix tadi, buang terus, tak kira sedangNgomong true ke false
+      if(iniSuaraMavixSendiri(teks)){
         setStatus("Itu suara Mavix sendiri, saya buang saja, bukan suara Bos");
         return;
       }
 
-      // === TAMPUNG = SIMPAN DULU, JANGAN KIRIM LAGI ===
       if(iniTopikBaru(teks) || window.MAVIX.antrianTerakhir === ""){
         window.MAVIX.antrianTerakhir = teks;
       } else {
@@ -87,8 +104,6 @@ function buatTelinga(){
       setStatus("Dengar: " + window.MAVIX.antrianTerakhir + " (Tampung dulu, tunggu Bos diam 2 detik...)");
 
       if(window.MAVIX.timerJawab) clearTimeout(window.MAVIX.timerJawab);
-
-      // === NOMBOR 1: TUNGGU BOS DIAM 2 DETIK, 2 DETIK ===
       window.MAVIX.timerJawab = setTimeout(function(){
         if(window.MAVIX.antrianTerakhir !== ""){
           const yangBosCakap = window.MAVIX.antrianTerakhir;
@@ -104,7 +119,8 @@ function buatTelinga(){
   };
 
   rec.onend = function(){
-    if(window.MAVIX.micNyala){
+    // Jangan auto-start di sini kalau Mavix tengah ngomong, biar mulut.js yang buka balik
+    if(window.MAVIX.micNyala && !window.MAVIX.sedangNgomong){
       try{ rec.start(); }catch(e){}
     }
   };
@@ -121,7 +137,6 @@ function buatTelinga(){
 function tekanMic(){
   if(!window.MAVIX.recognition) window.MAVIX.recognition = buatTelinga();
   if(!window.MAVIX.recognition) return;
-
   if(!window.MAVIX.micNyala){
     window.MAVIX.micNyala = true;
     window.MAVIX.antrianTerakhir = "";
@@ -149,13 +164,7 @@ function updateTombolMic(){
   if(btn){ btn.style.background = window.MAVIX.micNyala ? "#ff4444" : "#1e90ff"; }
 }
 
-// === INI YANG SUDAH DIBETULI, BOS ===
 function kirimKeOtak(teks){
-  // DULU: const yangTerakhir = ambilTerakhir(teks); -> SALAH, DIA POTONG
-  // SEKARANG: HANTAR AYAT PENUH, JANGAN POTONG LAGI
-  // Biar Otak Kecil potong sendiri, biar Otak Tengah potong sendiri
-  // Biar Otak Ingatan simpan semua, nama + suka + tinggal, tak hilang
-  // Biar Otak Besar faham cerita penuh Bos
   const yangBosCakapPenuh = teks.trim();
   setStatus("Mavix mikir: " + yangBosCakapPenuh + " (Mavix terus ngomong teks lama, jangan diam)");
   if(typeof tambah === "function") tambah('user', yangBosCakapPenuh);
