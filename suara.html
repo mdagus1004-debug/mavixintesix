@@ -14,16 +14,15 @@ body { height:100vh; overflow:hidden; background:#000; }
   overflow:hidden;
   animation: bernafas 5s ease-in-out infinite;
   cursor:pointer;
-  /* INI YANG SAYA BETULKAN - DARI none JADI auto, BIAR BISA DITEKAN */
   pointer-events:auto;
 }
 @keyframes bernafas{
   0%,100%{ transform:scale(1.03); }
   50%{ transform:scale(1.0); }
 }
+/* DISEMBUNYIKAN SAJA - FUNGSI TETAP JALAN, BOS TEKAN BADAN V SAJA */
 #wadah-tombol{
-  position:fixed; bottom:40px; left:0; width:100%; text-align:center;
-  z-index:9999; pointer-events:auto;
+  display: none !important;
 }
 #tombolMic{
   width:80px; height:80px; border-radius:50%;
@@ -38,8 +37,7 @@ body { height:100vh; overflow:hidden; background:#000; }
 </style>
 </head>
 <body>
-<!-- INI YANG SAYA BETULKAN - TAMBAH onclick="tekanMic()" -->
-<div id="layar-suara" onclick="tekanMic()"></div>
+<div id="layar-suara"></div>
 <button id="btnKeluar" onclick="window.location.href='index.html'">✕</button>
 <div id="wadah-tombol">
   <button id="tombolMic">🎤</button>
