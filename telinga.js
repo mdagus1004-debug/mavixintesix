@@ -1,165 +1,58 @@
-// telinga.js - FINAL MAVIX
-// Klik 1: "Ya, Mavix di sini. Mau cerita apa?"
-// Klik nyelah / klik lagi: "Mavix mendengarkan"
-
 window.MAVIX = window.MAVIX || {};
-window.MAVIX.micNyala = false;
-window.MAVIX.recognition = null;
-
-let tombolMic = null;
-let lagiProsesTekan = false;
-let sudahPernahSapa = false;
-
-function setStatus(teks) {
-  const el = document.getElementById('status');
-  if (el) el.textContent = teks;
+let rec = null;
+let micNyala = false;
+let sudahPasangTelinga = false;
+function hentikanDengar(sementara){
+  try{ if(rec) rec.stop(); }catch(e){}
+  micNyala = false;
+  if(window.MAVIX.manajer && !sementara) window.MAVIX.manajer.selesaiDengar();
 }
-
-function matikanMicOtomatis() {
-  window.MAVIX.micNyala = false;
-  if (window.MAVIX.recognition) {
-    try { window.MAVIX.recognition.stop(); } catch(e) {}
-  }
-  if (tombolMic) tombolMic.style.background = '#1e90ff';
-  setStatus('Tekan mic untuk ngobrol lagi');
-}
-
-function buatRecognition() {
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) { setStatus('Browser tidak dukung mic'); return null; }
-  const rec = new SR();
-  rec.lang = 'id-ID';
-  rec.continuous = false;
-  rec.interimResults = true;
-
-  rec.onresult = (event) => {
-    let teksFinal = '';
-    let teksSementara = '';
-    for (let i = event.resultIndex; i < event.results.length; i++) {
-      if (event.results[i].isFinal) {
-        teksFinal += event.results[i][0].transcript;
-      } else {
-        teksSementara += event.results[i][0].transcript;
-      }
+function mulaDengar(){
+  if(window.MAVIX.manajer && !window.MAVIX.manajer.mulaiDengar()) return;
+  if(window.MAVIX.sedangNgomong) return;
+  if(micNyala) return;
+  try{
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if(!SR){
+      if(window.MAVIX.manajer) window.MAVIX.manajer.setStatus("Mic tak sokong di HP ni Bos, taip saja ya.");
+      if(window.tunjukTeksDarurat) window.tunjukTeksDarurat("Mic tak sokong Bos, taip saja ya.");
+      return;
     }
-    if (teksSementara.trim()) {
-      setStatus('Dengar: ' + teksSementara.trim());
+    if(!rec){
+      rec = new SR(); rec.lang='id-ID'; rec.interimResults=false; rec.continuous=false;
+      rec.onresult = (e) => { const hasil = e.results[0][0].transcript; hentikanDengar(); if(window.kirim) window.kirim(hasil); };
+      rec.onend = () => { micNyala = false; if(window.MAVIX.manajer) window.MAVIX.manajer.selesaiDengar(); };
+      rec.onerror = (e) => { micNyala = false; if(window.MAVIX.manajer) window.MAVIX.manajer.setStatus("Mic error Bos: " + e.error); if(window.tunjukTeksDarurat) window.tunjukTeksDarurat("Mic error Bos: " + e.error + ". Taip saja ya."); };
     }
-    if (teksFinal.trim()) {
-      const kirim = teksFinal.trim();
-      setStatus('Proses: ' + kirim);
-      try { rec.stop(); } catch(e) {}
-      if (typeof kirimPesanSuara === 'function') {
-        kirimPesanSuara(kirim);
-      }
-    }
-  };
-
-  rec.onend = () => {
-    if (window.MAVIX.micNyala && !window.MAVIX.sedangNgomong && !window.MAVIX.sudahKirim) {
-      try { rec.start(); } catch(e) {}
-    }
-  };
-
-  rec.onerror = (e) => {
-    if (e.error === 'not-allowed') {
-      setStatus('Mic ditolak, izinkan mic di browser Bos');
-      window.MAVIX.micNyala = false;
-    }
-  };
-  return rec;
-}
-
-function mulaiDengar() {
-  window.MAVIX.sudahKirim = false;
-  if (!window.MAVIX.recognition) {
-    window.MAVIX.recognition = buatRecognition();
-  }
-  try {
-    window.MAVIX.recognition.start();
-    setStatus('Lagi dengerin Bos...');
-  } catch(e) {}
-}
-
-function stopDengarSaja() {
-  if (window.MAVIX.recognition) {
-    try { window.MAVIX.recognition.stop(); } catch(e) {}
+    rec.start(); micNyala = true;
+    if(window.MAVIX.manajer) window.MAVIX.manajer.setStatus("Mavix mendengarkan...");
+  }catch(e){
+    micNyala = false;
+    if(window.MAVIX.manajer) window.MAVIX.manajer.setStatus("Mic tak boleh mula Bos, cuba tekan lagi. " + e.message);
+    if(window.tunjukTeksDarurat) window.tunjukTeksDarurat("Mic tak hidup Bos, taip saja di sini ya.");
   }
 }
-
-function amanHentikanBicara() {
-  if (typeof hentikanBicara === 'function') {
-    try { hentikanBicara(); } catch(e) {}
-  } else if ('speechSynthesis' in window) {
-    window.speechSynthesis.cancel();
+// INI YANG TADI HILANG: Pasang tombol + layar sekali saja, jangan 2 kali
+function pasangTombolMic(){
+  if(sudahPasangTelinga) return;
+  sudahPasangTelinga = true;
+  const tombol = document.getElementById('tombolMic');
+  if(tombol){
+    tombol.addEventListener('click', (e) => { e.stopPropagation(); mulaDengar(); });
   }
-}
-
-function amanBicara(teks, cb) {
-  if (typeof bicara === 'function') {
-    try { bicara(teks, cb); return; } catch(e) {}
-  }
-  if (cb) cb();
-}
-
-function tekanMic(e) {
-  if (e) e.stopPropagation();
-  if (lagiProsesTekan) return;
-  lagiProsesTekan = true;
-  setTimeout(() => { lagiProsesTekan = false; }, 800);
-  if (!tombolMic) tombolMic = document.getElementById('tombolMic');
-
-  // 1. MAVIX TENGAH NGOMONG, BOS KLIK MAU NYELAH
-  if (window.MAVIX.sedangNgomong) {
-    amanHentikanBicara();
-    window.MAVIX.micNyala = true;
-    window.MAVIX.sudahKirim = false;
-    amanBicara('Mavix mendengarkan', () => {
-      setStatus('Lagi dengerin Bos...');
-      mulaiDengar();
-    });
-    return;
-  }
-
-  // 2. MAVIX TENGAH DENGAR, BOS KLIK MAU STOP
-  if (window.MAVIX.micNyala) {
-    matikanMicOtomatis();
-    amanHentikanBicara();
-    return;
-  }
-
-  // 3. MIC MATI, BOS KLIK MAU NGOBROL
-  window.MAVIX.micNyala = true;
-  window.MAVIX.sudahKirim = false;
-  if (tombolMic) tombolMic.style.background = '#ff4444';
-
-  if (!sudahPernahSapa) {
-    sudahPernahSapa = true;
-    amanBicara('Ya, Mavix di sini. Mau cerita apa?', () => {
-      mulaiDengar();
-    });
-  } else {
-    amanBicara('Mavix mendengarkan', () => {
-      mulaiDengar();
-    });
-  }
-}
-
-window.tekanMic = tekanMic;
-window.MAVIX.tekanMic = tekanMic;
-window.MAVIX.matikanMicOtomatis = matikanMicOtomatis;
-
-function pasangTombolMic() {
-  tombolMic = document.getElementById('tombolMic');
-  if (tombolMic && !tombolMic.dataset.sudahPasang) {
-    tombolMic.dataset.sudahPasang = 'ya';
-    tombolMic.addEventListener('click', tekanMic);
-  }
+  // Layar suara cuma pasang kalau ada, dan cuma 1 kali
   const layar = document.getElementById('layar-suara');
-  if (layar && !layar.dataset.sudahPasang) {
-    layar.dataset.sudahPasang = 'ya';
-    layar.addEventListener('click', tekanMic);
+  if(layar && !layar.dataset.mavixPasang){
+    layar.dataset.mavixPasang = "1";
+    layar.addEventListener('click', () => { mulaDengar(); });
   }
 }
-pasangTombolMic();
-document.addEventListener('DOMContentLoaded', pasangTombolMic);
+if(document.readyState === 'loading'){
+  document.addEventListener('DOMContentLoaded', pasangTombolMic);
+} else {
+  pasangTombolMic();
+}
+window.mulaDengar = mulaDengar;
+window.hentikanDengar = hentikanDengar;
+window.tekanMic = mulaDengar;
+window.pasangTombolMic = pasangTombolMic;
