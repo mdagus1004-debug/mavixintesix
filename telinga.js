@@ -1,29 +1,36 @@
-// telinga.js - VERSI BERSIH, 1 TOMBOL SAJA, ANTI DOUBLE
+// telinga.js - FINAL: 1x Jawab Langsung Mati, Anti Double, Tanpa Omongan "Mendengarkan"
 window.MAVIX = window.MAVIX || {};
 window.MAVIX.micNyala = false;
 window.MAVIX.recognition = null;
 
 let tombolMic = null;
-let lagiProsesTekan = false; // KUNCI ANTI DOUBLE
+let lagiProsesTekan = false;
 
 function setStatus(teks) {
   const el = document.getElementById('status');
   if (el) el.textContent = teks;
 }
 
+function matikanMicOtomatis() {
+  window.MAVIX.micNyala = false;
+  if (window.MAVIX.recognition) {
+    try { window.MAVIX.recognition.stop(); } catch(e) {}
+  }
+  if (tombolMic) tombolMic.style.background = '#1e90ff';
+  setStatus('Tekan mic untuk ngobrol lagi');
+}
+
 function buatRecognition() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) { setStatus('Browser tidak dukung mic'); return null; }
-
   const rec = new SR();
   rec.lang = 'id-ID';
-  rec.continuous = true;
+  rec.continuous = false;
   rec.interimResults = true;
 
   rec.onresult = (event) => {
     let teksFinal = '';
     let teksSementara = '';
-
     for (let i = event.resultIndex; i < event.results.length; i++) {
       if (event.results[i].isFinal) {
         teksFinal += event.results[i][0].transcript;
@@ -31,41 +38,36 @@ function buatRecognition() {
         teksSementara += event.results[i][0].transcript;
       }
     }
-
     if (teksSementara.trim()) {
       setStatus('Dengar: ' + teksSementara.trim());
     }
-
-    // Langsung kirim, tanpa 0,5 detik
     if (teksFinal.trim()) {
       const kirim = teksFinal.trim();
       setStatus('Proses: ' + kirim);
+      try { rec.stop(); } catch(e) {}
       if (typeof kirimPesanSuara === 'function') {
         kirimPesanSuara(kirim);
-      } else {
-        setStatus('ERROR: kirimPesanSuara tidak ketemu');
       }
     }
   };
 
   rec.onend = () => {
-    if (window.MAVIX.micNyala && !window.MAVIX.sedangNgomong) {
+    if (window.MAVIX.micNyala && !window.MAVIX.sedangNgomong && !window.MAVIX.sudahKirim) {
       try { rec.start(); } catch(e) {}
     }
   };
 
   rec.onerror = (e) => {
-    console.log('Mic error:', e.error);
     if (e.error === 'not-allowed') {
       setStatus('Mic ditolak, izinkan mic di browser Bos');
       window.MAVIX.micNyala = false;
     }
   };
-
   return rec;
 }
 
 function mulaiDengar() {
+  window.MAVIX.sudahKirim = false;
   if (!window.MAVIX.recognition) {
     window.MAVIX.recognition = buatRecognition();
   }
@@ -82,38 +84,31 @@ function stopDengarSaja() {
 }
 
 function tekanMic() {
-  // KUNCI: Kalau baru ditekan, abaikan tekanan kedua dalam 0,8 detik
-  if (lagiProsesTekan) {
-    console.log('Tekan double, diabaikan');
-    return;
-  }
+  if (lagiProsesTekan) return;
   lagiProsesTekan = true;
   setTimeout(() => { lagiProsesTekan = false; }, 800);
-
   if (!tombolMic) tombolMic = document.getElementById('tombolMic');
 
-  // Lagi ngomong, Bos tekan = POTONG
+  // Lagi ngomong, Bos tekan = POTONG, LANGSUNG DIAM, TIDAK NGOMONG "MENDENGARKAN" LAGI
   if (window.MAVIX.sedangNgomong) {
     hentikanBicara();
     window.MAVIX.micNyala = true;
-    bicara('Mavix mendengarkan...', () => {
-      mulaiDengar();
-    });
+    window.MAVIX.sudahKirim = false;
+    setStatus('Lagi dengerin Bos...');
+    mulaiDengar();
     return;
   }
 
   // Lagi dengar, Bos tekan = MATI
   if (window.MAVIX.micNyala) {
-    window.MAVIX.micNyala = false;
-    stopDengarSaja();
+    matikanMicOtomatis();
     hentikanBicara();
-    setStatus('Mic mati');
-    if (tombolMic) tombolMic.style.background = '#1e90ff';
     return;
   }
 
-  // Mic mati, Bos tekan = SAPA
+  // Mic mati, Bos tekan = SAPA, MULAI LAGI
   window.MAVIX.micNyala = true;
+  window.MAVIX.sudahKirim = false;
   if (tombolMic) tombolMic.style.background = '#ff4444';
   bicara('Ya, Mavix di sini. Mau cerita apa?', () => {
     mulaiDengar();
@@ -122,16 +117,14 @@ function tekanMic() {
 
 window.tekanMic = tekanMic;
 window.MAVIX.tekanMic = tekanMic;
+window.MAVIX.matikanMicOtomatis = matikanMicOtomatis;
 
-// Pasang tombol, 1x saja
 function pasangTombolMic() {
   tombolMic = document.getElementById('tombolMic');
   if (tombolMic && !tombolMic.dataset.sudahPasang) {
     tombolMic.dataset.sudahPasang = 'ya';
     tombolMic.addEventListener('click', tekanMic);
-    console.log('Tombol mic sudah dipasang');
   }
 }
-
 pasangTombolMic();
 document.addEventListener('DOMContentLoaded', pasangTombolMic);
