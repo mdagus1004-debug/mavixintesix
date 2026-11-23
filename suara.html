@@ -3,44 +3,62 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mavix</title>
+<title>MAVIXINTESIX - SUARA</title>
 <style>
-  body {
-    margin: 0;
-    background: #000;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    overflow: hidden;
-  }
-  /* Badan V Mavix - ini tombolnya */
-  #gambarMavix {
-    width: 90vw;
-    max-width: 380px;
-    cursor: pointer;
-    -webkit-tap-highlight-color: transparent;
-    transition: transform 0.15s;
-  }
-  #gambarMavix:active {
-    transform: scale(0.96);
-  }
-  /* Tombol mic & tulisan disembunyikan saja, fungsi tetap ada */
-  #tombolMic, #status {
-    display: none !important;
-  }
+* { margin:0; padding:0; box-sizing:border-box; font-family:sans-serif; }
+body { height:100vh; overflow:hidden; background:#000; }
+#layar-suara{
+  position:fixed; top:0; left:0; width:100%; height:100%;
+  background-image:url('mavixintesix.jpg');
+  background-size:cover; background-position:center;
+  overflow:hidden;
+  animation: bernafas 5s ease-in-out infinite;
+  cursor:pointer;
+  /* INI YANG SAYA BETULKAN - DARI none JADI auto, BIAR BISA DITEKAN */
+  pointer-events:auto;
+}
+@keyframes bernafas{
+  0%,100%{ transform:scale(1.03); }
+  50%{ transform:scale(1.0); }
+}
+#wadah-tombol{
+  position:fixed; bottom:40px; left:0; width:100%; text-align:center;
+  z-index:9999; pointer-events:auto;
+}
+#tombolMic{
+  width:80px; height:80px; border-radius:50%;
+  border:3px solid white; background:#1e90ff; color:white;
+  font-size:35px; cursor:pointer; pointer-events:auto; touch-action:manipulation;
+}
+#btnKeluar{
+  position:fixed; top:15px; right:15px; width:40px; height:40px;
+  border-radius:50%; border:none; background:white; color:black;
+  font-size:20px; font-weight:bold; cursor:pointer; z-index:9999;
+}
 </style>
 </head>
 <body>
-
-  <!-- GAMBAR MAVIX - BADAN V - TEKAN SINI -->
-  <img id="gambarMavix" src="mavixintesix.jpg" onclick="tekanMic()" alt="Mavix">
-
-  <!-- Tetap ada tapi disembunyikan, jangan dibuang -->
-  <button id="tombolMic"></button>
-  <p id="status"></p>
-
+<!-- INI YANG SAYA BETULKAN - TAMBAH onclick="tekanMic()" -->
+<div id="layar-suara" onclick="tekanMic()"></div>
+<button id="btnKeluar" onclick="window.location.href='index.html'">✕</button>
+<div id="wadah-tombol">
+  <button id="tombolMic">🎤</button>
+  <div id="status" style="color:white; margin-top:10px; text-shadow:0 1px 5px black;">Tekan mic, lalu bicara</div>
+  <div id="statusSuara" style="display:none;"></div>
+</div>
+<script>
+function tambah(siapa, teks){}
+window.tambah = tambah;
+</script>
+<script src="otak-ingatan.js"></script>
+<script src="otak-kecil.js"></script>
+<script src="otak-tengah.js"></script>
+<script src="mulut.js"></script>
 <script src="telinga.js"></script>
 <script src="otak-depan.js"></script>
+<script>
+window.modeMavix = "NGOBROL";
+localStorage.setItem('modeMavix', "NGOBROL");
+</script>
 </body>
 </html>
