@@ -42,8 +42,8 @@ function ambilCatatan(laci){
 function catatOtomatis(teks){
   if(!teks) return;
   let tFull = teks.toLowerCase();
-  let bahagian = tFull.split("?")[0];
-  let t = bahagian.trim().length > 3 ? bahagian : tFull.replace(/\?/g, "");
+  let bagian = tFull.split("?")[0];
+  let t = bagian.trim().length > 3 ? bagian : tFull.replace(/\?/g, "");
   if(t.startsWith("siapa") || t.startsWith("apa") || t.startsWith("mana") || t.startsWith("dimana") || t.startsWith("kapan")) return;
   if(t.includes("siapa nama saya") || t.includes("nama saya siapa") || t.includes("saya suka apa") || t.includes("saya di mana") || t.includes("saya tinggal di mana") || t.includes("kerja saya apa")) return;
   let m;
