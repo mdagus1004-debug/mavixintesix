@@ -1,5 +1,5 @@
-// OTAK KECIL - SATPAM DEPAN V4
-// Aturan ngomong: Baru jadi jawaban utama, lama jadi tambahan info
+// OTAK KECIL - SATPAM DEPAN V4.1
+// Aturan: Baru jadi jawaban utama, lama jadi tambahan info
 // Aturan: Pilih dulu sebelum ngomong, jangan ngomong semua
 
 function pikirKecil(teks){
@@ -13,7 +13,6 @@ function pikirKecil(teks){
   // Kata pendek
   if(tt === "siapa" || tt === "kamu siapa") return "Saya Mavix, Bos. Asisten Bos.";
   if(tt === "dimana" || tt === "di mana" || tt === "kamu dimana") return "Saya di sini, Bos. Di Chromebook Bos.";
-  if(tt === "hallo" || tt === "halo" || tt === "hai" || tt === "hei") return "Halo Bos, ada yang bisa saya bantu?";
 
   // STOP paling atas
   if(tt.includes("stop") || tt.includes("diam") || tt.includes("berhenti") || tt.includes("cukup")) return "__STOP__";
@@ -28,7 +27,7 @@ function pikirKecil(teks){
     if(semua.length === 1) return kalimatAwal + " " + semua[0] + ".";
     let baru = semua[semua.length - 1];
     let lama = semua.slice(0, -1).join(", ");
-    return "Terakhir Bos bilang " + kalimatAwal.toLowerCase() + " " + baru + ". Tapi sebelum itu, Bos pernah bilang " + lama + ".";
+    return "Terakhir Bos bilang " + kalimatAwal + " " + baru + ". Tapi sebelum itu, Bos pernah bilang " + lama + ".";
   }
 
   if(tt.includes("siapa nama saya") || tt.includes("nama saya siapa")){
@@ -54,8 +53,8 @@ function pikirKecil(teks){
   if(tt.includes("apa kabar") || tt.includes("gimana kabar")) return "Kabar saya baik, Bos. Bos sendiri gimana?";
   if(tt.includes("terima kasih") || tt.includes("makasih") || tt.includes("thanks")) return "Sama-sama, Bos. Senang bisa bantu.";
 
-  return null; // Tidak kenal -> lempar ke Otak Besar
+  return null; // Tidak kenal -> pulang ke Manajer. Manajer coba Otak Tengah dulu, baru Otak Besar
 }
 window.pikirKecil = pikirKecil;
 window.fikirKecil = pikirKecil;
-window.OtakKecil = { fikirKecil: function(teks, cb){ const j = pikirKecil(teks); if(typeof cb === 'function' && j) cb(j); return j; } };
+window.OtakKecil = { fikirKecil: pikirKecil };
