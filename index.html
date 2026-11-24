@@ -46,8 +46,6 @@ body.siang .btn svg { fill:#fff; }
 #btnMode { border:none; background:transparent; font-size:24px; cursor:pointer; }
 .bar-mode { display:flex; gap:8px; padding:7px 10px; justify-content:flex-start; overflow-x:auto; white-space:nowrap; }
 .bar-mode button { flex:none; padding:6px 14px; border:none; border-radius:15px; font-weight:bold; font-size:13px; cursor:pointer; }
-
-/* ===== BARU: GAYA 3 - PANEL LEMARI ===== */
 #panelLemari { display:none; max-height:42vh; overflow-y:auto; padding:10px 12px 12px; border-bottom:1px solid rgba(0,0,0,0.1); }
 #panelLemari.buka { display:block; }
 body.siang #panelLemari { background:rgba(255,255,255,0.92); }
@@ -74,7 +72,6 @@ body.malam .isi-row { background:#050818; border:1px solid #2e4a7a; }
 body.malam .btn-tambah-isi { color:#22d3ee; border-color:#22d3ee; }
 .btn-hapus-laci { border:none; background:transparent; color:#EF4444; font-size:11px; font-weight:bold; padding:7px 8px; cursor:pointer; width:100%; text-align:left; }
 .lemari-kosong { text-align:center; font-size:13px; padding:15px; opacity:0.7; }
-
 #chatBox { flex:1; overflow-y:auto; padding:15px; display:flex; flex-direction:column; gap:12px; }
 .msg { max-width:82%; padding:12px 16px; border-radius:18px; font-size:16px; line-height:1.45; }
 .mavix { align-self:flex-start; }
@@ -96,11 +93,8 @@ body.malam .btn-tambah-isi { color:#22d3ee; border-color:#22d3ee; }
   <button id="btnNgobrol" class="aktif" onclick="gantiMode('NGOBROL')">💬 Ngobrol</button>
   <button id="btnBaca" onclick="gantiMode('BACA')">📖 Baca</button>
   <button onclick="window.location.href='suara.html'" style="background:#ff9800 !important; color:white !important;">🎤 Ngobrol Suara</button>
-  <!-- BARU: TOMBOL PEMBUKA LEMARI -->
   <button id="btnLemari" onclick="toggleLemari()">🗄️ Lemari</button>
 </div>
-
-<!-- BARU: PANEL GAYA 3 - DI ANTARA BAR-MODE DAN CHATBOX -->
 <div id="panelLemari">
   <div class="lemari-atas">
     <b>🗄️ Lemari Mavix</b>
@@ -108,7 +102,6 @@ body.malam .btn-tambah-isi { color:#22d3ee; border-color:#22d3ee; }
   </div>
   <div id="daftarLaci"></div>
 </div>
-
 <div id="chatBox"></div>
 <div class="input-row">
   <input id="input" placeholder="Tulis untuk MAVIX...">
@@ -136,10 +129,79 @@ window.tambah = tambah;
 <script src="telinga.js"></script>
 <script src="otak-depan.js"></script>
 <script>
-window.modeMavix = localStorage.getItem('modeMavix') || "NGOBROL";
-function gantiMode(modeBaru){
+// ===== BARU: GUDANG IndexedDB - PENGGANTI localStorage TOTAL =====
+let dbPromise = null;
+function bukaDB(){
+  if(dbPromise) return dbPromise;
+  dbPromise = new Promise((resolve, reject) => {
+    const req = indexedDB.open('mavixDB', 1);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if(!db.objectStoreNames.contains('kunci')) db.createObjectStore('kunci');
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+  return dbPromise;
+}
+async function idbGet(kunci){
+  try{
+    const db = await bukaDB();
+    return await new Promise((resolve, reject) => {
+      const tx = db.transaction('kunci', 'readonly');
+      const req = tx.objectStore('kunci').get(kunci);
+      req.onsuccess = () => resolve(req.result === undefined ? null : req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }catch(e){ return null; }
+}
+async function idbSet(kunci, nilai){
+  const db = await bukaDB();
+  return await new Promise((resolve, reject) => {
+    const tx = db.transaction('kunci', 'readwrite');
+    tx.objectStore('kunci').put(nilai, kunci);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+async function idbHapus(kunci){
+  const db = await bukaDB();
+  return await new Promise((resolve) => {
+    const tx = db.transaction('kunci', 'readwrite');
+    tx.objectStore('kunci').delete(kunci);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => resolve();
+  });
+}
+// Pindah data lama localStorage -> IndexedDB, sekali saja, lalu hapus localStorage
+async function pindahDariLocalStorage(){
+  try{
+    if(localStorage.length === 0) return;
+    const daftar = ['modeMavix','modeBackground','modeBackgroundManualHari','lemariMavix'];
+    for(const k of daftar){
+      const v = localStorage.getItem(k);
+      if(v !== null){
+        let simpan = v;
+        try{ simpan = JSON.parse(v); }catch(e){}
+        const lama = await idbGet(k);
+        if(lama === null) await idbSet(k, simpan);
+      }
+    }
+    // Hapus semua kunci lama kita
+    for(const k of daftar) localStorage.removeItem(k);
+  }catch(e){}
+}
+window.idbGet = idbGet;
+window.idbSet = idbSet;
+window.idbHapus = idbHapus;
+window.bukaDB = bukaDB;
+</script>
+<script>
+// ===== MODE NGOBROL / BACA + SIANG / MALAM - SUDAH PAKAI IndexedDB =====
+window.modeMavix = "NGOBROL";
+async function gantiMode(modeBaru){
   window.modeMavix = modeBaru;
-  localStorage.setItem('modeMavix', modeBaru);
+  await idbSet('modeMavix', modeBaru);
   document.getElementById('btnNgobrol').classList.toggle('aktif', modeBaru === 'NGOBROL');
   document.getElementById('btnBaca').classList.toggle('aktif', modeBaru === 'BACA');
 }
@@ -149,31 +211,49 @@ function terapkanMode(mode){
   document.getElementById('btnMode').innerText = mode === 'siang' ? '☀️' : '🌙';
 }
 function modeAutoIkutJam(){ const jam = new Date().getHours(); return (jam >= 6 && jam < 18) ? 'siang' : 'malam'; }
-function gantiBackgroundManual(){
+async function gantiBackgroundManual(){
   const sekarang = document.body.classList.contains('siang') ? 'malam' : 'siang';
   terapkanMode(sekarang);
-  localStorage.setItem('modeBackground', sekarang);
-  localStorage.setItem('modeBackgroundManualHari', new Date().toDateString());
+  await idbSet('modeBackground', sekarang);
+  await idbSet('modeBackgroundManualHari', new Date().toDateString());
 }
-const manualHari = localStorage.getItem('modeBackgroundManualHari');
-if(manualHari === new Date().toDateString()){ terapkanMode(localStorage.getItem('modeBackground') || 'siang'); }
-else { terapkanMode(modeAutoIkutJam()); localStorage.removeItem('modeBackground'); }
-setInterval(function(){ if(localStorage.getItem('modeBackgroundManualHari') !== new Date().toDateString()) terapkanMode(modeAutoIkutJam()); }, 60000);
-window.gantiMode = gantiMode;
 document.getElementById('input').addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); document.getElementById('kirimBtn').click(); } });
-gantiMode(window.modeMavix);
+window.gantiMode = gantiMode;
 
-// ===== BARU: LOGIKA GAYA 3 - LEMARI BUKA TUTUP =====
-let lemariData = JSON.parse(localStorage.getItem('lemariMavix') || 'null');
-if(!lemariData){
-  lemariData = [
-    { nama: 'nama', terbuka: false, isi: ['Bos'] },
-    { nama: 'suka', terbuka: true, isi: ['kopi', 'nasi lemak'] },
-    { nama: 'hobi', terbuka: false, isi: ['ngobrol'] }
-  ];
-  localStorage.setItem('lemariMavix', JSON.stringify(lemariData));
+// Jalan pertama: pindah data lama, lalu baca dari IndexedDB
+(async function initMode(){
+  await pindahDariLocalStorage();
+  window.modeMavix = (await idbGet('modeMavix')) || "NGOBROL";
+  gantiMode(window.modeMavix);
+  const manualHari = await idbGet('modeBackgroundManualHari');
+  if(manualHari === new Date().toDateString()){
+    terapkanMode((await idbGet('modeBackground')) || 'siang');
+  } else {
+    terapkanMode(modeAutoIkutJam());
+    await idbHapus('modeBackground');
+  }
+  setInterval(async function(){
+    const hari = await idbGet('modeBackgroundManualHari');
+    if(hari !== new Date().toDateString()) terapkanMode(modeAutoIkutJam());
+  }, 60000);
+})();
+
+// ===== LEMARI GAYA 3 - SUDAH PAKAI IndexedDB =====
+let lemariData = [];
+async function muatLemari(){
+  const data = await idbGet('lemariMavix');
+  if(data && Array.isArray(data)){ lemariData = data; }
+  else {
+    lemariData = [
+      { nama: 'nama', terbuka: false, isi: ['Bos'] },
+      { nama: 'suka', terbuka: true, isi: ['kopi', 'nasi lemak'] },
+      { nama: 'hobi', terbuka: false, isi: ['ngobrol'] }
+    ];
+    await idbSet('lemariMavix', lemariData);
+  }
+  window.lemariData = lemariData;
 }
-function simpanLemari(){ localStorage.setItem('lemariMavix', JSON.stringify(lemariData)); }
+async function simpanLemari(){ window.lemariData = lemariData; await idbSet('lemariMavix', lemariData); }
 function toggleLemari(){
   const panel = document.getElementById('panelLemari');
   const btn = document.getElementById('btnLemari');
@@ -209,37 +289,36 @@ function renderLemari(){
     </div>`;
   }).join('');
 }
-function toggleLaci(i){ lemariData[i].terbuka = !lemariData[i].terbuka; simpanLemari(); renderLemari(); }
-function tambahLaci(){
+async function toggleLaci(i){ lemariData[i].terbuka = !lemariData[i].terbuka; await simpanLemari(); renderLemari(); }
+async function tambahLaci(){
   const nama = prompt('Nama laci baru apa? contoh: cita-cita');
   if(!nama) return;
   lemariData.push({ nama: nama.trim(), terbuka: true, isi: [] });
-  simpanLemari(); renderLemari();
+  await simpanLemari(); renderLemari();
 }
-function tambahIsi(i){
+async function tambahIsi(i){
   const isi = prompt('Isi baru untuk laci ' + lemariData[i].nama + ':');
   if(!isi) return;
   lemariData[i].isi.push(isi.trim());
-  simpanLemari(); renderLemari();
+  await simpanLemari(); renderLemari();
 }
-function ubahIsi(i, j){
+async function ubahIsi(i, j){
   const baru = prompt('Ubah "' + lemariData[i].isi[j] + '" jadi apa?', lemariData[i].isi[j]);
   if(baru === null || baru.trim() === '') return;
   lemariData[i].isi[j] = baru.trim();
-  simpanLemari(); renderLemari();
+  await simpanLemari(); renderLemari();
 }
-function hapusIsi(i, j){
+async function hapusIsi(i, j){
   if(!confirm('Hapus "' + lemariData[i].isi[j] + '" dari laci ' + lemariData[i].nama + '?')) return;
   lemariData[i].isi.splice(j, 1);
-  simpanLemari(); renderLemari();
+  await simpanLemari(); renderLemari();
 }
-function hapusLaci(i){
+async function hapusLaci(i){
   if(!confirm('Hapus laci ' + lemariData[i].nama + ' beserta semua isinya?')) return;
   lemariData.splice(i, 1);
-  simpanLemari(); renderLemari();
+  await simpanLemari(); renderLemari();
 }
-// Supaya otak-ingatan.js yang lama bisa pakai data baru ini
-window.lemariData = lemariData;
+muatLemari();
 window.renderLemari = renderLemari;
 window.simpanLemari = simpanLemari;
 </script>
