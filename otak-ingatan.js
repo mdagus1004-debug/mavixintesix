@@ -1,85 +1,127 @@
-// OTAK INGATAN MAVIX V3 - VERSI BETUL, TIDAK SIMPAN PERTANYAAN
-function bersihkanTeksIngatan(teks){
+// OTAK INGATAN MAVIX V4 - GABUNGAN
+// Aturan: 2 mesin saja - IndexedDB untuk simpan, Inverted Index untuk cari
+// Aturan: ID anti timpa, simpan pakai ADD, ingatan cuma nambah, tidak ubah
+// Aturan: Baru jadi utama, lama jadi tambahan
+
+let db;
+let kamus = JSON.parse(localStorage.getItem("mavix_kamus") || "{}");
+// Contoh kamus awal: {"suka": ["doyan","demen"], "jalan-jalan": ["nongkrong"]}
+
+function bukaDB(){
+  return new Promise((res)=>{
+    let req = indexedDB.open("OtakKecilCS", 1);
+    req.onupgradeneeded = e => {
+      db = e.target.result;
+      let store = db.createObjectStore("chats", { keyPath: "id" });
+      // Ini Inverted Index-nya
+      store.createIndex("by_kata", "kata", { multiEntry: true });
+    };
+    req.onsuccess = e => { db = e.target.result; res(db); };
+  });
+}
+
+function buatID(){
+  return Date.now() + "-" + Math.random().toString(36).slice(2,7);
+}
+
+function bersihkanTeks(teks){
   if(!teks) return "";
   let t = teks.toLowerCase().trim();
   t = t.replace(/\b(banget|sangat|sekali|dong|ya|lho|kok|deh)\b/g, "");
-  t = t.replace(/\b(sebagai|jadi|adalah|itu)\b/g, "");
   t = t.replace(/\s+/g, " ").trim();
   return t;
 }
-function simpanObrolan(siapa, teks){
-  try{
-    let arsip = JSON.parse(localStorage.getItem("mavix_arsip") || "[]");
-    arsip.push({ siapa, teks, waktu: Date.now() });
-    if(arsip.length > 50) arsip = arsip.slice(-50);
-    localStorage.setItem("mavix_arsip", JSON.stringify(arsip));
-  }catch(e){}
+
+// KAMUS: samakan kata baru ke kata dasar
+function samakanKata(kata){
+  kata = kata.toLowerCase();
+  if(kamus[kata]) return kata;
+  for(let dasar in kamus){
+    if(kamus[dasar].includes(kata)) return dasar;
+  }
+  return kata;
 }
-function ambilArsip(){ try{ return JSON.parse(localStorage.getItem("mavix_arsip") || "[]"); }catch(e){ return []; } }
+
+function simpanKamus(kataBaru, kataDasar){
+  kataDasar = kataDasar.toLowerCase(); kataBaru = kataBaru.toLowerCase();
+  if(!kamus[kataDasar]) kamus[kataDasar] = [];
+  if(!kamus[kataDasar].includes(kataBaru)) kamus[kataDasar].push(kataBaru);
+  localStorage.setItem("mavix_kamus", JSON.stringify(kamus));
+}
+
+// SIMPAN - Pakai ADD, bukan PUT, supaya tidak timpa
+async function simpanObrolan(siapa, teks){
+  if(!db) await bukaDB();
+  if(!teks) return;
+  // Jangan simpan pertanyaan yang menanyakan ingatan
+  let t = teks.toLowerCase();
+  if(t.includes("?") && (t.includes("saya suka apa") || t.includes("nama saya") || t.includes("saya di mana") || t.includes("kerja saya"))) return;
+
+  let kata = bersihkanTeks(teks).split(/[^a-z0-9]+/).filter(Boolean).map(samakanKata);
+  let data = { id: buatID(), siapa, teks, kata, waktu: Date.now() };
+  let tx = db.transaction("chats", "readwrite");
+  tx.objectStore("chats").add(data); // ADD = anti timpa
+
+  // Tetap simpan ke laci lama supaya Satpam lama tetap jalan
+  catatOtomatis(teks);
+}
+
+// CARI - Tanya ke Inverted Index, ambil kalimat utuh
+async function cariKata(kataKunci){
+  if(!db) await bukaDB();
+  kataKunci = samakanKata(kataKunci.toLowerCase().trim());
+  return new Promise(r=>{
+    let tx = db.transaction("chats", "readonly");
+    let req = tx.objectStore("chats").index("by_kata").getAll(kataKunci);
+    req.onsuccess = ()=> r(req.result.sort((a,b)=> b.waktu - a.waktu)); // Baru paling atas
+  });
+}
+
+// LACI LAMA - Biar file lama Bos tetap jalan, tidak dibuang
 function catat(laci, isi){
   try{
     let lemari = JSON.parse(localStorage.getItem("mavix_lemari") || "{}");
-    lemari[laci] = isi;
+    // Simpan sebagai list, bukan 1 saja, supaya tidak timpa
+    if(!lemari[laci]) lemari[laci] = [];
+    if(!lemari[laci].includes(isi)) lemari[laci].push(isi);
     localStorage.setItem("mavix_lemari", JSON.stringify(lemari));
   }catch(e){}
 }
 function ambilCatatan(laci){
-  try{ let lemari = JSON.parse(localStorage.getItem("mavix_lemari") || "{}"); return lemari[laci] || null; }catch(e){ return null; }
+  try{
+    let lemari = JSON.parse(localStorage.getItem("mavix_lemari") || "{}");
+    let v = lemari[laci];
+    if(Array.isArray(v)) return v[v.length-1]; // Ambil yang terbaru
+    return v || null;
+  }catch(e){ return null; }
+}
+function ambilSemuaCatatan(laci){
+  try{
+    let lemari = JSON.parse(localStorage.getItem("mavix_lemari") || "{}");
+    let v = lemari[laci];
+    return Array.isArray(v) ? v : (v ? [v] : []);
+  }catch(e){ return []; }
 }
 function catatOtomatis(teks){
   if(!teks) return;
   const t = teks.toLowerCase();
-  // JANGAN SIMPAN PERTANYAAN - ini yang dulu bikin ingat "mana" dan "apa"
   if(t.includes("?")) return;
-  if(t.includes("siapa nama saya") || t.includes("nama saya siapa") || t.includes("saya suka apa") || t.includes("saya di mana") || t.includes("saya tinggal di mana") || t.includes("kerja saya apa") || t.includes("saya kerja apa")) return;
+  if(t.includes("siapa nama saya") || t.includes("saya suka apa") || t.includes("saya di mana")) return;
   let m;
-  m = t.match(/nama saya (?:adalah )?([^,?.]+)/); if(m) catat("nama", bersihkanTeksIngatan(m[1]));
-  m = t.match(/saya suka ([^,?.]+)/); if(m){
-    // Jangan simpan kalau yang disuka itu "apa"
-    const v = bersihkanTeksIngatan(m[1]);
-    if(v && v !== "apa" && v !== "mana") catat("suka", v);
-  }
-  m = t.match(/hobi saya (?:adalah )?([^,?.]+)/); if(m) catat("hobi", bersihkanTeksIngatan(m[1]));
-  m = t.match(/makanan favorit saya (?:adalah )?([^,?.]+)|makanan saya (?:adalah )?([^,?.]+)|saya suka makan ([^,?.]+)/); if(m) catat("makanan", bersihkanTeksIngatan(m[1]||m[2]||m[3]));
-  m = t.match(/minuman favorit saya (?:adalah )?([^,?.]+)|minuman saya (?:adalah )?([^,?.]+)|saya suka minum ([^,?.]+)/); if(m) catat("minuman", bersihkanTeksIngatan(m[1]||m[2]||m[3]));
-  m = t.match(/saya tinggal di ([^,?.]+)|rumah saya di ([^,?.]+)/); if(m) catat("kota", bersihkanTeksIngatan(m[1]||m[2]));
-  m = t.match(/saya kerja (?:sebagai )?([^,?.]+)|pekerjaan saya (?:adalah )?([^,?.]+)/); if(m){
-    const v = bersihkanTeksIngatan(m[1]||m[2]);
-    if(v && v !== "apa") catat("pekerjaan", v);
-  }
+  m = t.match(/nama saya (?:adalah )?([^,?.]+)/); if(m) catat("nama", bersihkanTeks(m[1]));
+  m = t.match(/saya suka ([^,?.]+)/); if(m){ let v = bersihkanTeks(m[1]); if(v && v!=="apa" && v!=="mana") catat("suka", v); }
+  m = t.match(/hobi saya (?:adalah )?([^,?.]+)/); if(m) catat("hobi", bersihkanTeks(m[1]));
+  m = t.match(/saya tinggal di ([^,?.]+)|rumah saya di ([^,?.]+)/); if(m) catat("kota", bersihkanTeks(m[1]||m[2]));
+  m = t.match(/saya kerja (?:sebagai )?([^,?.]+)|pekerjaan saya (?:adalah )?([^,?.]+)/); if(m){ let v = bersihkanTeks(m[1]||m[2]); if(v && v!=="apa") catat("pekerjaan", v); }
   m = t.match(/saya (sedih|senang|marah|lelah|capek|lapar|ngantuk|kesal|bahagia)/); if(m) catat("perasaan", m[1]);
 }
-function buatCatatanUntukOtakBesar(){
-  const nama = ambilCatatan("nama"), suka = ambilCatatan("suka"), hobi = ambilCatatan("hobi"), makanan = ambilCatatan("makanan"), minuman = ambilCatatan("minuman"), kota = ambilCatatan("kota"), pekerjaan = ambilCatatan("pekerjaan"), perasaan = ambilCatatan("perasaan");
-  let s = "CATATAN TENTANG BOS:\n";
-  if(nama) s += "- Nama: " + nama + "\n";
-  if(suka) s += "- Suka: " + suka + "\n";
-  if(hobi) s += "- Hobi: " + hobi + "\n";
-  if(makanan) s += "- Makanan favorit: " + makanan + "\n";
-  if(minuman) s += "- Minuman favorit: " + minuman + "\n";
-  if(kota) s += "- Tinggal di: " + kota + "\n";
-  if(pekerjaan) s += "- Pekerjaan: " + pekerjaan + "\n";
-  if(perasaan) s += "- Perasaan terakhir: " + perasaan + "\n";
-  if(s === "CATATAN TENTANG BOS:\n") return "";
-  return s;
-}
-function ambilChatTerakhir(jumlah){
-  const arsip = ambilArsip().slice(-(jumlah || 4));
-  return arsip.map(a => (a.siapa === "user" ? "Bos: " : "Mavix: ") + a.teks).join("\n");
-}
-function buatRingkasanArsip(){
-  const arsip = ambilArsip();
-  if(arsip.length === 0) return "";
-  const terakhir = arsip.slice(-10).map(a => (a.siapa === "user" ? "Bos: " : "Mavix: ") + a.teks).join("\n");
-  return "RINGKASAN ARSIP TERAKHIR:\n" + terakhir;
-}
+
 window.simpanChat = simpanObrolan;
 window.catat = catat;
 window.ambilCatatan = ambilCatatan;
-window.ambilIngatan = ambilCatatan;
+window.ambilSemuaCatatan = ambilSemuaCatatan;
 window.ingatOtomatis = catatOtomatis;
-window.catatOtomatis = catatOtomatis;
-window.buatCatatanUntukOtakBesar = buatCatatanUntukOtakBesar;
-window.ambilChatTerakhir = ambilChatTerakhir;
-window.buatRingkasanArsip = buatRingkasanArsip;
-window.bersihkanTeksIngatan = bersihkanTeksIngatan;
+window.cariKata = cariKata;
+window.samakanKata = samakanKata;
+window.simpanKamus = simpanKamus;
+window.bukaDB = bukaDB;
