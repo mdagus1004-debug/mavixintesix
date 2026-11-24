@@ -1,3 +1,81 @@
+// kataTanya - ASLI, TIDAK DIHAPUS
+const kataTanya = {
+  apa: [
+    "ap", "pa",
+    "apaa", "apaaa", "aapa", "aaapa",
+    "appan", "apatuh",
+    "apa itu", "apaitu",
+    "apasih", "apa sih",
+    "apa tuh", "apa tu",
+    "apa aja", "apaaja",
+    "apa saja", "apasaja",
+    "ape", "apo"
+  ],
+
+  siapa: [
+    "sp", "sapa", "siapa",
+    "siapaa", "siapaaa", "siapaa",
+    "sape", "sapa tu", "siapa tu",
+    "siapa tuh", "siapa sih", "siapasih",
+    "siapa aja", "siapaaja",
+    "siapa saja", "siapasaja",
+    "sape ni", "siapa ni",
+    "siapa ya"
+  ],
+
+  kapan: [
+    "kp", "kpn", "kapan",
+    "kapaan", "kapann", "kapaaan",
+    "kapan sih", "kapansih",
+    "bila", "bilaa", "bila ya",
+    "kapan ya"
+  ],
+
+  dimana: [
+    "dmn", "dmana", "dimana",
+    "dimna", "dimaana", "dimaanaa",
+    "dimana sih", "dimanasih",
+    "dimana tuh", "dimana tu",
+    "dimana aja", "dimanaaja", "dimana saja", "dimanasaja",
+    "mana", "manaa", "di mana", "di mana tuh",
+    "dimana nih", "di mana ya",
+    "kat mana", "katmana", "kat mana tu"
+  ],
+
+  mengapa: [
+    "mngp", "mengapa", "mengapaa",
+    "kenapa", "knp", "kenapaa", "knapa",
+    "mengapa sih", "mengapasih",
+    "kenapa sih", "kenapasih",
+    "kenapa tuh", "kenapa tu",
+    "mengapa tuh", "mengapa tu",
+    "kenapa ya", "mengapa ya",
+    "kok", "kok bisa", "kenapa kok",
+    "pasal apa", "pasaipa", "nape", "nape ni"
+  ],
+
+  bagaimana: [
+    "bgm", "bgmn", "bagaimana",
+    "bagaimna", "bagaimanaa", "bagaimnaa",
+    "gimana", "gmna", "gmn", "gimna",
+    "bagaimana sih", "bagaimanasih",
+    "gimana sih", "gimana sih",
+    "gimana tuh", "gimana tu",
+    "bagaimana tuh", "bagaimana tu",
+    "macam mana", "macammana", "cm mana",
+    "camne", "cmne", "mcm mana"
+  ],
+
+  berapa: [
+    "brp", "berapa", "berapaa",
+    "berapa sih", "berapasih",
+    "berapa tuh", "berapa tu",
+    "berapa ya", "berapa ni",
+    "brape", "brape ni",
+    "berapa harga", "berapa harganya"
+  ]
+};
+
 // OTAK KECIL - SATPAM DEPAN - VERSI BETUL
 function pikirKecil(teks){
   if(!teks) return null;
@@ -56,6 +134,18 @@ function pikirKecil(teks){
   if(tt.includes("apa kabar") || tt.includes("gimana kabar") || tt.includes("kabar kamu")) return "Kabar saya baik, Bos. Bos sendiri gimana?";
   if(tt.includes("terima kasih") || tt.includes("makasih") || tt.includes("thanks")) return "Sama-sama, Bos. Senang bisa bantu.";
   if(tt.includes("kamu siapa") || tt.includes("nama kamu")) return "Saya Mavix, Bos. Asisten Bos.";
+  // TAMBAHAN BARU: DETEKSI kataTanya - tidak ada yang dihapus di atas
+  for (const jenis in kataTanya) {
+    if (kataTanya[jenis].some(k => tt === k || tt.startsWith(k + " "))) {
+      if (jenis === "siapa") return "Siapa yang Bos maksud?";
+      if (jenis === "dimana") return "Di mana yang Bos maksud?";
+      if (jenis === "kapan") return "Kapan ya, Bos?";
+      if (jenis === "mengapa") return "Kenapa ya, Bos? Coba cerita dulu.";
+      if (jenis === "bagaimana") return "Gimana ya, Bos? Boleh jelaskan lagi?";
+      if (jenis === "berapa") return "Berapa ya, Bos?";
+      if (jenis === "apa") return "Apa ya, Bos? Boleh jelaskan lagi?";
+    }
+  }
   return null;
 }
 window.pikirKecil = pikirKecil;
