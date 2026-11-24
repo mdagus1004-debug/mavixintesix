@@ -1,60 +1,131 @@
-// OTAK KECIL - SATPAM DEPAN V4.1
-// Aturan: Baru jadi jawaban utama, lama jadi tambahan info
-// Aturan: Pilih dulu sebelum ngomong, jangan ngomong semua
+// ==========================================
+// OTAK KECIL - Mavix
+// Tugas: Jawab cepat dari ingatan
+// Sekarang: Ngambil dari index di DB (by_kata)
+// Yang lain biarin, tidak diubah
+// ==========================================
 
-function pikirKecil(teks){
-  if(!teks) return null;
-  const t = teks.toLowerCase().trim();
-  let pot = t.split(/[,.\n]| eh | terus | lalu /);
-  let tt = pot[pot.length - 1].trim();
-  if(tt === "" && pot.length > 1) tt = pot[pot.length - 2].trim();
-  if(!tt) tt = t;
-
-  // Kata pendek
-  if(tt === "siapa" || tt === "kamu siapa") return "Saya Mavix, Bos. Asisten Bos.";
-  if(tt === "dimana" || tt === "di mana" || tt === "kamu dimana") return "Saya di sini, Bos. Di Chromebook Bos.";
-
-  // STOP paling atas
-  if(tt.includes("stop") || tt.includes("diam") || tt.includes("berhenti") || tt.includes("cukup")) return "__STOP__";
-  if(tt.includes("jam berapa") || tt.includes("pukul berapa")){
-    const s = new Date(); return "Sekarang jam " + s.getHours() + ":" + s.getMinutes().toString().padStart(2,"0") + ", Bos.";
+// Ambil dari index di DB pakai cariKata
+async function ambilDariIndex(kataKunci) {
+  try {
+    if (typeof cariKata !== 'function') return null;
+    const hasil = await cariKata(kataKunci.toLowerCase());
+    if (!hasil || hasil.length === 0) return null;
+    // cariKata sudah sort paling baru paling atas
+    return hasil[0].teks;
+  } catch (e) {
+    return null;
   }
-
-  // Fungsi bantu - Baru jadi utama, lama jadi tambahan
-  function jawabLaci(laci, kalimatAwal, kalimatKosong){
-    let semua = (typeof ambilSemuaCatatan === 'function' ? ambilSemuaCatatan(laci) : []);
-    if(semua.length === 0) return kalimatKosong;
-    if(semua.length === 1) return kalimatAwal + " " + semua[0] + ".";
-    let baru = semua[semua.length - 1];
-    let lama = semua.slice(0, -1).join(", ");
-    return "Terakhir Bos bilang " + kalimatAwal + " " + baru + ". Tapi sebelum itu, Bos pernah bilang " + lama + ".";
-  }
-
-  if(tt.includes("siapa nama saya") || tt.includes("nama saya siapa")){
-    const v = (typeof ambilCatatan === 'function' ? ambilCatatan("nama") : null);
-    return v ? "Nama Bos " + v + "." : "Saya belum tahu nama Bos. Nama Bos siapa?";
-  }
-  if(tt.includes("saya suka apa") || tt.includes("apa yang saya suka") || tt.includes("saya demen apa") || tt.includes("saya doyan apa")){
-    return jawabLaci("suka", "Bos suka", "Bos belum pernah bilang Bos suka apa.");
-  }
-  if(tt.includes("hobi saya apa") || tt.includes("apa hobi saya")){
-    return jawabLaci("hobi", "Hobi Bos", "Bos belum pernah bilang hobi Bos apa.");
-  }
-  if(tt.includes("saya tinggal di mana") || tt.includes("saya di mana") || tt.includes("rumah saya di mana")){
-    return jawabLaci("kota", "Bos tinggal di", "Saya belum tahu Bos tinggal di mana.");
-  }
-  if(tt.includes("kerja saya apa") || tt.includes("saya kerja apa")){
-    return jawabLaci("pekerjaan", "Bos kerja", "Bos belum pernah bilang Bos kerja apa.");
-  }
-  if(tt.includes("saya marah") || tt.includes("saya kesal")) return "Sabar ya, Bos. Tarik napas dulu. Cerita saja sama saya, kenapa Bos marah?";
-  if(tt.includes("saya lapar")) return "Wah, Bos lapar ya? Makan dulu, Bos. Jangan tahan lapar.";
-  if(tt.includes("mau tidur") || tt.includes("ngantuk")) return "Oke Bos, selamat istirahat ya. Jangan lupa minum air.";
-  if(tt.includes("halo") || tt.includes("hai") || tt.includes("selamat pagi") || tt.includes("selamat malam") || tt.includes("assalamualaikum")) return "Halo Bos, ada yang bisa saya bantu?";
-  if(tt.includes("apa kabar") || tt.includes("gimana kabar")) return "Kabar saya baik, Bos. Bos sendiri gimana?";
-  if(tt.includes("terima kasih") || tt.includes("makasih") || tt.includes("thanks")) return "Sama-sama, Bos. Senang bisa bantu.";
-
-  return null; // Tidak kenal -> pulang ke Manajer. Manajer coba Otak Tengah dulu, baru Otak Besar
 }
-window.pikirKecil = pikirKecil;
-window.fikirKecil = pikirKecil;
-window.OtakKecil = { fikirKecil: pikirKecil };
+
+// Fungsi lama, biarin saja - jangan hapus
+function ambilCatatan(kunci) {
+  try {
+    const data = JSON.parse(localStorage.getItem("mavix_lemari") || "{}");
+    return data[kunci] || null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function ambilSemuaCatatan(kunci) {
+  try {
+    const data = JSON.parse(localStorage.getItem("mavix_lemari") || "{}");
+    const val = data[kunci];
+    if (Array.isArray(val)) return val;
+    if (val) return [val];
+    return [];
+  } catch (e) {
+    return [];
+  }
+}
+
+// ==========================================
+// OTAK KECIL UTAMA
+// Urutan: Kecil -> Index DB dulu
+// Ketemu = jawab, Tidak ketemu = return null -> lempar ke Tengah
+// ==========================================
+async function fikirKecil(teks) {
+  if (!teks) return null;
+  const t = teks.toLowerCase().trim();
+
+  // 1. NAMA SAYA SIAPA
+  if (t.includes("nama saya") || t.includes("siapa nama saya") || t.includes("namaku siapa")) {
+    // Coba index dulu
+    const dariIndex = await ambilDariIndex("nama");
+    if (dariIndex) return "Nama Bos " + dariIndex + ".";
+    // Kalau index kosong, coba laci lama (biarin)
+    const lama = ambilCatatan("nama");
+    if (lama) return "Nama Bos " + lama + ".";
+    return null;
+  }
+
+  // 2. SAYA SUKA APA
+  if (t.includes("saya suka apa") || t.includes("apa yang saya suka") || t.includes("aku suka apa")) {
+    const dariIndex = await ambilDariIndex("suka");
+    if (dariIndex) return "Dari chat Bos, Bos pernah bilang: " + dariIndex;
+    const lama = ambilSemuaCatatan("suka");
+    if (lama.length > 0) return "Bos suka " + lama.join(", ") + ".";
+    return null;
+  }
+
+  // 3. HOBI SAYA APA
+  if (t.includes("hobi saya") || t.includes("hobi ku") || t.includes("hobi aku")) {
+    const dariIndex = await ambilDariIndex("hobi");
+    if (dariIndex) return "Hobi Bos: " + dariIndex;
+    const lama = ambilSemuaCatatan("hobi");
+    if (lama.length > 0) return "Hobi Bos " + lama.join(", ") + ".";
+    return null;
+  }
+
+  // 4. SAYA TINGGAL DIMANA
+  if (t.includes("tinggal dimana") || t.includes("tinggal di mana") || t.includes("rumah saya dimana") || t.includes("kota saya")) {
+    const dariIndex = await ambilDariIndex("tinggal");
+    if (dariIndex) return "Bos tinggal di " + dariIndex + ".";
+    const lama = ambilCatatan("tinggal") || ambilCatatan("kota");
+    if (lama) return "Bos tinggal di " + lama + ".";
+    return null;
+  }
+
+  // 5. PEKERJAAN SAYA APA
+  if (t.includes("pekerjaan saya") || t.includes("kerja saya") || t.includes("kerja apa")) {
+    const dariIndex = await ambilDariIndex("kerja");
+    if (dariIndex) return "Kerja Bos: " + dariIndex;
+    const lama = ambilCatatan("kerja") || ambilCatatan("pekerjaan");
+    if (lama) return "Kerja Bos " + lama + ".";
+    return null;
+  }
+
+  // 6. PERASAAN / KEADAAN TERAKHIR
+  if (t.includes("gimana perasaan") || t.includes("perasaan saya") || t.includes("aku lagi apa")) {
+    const dariIndex = await ambilDariIndex("perasaan");
+    if (dariIndex) return "Terakhir Bos bilang: " + dariIndex;
+    return null;
+  }
+
+  // 7. ULANGI CHAT TERAKHIR / APA YANG BARU SAYA BILANG
+  if (t.includes("tadi saya bilang apa") || t.includes("apa yang baru saya bilang") || t.includes("terakhir saya bilang")) {
+    const dariIndex = await ambilDariIndex("saya");
+    if (dariIndex) return "Terakhir Bos bilang: " + dariIndex;
+    return null;
+  }
+
+  // 8. SAPAAN BIASA - tidak perlu index
+  if (t === "halo" || t === "hai" || t === "hi" || t.includes("halo mavix")) {
+    return "Halo Bos, ada di sini.";
+  }
+  if (t.includes("terima kasih") || t.includes("makasih")) {
+    return "Sama-sama Bos.";
+  }
+  if (t.includes("selamat pagi")) return "Selamat pagi Bos.";
+  if (t.includes("selamat malam")) return "Selamat malam Bos.";
+
+  // Tidak ketemu -> kembalikan null, Manajer lempar ke Tengah
+  return null;
+}
+
+// Buka ke luar, biar Manajer bisa panggil
+window.OtakKecil = {
+  fikirKecil: fikirKecil,
+  ambilDariIndex: ambilDariIndex
+};
