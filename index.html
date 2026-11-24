@@ -44,8 +44,37 @@ body.siang .btn svg { fill:#fff; }
 .judul { flex:1; }
 .judul h1 { font-size:22px; }
 #btnMode { border:none; background:transparent; font-size:24px; cursor:pointer; }
-.bar-mode { display:flex; gap:8px; padding:7px 10px; justify-content:center; }
+.bar-mode { display:flex; gap:8px; padding:7px 10px; justify-content:flex-start; overflow-x:auto; white-space:nowrap; }
 .bar-mode button { flex:none; padding:6px 14px; border:none; border-radius:15px; font-weight:bold; font-size:13px; cursor:pointer; }
+
+/* ===== BARU: GAYA 3 - PANEL LEMARI ===== */
+#panelLemari { display:none; max-height:42vh; overflow-y:auto; padding:10px 12px 12px; border-bottom:1px solid rgba(0,0,0,0.1); }
+#panelLemari.buka { display:block; }
+body.siang #panelLemari { background:rgba(255,255,255,0.92); }
+body.malam #panelLemari { background:rgba(5,8,24,0.9); }
+.lemari-atas { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+.lemari-atas b { font-size:14px; }
+.btn-tambah-laci { border:none; background:#0EA5E9; color:#fff; font-weight:bold; font-size:12px; padding:6px 10px; border-radius:12px; cursor:pointer; }
+body.malam .btn-tambah-laci { background:#22d3ee; color:#000; }
+.laci { border-radius:12px; margin-bottom:8px; overflow:hidden; }
+body.siang .laci { background:#F2F6FF; border:1px solid #D1D5DB; }
+body.malam .laci { background:#1a1a1a; border:1px solid #2e4a7a; }
+.laci-judul { display:flex; justify-content:space-between; align-items:center; padding:10px 12px; cursor:pointer; font-weight:bold; font-size:14px; }
+.laci-judul .panah { font-size:12px; }
+.laci-isi { display:none; padding:0 10px 10px; }
+.laci.terbuka .laci-isi { display:block; }
+.isi-row { display:flex; align-items:center; gap:6px; padding:7px 8px; border-radius:10px; margin-top:6px; font-size:14px; }
+body.siang .isi-row { background:#fff; border:1px solid #E5E7EB; }
+body.malam .isi-row { background:#050818; border:1px solid #2e4a7a; }
+.isi-row .isi-teks { flex:1; word-break:break-word; }
+.btn-kecil { border:none; padding:5px 8px; border-radius:8px; font-size:11px; font-weight:bold; cursor:pointer; flex:none; }
+.btn-ubah { background:#FFC107; color:#000; }
+.btn-hapus { background:#EF4444; color:#fff; }
+.btn-tambah-isi { border:1px dashed #0EA5E9; background:transparent; color:#0EA5E9; width:100%; padding:7px; border-radius:10px; font-size:12px; font-weight:bold; margin-top:8px; cursor:pointer; }
+body.malam .btn-tambah-isi { color:#22d3ee; border-color:#22d3ee; }
+.btn-hapus-laci { border:none; background:transparent; color:#EF4444; font-size:11px; font-weight:bold; padding:7px 8px; cursor:pointer; width:100%; text-align:left; }
+.lemari-kosong { text-align:center; font-size:13px; padding:15px; opacity:0.7; }
+
 #chatBox { flex:1; overflow-y:auto; padding:15px; display:flex; flex-direction:column; gap:12px; }
 .msg { max-width:82%; padding:12px 16px; border-radius:18px; font-size:16px; line-height:1.45; }
 .mavix { align-self:flex-start; }
@@ -66,9 +95,20 @@ body.siang .btn svg { fill:#fff; }
 <div class="bar-mode">
   <button id="btnNgobrol" class="aktif" onclick="gantiMode('NGOBROL')">💬 Ngobrol</button>
   <button id="btnBaca" onclick="gantiMode('BACA')">📖 Baca</button>
-  <!-- INI PINTU KE FILE 2 -->
   <button onclick="window.location.href='suara.html'" style="background:#ff9800 !important; color:white !important;">🎤 Ngobrol Suara</button>
+  <!-- BARU: TOMBOL PEMBUKA LEMARI -->
+  <button id="btnLemari" onclick="toggleLemari()">🗄️ Lemari</button>
 </div>
+
+<!-- BARU: PANEL GAYA 3 - DI ANTARA BAR-MODE DAN CHATBOX -->
+<div id="panelLemari">
+  <div class="lemari-atas">
+    <b>🗄️ Lemari Mavix</b>
+    <button class="btn-tambah-laci" onclick="tambahLaci()">+ Tambah Laci Baru</button>
+  </div>
+  <div id="daftarLaci"></div>
+</div>
+
 <div id="chatBox"></div>
 <div class="input-row">
   <input id="input" placeholder="Tulis untuk MAVIX...">
@@ -122,6 +162,86 @@ setInterval(function(){ if(localStorage.getItem('modeBackgroundManualHari') !== 
 window.gantiMode = gantiMode;
 document.getElementById('input').addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); document.getElementById('kirimBtn').click(); } });
 gantiMode(window.modeMavix);
+
+// ===== BARU: LOGIKA GAYA 3 - LEMARI BUKA TUTUP =====
+let lemariData = JSON.parse(localStorage.getItem('lemariMavix') || 'null');
+if(!lemariData){
+  lemariData = [
+    { nama: 'nama', terbuka: false, isi: ['Bos'] },
+    { nama: 'suka', terbuka: true, isi: ['kopi', 'nasi lemak'] },
+    { nama: 'hobi', terbuka: false, isi: ['ngobrol'] }
+  ];
+  localStorage.setItem('lemariMavix', JSON.stringify(lemariData));
+}
+function simpanLemari(){ localStorage.setItem('lemariMavix', JSON.stringify(lemariData)); }
+function toggleLemari(){
+  const panel = document.getElementById('panelLemari');
+  const btn = document.getElementById('btnLemari');
+  const buka = panel.classList.toggle('buka');
+  btn.classList.toggle('aktif', buka);
+  if(buka) renderLemari();
+}
+function renderLemari(){
+  const wadah = document.getElementById('daftarLaci');
+  if(lemariData.length === 0){
+    wadah.innerHTML = '<div class="lemari-kosong">Lemari masih kosong.<br>Pencet + Tambah Laci Baru di atas.</div>';
+    return;
+  }
+  wadah.innerHTML = lemariData.map((laci, i) => {
+    const isiHtml = laci.isi.map((item, j) => `
+      <div class="isi-row">
+        <span class="isi-teks">${item}</span>
+        <button class="btn-kecil btn-ubah" onclick="ubahIsi(${i}, ${j})">Ubah</button>
+        <button class="btn-kecil btn-hapus" onclick="hapusIsi(${i}, ${j})">Hapus</button>
+      </div>
+    `).join('') || '<div class="lemari-kosong" style="padding:8px;">Belum ada isi.</div>';
+    return `
+    <div class="laci ${laci.terbuka ? 'terbuka' : ''}">
+      <div class="laci-judul" onclick="toggleLaci(${i})">
+        <span><span class="panah">${laci.terbuka ? '▼' : '▶'}</span> ${laci.nama} (${laci.isi.length} isi)</span>
+        <span>⋮</span>
+      </div>
+      <div class="laci-isi">
+        ${isiHtml}
+        <button class="btn-tambah-isi" onclick="tambahIsi(${i})">+ Tambah isi baru</button>
+        <button class="btn-hapus-laci" onclick="hapusLaci(${i})">🗑️ Hapus laci ${laci.nama}</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function toggleLaci(i){ lemariData[i].terbuka = !lemariData[i].terbuka; simpanLemari(); renderLemari(); }
+function tambahLaci(){
+  const nama = prompt('Nama laci baru apa? contoh: cita-cita');
+  if(!nama) return;
+  lemariData.push({ nama: nama.trim(), terbuka: true, isi: [] });
+  simpanLemari(); renderLemari();
+}
+function tambahIsi(i){
+  const isi = prompt('Isi baru untuk laci ' + lemariData[i].nama + ':');
+  if(!isi) return;
+  lemariData[i].isi.push(isi.trim());
+  simpanLemari(); renderLemari();
+}
+function ubahIsi(i, j){
+  const baru = prompt('Ubah "' + lemariData[i].isi[j] + '" jadi apa?', lemariData[i].isi[j]);
+  if(baru === null || baru.trim() === '') return;
+  lemariData[i].isi[j] = baru.trim();
+  simpanLemari(); renderLemari();
+}
+function hapusIsi(i, j){
+  if(!confirm('Hapus "' + lemariData[i].isi[j] + '" dari laci ' + lemariData[i].nama + '?')) return;
+  lemariData[i].isi.splice(j, 1);
+  simpanLemari(); renderLemari();
+}
+function hapusLaci(i){
+  if(!confirm('Hapus laci ' + lemariData[i].nama + ' beserta semua isinya?')) return;
+  lemariData.splice(i, 1);
+  simpanLemari(); renderLemari();
+}
+// Supaya otak-ingatan.js yang lama bisa pakai data baru ini
+window.lemariData = lemariData;
+window.renderLemari = renderLemari;
+window.simpanLemari = simpanLemari;
 </script>
 </body>
 </html>
