@@ -3,125 +3,45 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MAVIXINTESIX - CHAT</title>
-<link rel="icon" type="image/png" href="favicon.png">
+<title>MAVIX - Teman Ngobrol</title>
 <style>
-* { margin:0; padding:0; box-sizing:border-box; font-family:sans-serif; }
-body { height:100vh; display:flex; flex-direction:column; overflow:hidden; }
-.pentas { position:fixed; top:0; left:0; width:100%; height:100%; z-index:-1; display:flex; align-items:center; justify-content:center; background-size:cover; background-position:center; overflow:hidden; }
-body.malam { background:#050818; color:white; }
-body.malam .pentas { background-image:url('background-siang.jpg'); filter:brightness(0.45); }
-body.malam .header { background:rgba(5,8,24,0.7); }
-body.malam .judul h1 { color:#22d3ee; }
-body.malam .avatar { border-color:#22d3ee; }
-body.malam .bar-mode { background:rgba(5,8,24,0.8); }
-body.malam .bar-mode button { background:#1a1a1a; color:white; }
-body.malam .bar-mode button.aktif { background:#22d3ee; color:#000; }
-body.malam .mavix { background:rgba(30,42,74,0.9); border:1px solid #2e4a7a; color:white; }
-body.malam .user { background:#22d3ee; color:#000; }
-body.malam .input-row { background:rgba(5,8,24,0.8); }
-body.malam #input { background:#1a1a1a; color:white; border:none; }
-body.malam .btn { background:#22d3ee; }
-body.malam .btn svg { fill:#000; }
-body.siang { background:#F2F6FF; color:#111827; }
-body.siang .pentas { background-image:url('background-siang.jpg'); }
-body.siang .pentas { background-size:cover; background-position:center; }
-body.siang .header { background:rgba(255,255,255,0.85); }
-body.siang .judul h1 { color:#0EA5E9; }
-body.siang .avatar { border-color:#0EA5E9; }
-body.siang .bar-mode { background:rgba(255,255,255,0.9); }
-body.siang .bar-mode button { background:#E5E7EB; color:#111827; }
-body.siang .bar-mode button.aktif { background:#0EA5E9; color:#fff; }
-body.siang .mavix { background:rgba(255,255,255,0.95); border:1px solid #D1D5DB; color:#111827; }
-body.siang .user { background:#0EA5E9; color:#fff; }
-body.siang .input-row { background:rgba(255,255,255,0.9); }
-body.siang #input { background:#FFFFFF; color:#111827; border:1px solid #D1D5DB; }
-body.siang .btn { background:#0EA5E9; }
-body.siang .btn svg { fill:#fff; }
-.header { display:flex; align-items:center; gap:12px; padding:12px 15px; }
-.avatar { width:58px; height:58px; border-radius:50%; flex-shrink:0; border:3px solid; overflow:hidden; cursor:pointer; }
-.avatar img { width:100%; height:100%; object-fit:cover; }
-.judul { flex:1; }
-.judul h1 { font-size:22px; }
-#btnMode { border:none; background:transparent; font-size:24px; cursor:pointer; }
-.bar-mode { display:flex; gap:8px; padding:7px 10px; justify-content:flex-start; overflow-x:auto; white-space:nowrap; }
-.bar-mode button { flex:none; padding:6px 14px; border:none; border-radius:15px; font-weight:bold; font-size:13px; cursor:pointer; }
-#panelLemari { display:none; max-height:42vh; overflow-y:auto; padding:10px 12px 12px; border-bottom:1px solid rgba(0,0,0,0.1); }
-#panelLemari.buka { display:block; }
-body.siang #panelLemari { background:rgba(255,255,255,0.92); }
-body.malam #panelLemari { background:rgba(5,8,24,0.9); }
-.lemari-atas { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
-.lemari-atas b { font-size:14px; }
-.btn-tambah-laci { border:none; background:#0EA5E9; color:#fff; font-weight:bold; font-size:12px; padding:6px 10px; border-radius:12px; cursor:pointer; }
-body.malam .btn-tambah-laci { background:#22d3ee; color:#000; }
-.laci { border-radius:12px; margin-bottom:8px; overflow:hidden; }
-body.siang .laci { background:#F2F6FF; border:1px solid #D1D5DB; }
-body.malam .laci { background:#1a1a1a; border:1px solid #2e4a7a; }
-.laci-judul { display:flex; justify-content:space-between; align-items:center; padding:10px 12px; cursor:pointer; font-weight:bold; font-size:14px; }
-.laci-judul .panah { font-size:12px; }
-.laci-isi { display:none; padding:0 10px 10px; }
-.laci.terbuka .laci-isi { display:block; }
-.isi-row { display:flex; align-items:center; gap:6px; padding:7px 8px; border-radius:10px; margin-top:6px; font-size:14px; }
-body.siang .isi-row { background:#fff; border:1px solid #E5E7EB; }
-body.malam .isi-row { background:#050818; border:1px solid #2e4a7a; }
-.isi-row .isi-teks { flex:1; word-break:break-word; }
-.btn-kecil { border:none; padding:5px 8px; border-radius:8px; font-size:11px; font-weight:bold; cursor:pointer; flex:none; }
-.btn-ubah { background:#FFC107; color:#000; }
-.btn-hapus { background:#EF4444; color:#fff; }
-.btn-tambah-isi { border:1px dashed #0EA5E9; background:transparent; color:#0EA5E9; width:100%; padding:7px; border-radius:10px; font-size:12px; font-weight:bold; margin-top:8px; cursor:pointer; }
-body.malam .btn-tambah-isi { color:#22d3ee; border-color:#22d3ee; }
-.btn-hapus-laci { border:none; background:transparent; color:#EF4444; font-size:11px; font-weight:bold; padding:7px 8px; cursor:pointer; width:100%; text-align:left; }
-.lemari-kosong { text-align:center; font-size:13px; padding:15px; opacity:0.7; }
-#chatBox { flex:1; overflow-y:auto; padding:15px; display:flex; flex-direction:column; gap:12px; }
-.msg { max-width:82%; padding:12px 16px; border-radius:18px; font-size:16px; line-height:1.45; }
-.mavix { align-self:flex-start; }
-.user { align-self:flex-end; font-weight:500; }
-.input-row { display:flex; gap:8px; padding:10px; align-items:center; }
-#input { flex:1; padding:13px 16px; border-radius:25px; outline:none; font-size:15px; }
-.btn { width:48px; height:48px; border:none; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-.btn svg { width:26px; height:26px; margin-left:2px; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #0f172a; color: white; font-family: Arial, sans-serif; height: 100vh; display: flex; flex-direction: column; }
+header { padding: 15px; text-align: center; font-size: 20px; font-weight: bold; background: #1e293b; }
+#chatBox { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
+.msg { padding: 12px 15px; border-radius: 15px; max-width: 80%; line-height: 1.5; }
+.msg.user { background: #2563eb; align-self: flex-end; }
+.msg.mavix { background: #334155; align-self: flex-start; }
+#lemari { background: #1e293b; padding: 10px 15px; max-height: 150px; overflow-y: auto; font-size: 14px; }
+#lemari h3 { font-size: 14px; margin-bottom: 8px; }
+.laci { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #334155; }
+.laci span { color: #94a3b8; }
+#inputArea { display: flex; gap: 10px; padding: 15px; background: #1e293b; }
+#input { flex: 1; padding: 12px; border-radius: 25px; border: none; outline: none; font-size: 16px; }
+#kirimBtn { padding: 12px 20px; border-radius: 25px; border: none; background: #2563eb; color: white; font-weight: bold; }
+#suaraBtn { padding: 12px 15px; border-radius: 25px; border: none; background: #475569; color: white; }
+.modeBtn { padding: 5px 10px; border-radius: 15px; border: none; background: #475569; color: white; font-size: 12px; margin-right: 5px; }
+.modeBtn.aktif { background: #2563eb; }
 </style>
 </head>
-<body class="siang">
-<div class="pentas"></div>
-<div class="header">
-  <div class="avatar"><img src="mavix.jpg?v=2"></div>
-  <div class="judul"><h1>MAVIXINTESIX</h1></div>
-  <button id="btnMode" onclick="gantiBackgroundManual()">☀️</button>
-</div>
-<div class="bar-mode">
-  <button id="btnNgobrol" class="aktif" onclick="gantiMode('NGOBROL')">💬 Ngobrol</button>
-  <button id="btnBaca" onclick="gantiMode('BACA')">📖 Baca</button>
-  <button onclick="window.location.href='suara.html'" style="background:#ff9800 !important; color:white !important;">🎤 Ngobrol Suara</button>
-  <button id="btnLemari" onclick="toggleLemari()">🗄️ Lemari</button>
-</div>
-<div id="panelLemari">
-  <div class="lemari-atas">
-    <b>🗄️ Lemari Mavix</b>
-    <button class="btn-tambah-laci" onclick="tambahLaci()">+ Tambah Laci Baru</button>
-  </div>
-  <div id="daftarLaci"></div>
-</div>
+<body>
+<header>MAVIX</header>
 <div id="chatBox"></div>
-<div class="input-row">
-  <input id="input" placeholder="Tulis untuk MAVIX...">
-  <button class="btn" id="kirimBtn"><svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
+<div id="lemari">
+<h3>LEMARI MAVIX</h3>
+<div id="isiLemari"></div>
+<div style="margin-top:8px;">
+<button class="modeBtn" data-mode="NGOBROL">NGOBROL</button>
+<button class="modeBtn" data-mode="FOKUS">FOKUS</button>
+<button class="modeBtn" data-mode="SANTAI">SANTAI</button>
+<button class="modeBtn" data-mode="BACA">BACA</button>
 </div>
-<script>
-function tambah(siapa, teks){
-  const chat = document.getElementById('chatBox');
-  if(!chat) return;
-  let kelas = 'mavix';
-  if(siapa && siapa.toLowerCase() === 'user') kelas = 'user';
-  const div = document.createElement('div');
-  div.className = 'msg ' + kelas;
-  if (teks.includes('<button') || teks.includes('<div id="isi_')) { div.innerHTML = teks.replace(/\n/g, '<br>'); }
-  else { div.innerText = teks; }
-  chat.appendChild(div);
-  chat.scrollTop = chat.scrollHeight;
-}
-window.tambah = tambah;
-</script>
+</div>
+<div id="inputArea">
+<input id="input" placeholder="Ketik di sini Bos...">
+<button id="suaraBtn" onclick="window.location.href='suara.html'">🎤</button>
+<button id="kirimBtn">Kirim</button>
+</div>
 <script src="otak-ingatan.js"></script>
 <script src="otak-nalar.js"></script>
 <script src="otak-kecil.js"></script>
@@ -130,163 +50,43 @@ window.tambah = tambah;
 <script src="telinga.js"></script>
 <script src="otak-depan.js"></script>
 <script>
-// ===== IKUT INGATAN SEMUA - TIDAK ADA DB BUATAN SENDIRI LAGI =====
-// DB cuma 1: OtakKecilCS dari otak-ingatan.js
-// Lemari cuma 1: laci di OtakKecilCS
-// Mode cuma 1: laci "mode" dan "background" di OtakKecilCS
-
 window.modeMavix = "NGOBROL";
-let lemariData = []; // [{nama, terbuka, isi:[]}]
-// PERBAIKAN 1: pekerjaan -> kerja, biar sama dengan otak-nalar.js / otak-ingatan.js
-let daftarNamaLaci = ["nama","suka","hobi","kota","kerja","perasaan","mode","background"];
-
-async function muatLemari(){
-  // Simpan status buka/tutup lama biar tidak ke-reset pas reload
-  const terbukaLama = {};
-  for(const l of lemariData) terbukaLama[l.nama] = l.terbuka;
-  lemariData = [];
-  for(const nama of daftarNamaLaci){
-    const isi = await ambilCatatan(nama);
-    lemariData.push({ nama: nama, terbuka: (nama in terbukaLama ? terbukaLama[nama] : (nama === "suka")), isi: isi });
+const daftarNamaLaci = ["nama","suka","hobi","kota","pekerjaan","perasaan","mode"];
+const labelLaci = { nama:"Nama", suka:"Suka", hobi:"Hobi", kota:"Kota", pekerjaan:"Pekerjaan", perasaan:"Perasaan", mode:"Mode" };
+async function tampilLemari(){
+  const box = document.getElementById("isiLemari");
+  if(!box) return;
+  let html = "";
+  for(let laci of daftarNamaLaci){
+    let isi = [];
+    try{ isi = await ambilCatatan(laci); }catch(e){}
+    if(laci === "mode" && window.modeMavix) isi = [window.modeMavix];
+    html += `<div class="laci"><b>${labelLaci[laci] || laci}</b><span>${isi.length ? isi.join(", ") : "-"}</span></div>`;
   }
-  const extra = await ambilCatatan("daftarLaci");
-  for(const nama of extra){
-    if(!daftarNamaLaci.includes(nama)){
-      const isi = await ambilCatatan(nama);
-      lemariData.push({ nama: nama, terbuka: (nama in terbukaLama ? terbukaLama[nama] : true), isi: isi });
-    }
-  }
-  window.lemariData = lemariData;
+  box.innerHTML = html;
 }
-
-async function simpanLemari(){
-  window.lemariData = lemariData;
-  for(const laci of lemariData){
-    await simpanLaci(laci.nama, laci.isi);
-    if(!daftarNamaLaci.includes(laci.nama)){
-      let extra = await ambilCatatan("daftarLaci");
-      if(!extra.includes(laci.nama)){
-        extra.push(laci.nama);
-        await simpanLaci("daftarLaci", extra);
-      }
-    }
-  }
-  // PERBAIKAN 2b: habis simpan, sinkron ulang dari lemari asli
-  await muatLemari();
+function tambah(siapa, teks){
+  const box = document.getElementById("chatBox");
+  const div = document.createElement("div");
+  div.className = siapa === "user" ? "msg user" : "msg mavix";
+  div.textContent = teks;
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
 }
-
-async function gantiMode(modeBaru){
-  window.modeMavix = modeBaru;
-  await simpanLaci("mode", [modeBaru]);
-  document.getElementById('btnNgobrol').classList.toggle('aktif', modeBaru === 'NGOBROL');
-  document.getElementById('btnBaca').classList.toggle('aktif', modeBaru === 'BACA');
-}
-function terapkanMode(mode){
-  document.body.classList.remove('siang','malam');
-  document.body.classList.add(mode);
-  document.getElementById('btnMode').innerText = mode === 'siang' ? '☀️' : '🌙';
-}
-function modeAutoIkutJam(){ const jam = new Date().getHours(); return (jam >= 6 && jam < 18) ? 'siang' : 'malam'; }
-async function gantiBackgroundManual(){
-  const sekarang = document.body.classList.contains('siang') ? 'malam' : 'siang';
-  terapkanMode(sekarang);
-  await simpanLaci("background", [sekarang]);
-  await simpanLaci("backgroundHari", [new Date().toDateString()]);
-}
-document.getElementById('input').addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); document.getElementById('kirimBtn').click(); } });
-window.gantiMode = gantiMode;
-
-(async function initMode(){
-  await muatLemari();
-  const modeArr = await ambilCatatan("mode");
-  window.modeMavix = modeArr[0] || "NGOBROL";
-  gantiMode(window.modeMavix);
-  const hariArr = await ambilCatatan("backgroundHari");
-  if(hariArr[0] === new Date().toDateString()){
-    const bgArr = await ambilCatatan("background");
-    terapkanMode(bgArr[0] || 'siang');
-  } else {
-    terapkanMode(modeAutoIkutJam());
-  }
-  setInterval(async function(){
-    const h = await ambilCatatan("backgroundHari");
-    if(h[0] !== new Date().toDateString()) terapkanMode(modeAutoIkutJam());
-  }, 60000);
-})();
-
-// ===== LEMARI PANEL - IKUT INGATAN =====
-// PERBAIKAN 2a: pas buka panel, muat ulang dulu dari lemari asli
-async function toggleLemari(){
-  const panel = document.getElementById('panelLemari');
-  const btn = document.getElementById('btnLemari');
-  const buka = panel.classList.toggle('buka');
-  btn.classList.toggle('aktif', buka);
-  if(buka){
-    await muatLemari();
-    renderLemari();
-  }
-}
-function renderLemari(){
-  const wadah = document.getElementById('daftarLaci');
-  if(lemariData.length === 0){
-    wadah.innerHTML = '<div class="lemari-kosong">Lemari masih kosong.<br>Pencet + Tambah Laci Baru di atas.</div>';
-    return;
-  }
-  wadah.innerHTML = lemariData.map((laci, i) => {
-    const isiHtml = laci.isi.map((item, j) => `
-      <div class="isi-row">
-        <span class="isi-teks">${item}</span>
-        <button class="btn-kecil btn-ubah" onclick="ubahIsi(${i}, ${j})">Ubah</button>
-        <button class="btn-kecil btn-hapus" onclick="hapusIsi(${i}, ${j})">Hapus</button>
-      </div>
-    `).join('') || '<div class="lemari-kosong" style="padding:8px;">Belum ada isi.</div>';
-    return `
-    <div class="laci ${laci.terbuka ? 'terbuka' : ''}">
-      <div class="laci-judul" onclick="toggleLaci(${i})">
-        <span><span class="panah">${laci.terbuka ? '▼' : '▶'}</span> ${laci.nama} (${laci.isi.length} isi)</span>
-        <span>⋮</span>
-      </div>
-      <div class="laci-isi">
-        ${isiHtml}
-        <button class="btn-tambah-isi" onclick="tambahIsi(${i})">+ Tambah isi baru</button>
-        <button class="btn-hapus-laci" onclick="hapusLaci(${i})">🗑️ Hapus laci ${laci.nama}</button>
-      </div>
-    </div>`;
-  }).join('');
-}
-async function toggleLaci(i){ lemariData[i].terbuka = !lemariData[i].terbuka; await simpanLemari(); renderLemari(); }
-async function tambahLaci(){
-  const nama = prompt('Nama laci baru apa? contoh: cita-cita');
-  if(!nama) return;
-  lemariData.push({ nama: nama.trim(), terbuka: true, isi: [] });
-  await simpanLemari(); renderLemari();
-}
-async function tambahIsi(i){
-  const isi = prompt('Isi baru untuk laci ' + lemariData[i].nama + ':');
-  if(!isi) return;
-  lemariData[i].isi.push(isi.trim());
-  await simpanLemari(); renderLemari();
-}
-async function ubahIsi(i, j){
-  const baru = prompt('Ubah "' + lemariData[i].isi[j] + '" jadi apa?', lemariData[i].isi[j]);
-  if(baru === null || baru.trim() === '') return;
-  lemariData[i].isi[j] = baru.trim();
-  await simpanLemari(); renderLemari();
-}
-async function hapusIsi(i, j){
-  if(!confirm('Hapus "' + lemariData[i].isi[j] + '" dari laci ' + lemariData[i].nama + '?')) return;
-  lemariData[i].isi.splice(j, 1);
-  await simpanLemari(); renderLemari();
-}
-async function hapusLaci(i){
-  if(!confirm('Hapus laci ' + lemariData[i].nama + ' beserta semua isinya?')) return;
-  const nama = lemariData[i].nama;
-  lemariData.splice(i, 1);
-  await simpanLaci(nama, []);
-  await simpanLemari(); renderLemari();
-}
-window.renderLemari = renderLemari;
-window.simpanLemari = simpanLemari;
+window.tambah = tambah;
+document.addEventListener("DOMContentLoaded", () => {
+  tampilLemari();
+  document.querySelectorAll(".modeBtn").forEach(b => {
+    b.addEventListener("click", async () => {
+      window.modeMavix = b.dataset.mode;
+      await simpanLaci("mode", [window.modeMavix]);
+      document.querySelectorAll(".modeBtn").forEach(x => x.classList.remove("aktif"));
+      b.classList.add("aktif");
+      tampilLemari();
+    });
+  });
+  setInterval(tampilLemari, 3000);
+});
 </script>
 </body>
 </html>
