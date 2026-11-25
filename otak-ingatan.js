@@ -5,7 +5,7 @@ let db = null;
 function bukaDB() {
   return new Promise((res, rej) => {
     if (db) { res(db); return; }
-    const req = indexedDB.open(DB_NAMA, 1);
+    const req = indexedDB.open(DB_NAMA, 3);
     req.onupgradeneeded = () => {
       const d = req.result;
       if (!d.objectStoreNames.contains("lemari")) d.createObjectStore("lemari", { keyPath: "laci" });
