@@ -1,65 +1,30 @@
-// ==========================================
-// OTAK KECIL - Mavix - VERSI TANPA SPASI TOTAL
-// ==========================================
-// Tugas: Sapaan saja
-// Aturan: 1. Semua cek TANPA SPASI, sama seperti Nalar
-//         2. TIDAK BOLEH ada localStorage
-//         3. TIDAK BOLEH ada ambilCatatan
-// Alur: Manajer -> Kecil -> Nalar
-// ==========================================
-
+// =================================================
+// OTAK KECIL - SAPAAN SAJA
+// Dipanggil oleh: Otak Depan
+// Yang manggil Nalar: Kecil ini, bukan Depan
+// Jawaban dibagi ke: Otak Depan
+// =================================================
 async function fikirKecil(teks) {
-  if (!teks) return null;
+  const t = teks.toLowerCase().trim().replace(/\s+/g, "").replace(/\?/g, "").replace(/!/g, "").replace(/\./g, "");
 
-  // TANPA SPASI TOTAL - Sama seperti Nalar
-  // "Halo   Mavix" -> "halomavix"
-  // "Selamat   Pagi" -> "selamatpagi"
-  // "Terima   Kasih" -> "terimakasih"
-  const t = teks.toLowerCase().replace(/\s+/g, "");
-
-  // --- SAPAAN: HALO ---
-  if (t === "halo" || t === "hai" || t === "hi" || t.includes("halomavix") || t.includes("halo,mavix")) {
+  // Sapaan murni saja, pakai === biar tidak motong pertanyaan
+  if (t === "halo" || t === "hai" || t === "hallo" || t === "hi" || t === "hei") {
     return "Halo Bos, ada di sini.";
   }
+  if (t === "selamatpagi") return "Selamat pagi Bos.";
+  if (t === "selamatsiang") return "Selamat siang Bos.";
+  if (t === "selamatsore") return "Selamat sore Bos.";
+  if (t === "selamatmalam") return "Selamat malam Bos.";
+  if (t === "apakabar" || t === "apa kabar") return "Kabar saya baik Bos, Bos gimana?";
+  if (t === "terimakasih" || t === "makasih" || t === "thankyou" || t === "thanks") return "Sama-sama Bos.";
+  if (t === "dadah" || t === "bye" || t === "dadahbos") return "Dadah Bos, hati-hati.";
+  if (t === "oke" || t === "ok" || t === "sip") return "Oke Bos, siap.";
+  if (t === "baik" || t === "baikbos") return "Baik Bos.";
 
-  // --- SAPAAN: TERIMA KASIH ---
-  if (t.includes("terimakasih") || t.includes("makasih") || t.includes("thanks") || t.includes("thankyou")) {
-    return "Sama-sama Bos.";
-  }
-
-  // --- SAPAAN: SELAMAT PAGI ---
-  if (t.includes("selamatpagi") || t === "pagi" || t.includes("pagibos")) {
-    return "Selamat pagi Bos.";
-  }
-
-  // --- SAPAAN: SELAMAT MALAM ---
-  if (t.includes("selamatmalam") || t === "malam" || t.includes("malambos")) {
-    return "Selamat malam Bos.";
-  }
-
-  // --- SAPAAN: SELAMAT SIANG ---
-  if (t.includes("selamatsiang") || t === "siang" || t.includes("siangbos")) {
-    return "Selamat siang Bos.";
-  }
-
-  // --- SAPAAN: SELAMAT SORE ---
-  if (t.includes("selamatsore") || t === "sore" || t.includes("sorebos")) {
-    return "Selamat sore Bos.";
-  }
-
-  // --- SAPAAN TAMBAHAN: APA KABAR ---
-  if (t.includes("apakabar") || t.includes("gimanakabar") || t.includes("kabarmu")) {
-    return "Kabar saya baik Bos, Bos gimana?";
-  }
-
-  // --- BUKAN SAPAAN, LEMPAR KE NALAR ---
-  if (typeof prosesNalar === 'function') {
-    return await prosesNalar(teks);
-  }
-
-  return null;
+  // Kalau bukan sapaan murni, Kecil manggil Nalar
+  // Nalar jawab ke Kecil, Kecil teruskan ke Depan
+  const jawabNalar = await prosesNalar(teks);
+  return jawabNalar; // bisa isi, bisa null
 }
 
-window.OtakKecil = {
-  fikirKecil: fikirKecil
-};
+window.OtakKecil = { fikir: fikirKecil, fikirKecil: fikirKecil };
