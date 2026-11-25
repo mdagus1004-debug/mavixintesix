@@ -20,7 +20,7 @@ app.get("/suara", async (req, res) => {
     teks = teks.substring(0, 800);
     const fileTmp = path.join(os.tmpdir(), 'mavix-' + Date.now() + '.mp3');
     const tts = new EdgeTTS();
-    await tts.synthesize(teks, 'id-ID-GadisNeural', fileTmp);
+    await tts.tts(teks, 'id-ID-GadisNeural', fileTmp);
     if(!fs.existsSync(fileTmp)) return res.status(500).send("gagal");
     res.setHeader("Content-Type", "audio/mpeg");
     res.sendFile(fileTmp, () => { try{ fs.unlinkSync(fileTmp); }catch(e){} });
