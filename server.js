@@ -28,7 +28,6 @@ app.get("/suara", async (req, res) => {
 });
 
 app.post('/chat', async (req, res) => {
-  // PERBAIKAN: Terima pesan DAN message, biar Depan lama / baru sama-sama jalan
   const pesanUser = req.body.pesan || req.body.message || "halo";
   const namaBos = req.body.namaBos || "Bos";
   const kesukaanBos = req.body.kesukaan || "";
@@ -62,7 +61,6 @@ app.post('/chat', async (req, res) => {
     if(data.choices && data.choices[0]){
       let jawaban = data.choices[0].message.content || "";
       jawaban = jawaban.replace(/\*\*/g, "").replace(/\*/g, "").replace(/###/g, "").replace(/##/g, "").replace(/#/g, "").replace(/```/g, "").replace(/https?:\/\/wa\.me\/\S+/gi, "").replace(/\+62[\d\s\-()]+/g, "").trim();
-      // PERBAIKAN: Kirim 2 nama biar Depan lama / baru sama-sama baca
       return res.json({ reply: jawaban, jawaban: jawaban });
     } else { return res.json({ reply: "GROQ bilang: " + JSON.stringify(data.error || data).slice(0, 300), jawaban: "GROQ bilang: " + JSON.stringify(data.error || data).slice(0, 300) }); }
   }catch(e){ return res.json({ reply: "Bos, Groq saya putus sebentar: " + e.message + ". Tapi saya masih di sini Bos.", jawaban: "Bos, Groq saya putus sebentar: " + e.message + ". Tapi saya masih di sini Bos." }); }
