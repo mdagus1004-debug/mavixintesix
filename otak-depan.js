@@ -142,7 +142,9 @@ async function prosesDepan(teks) {
   } catch(e){}
 
   try {
-    const r = await fetch("/api/chat", {
+
+const r = await fetch("/chat", {
+    
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
