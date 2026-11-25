@@ -130,79 +130,53 @@ window.tambah = tambah;
 <script src="telinga.js"></script>
 <script src="otak-depan.js"></script>
 <script>
-// ===== BARU: GUDANG IndexedDB - PENGGANTI localStorage TOTAL =====
-let dbPromise = null;
-function bukaDB(){
-  if(dbPromise) return dbPromise;
-  dbPromise = new Promise((resolve, reject) => {
-    const req = indexedDB.open('mavixDB', 1);
-    req.onupgradeneeded = () => {
-      const db = req.result;
-      if(!db.objectStoreNames.contains('kunci')) db.createObjectStore('kunci');
-    };
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
-  return dbPromise;
+// ===== IKUT INGATAN SEMUA - TIDAK ADA DB BUATAN SENDIRI LAGI =====
+// DB cuma 1: OtakKecilCS dari otak-ingatan.js
+// Lemari cuma 1: laci di OtakKecilCS
+// Mode cuma 1: laci "mode" dan "background" di OtakKecilCS
+
+window.modeMavix = "NGOBROL";
+let lemariData = []; // [{nama, terbuka, isi:[]}]
+let daftarNamaLaci = ["nama","suka","hobi","kota","pekerjaan","perasaan","mode","background"];
+
+async function muatLemari(){
+  lemariData = [];
+  for(const nama of daftarNamaLaci){
+    const isi = await ambilCatatan(nama);
+    // Biar laci default tetap ada walaupun kosong
+    lemariData.push({ nama: nama, terbuka: (nama === "suka"), isi: isi });
+  }
+  // Laci tambahan buatan Bos yang tidak ada di daftar, tetap dibaca dari laci "daftarLaci"
+  const extra = await ambilCatatan("daftarLaci");
+  for(const nama of extra){
+    if(!daftarNamaLaci.includes(nama)){
+      const isi = await ambilCatatan(nama);
+      lemariData.push({ nama: nama, terbuka: true, isi: isi });
+    }
+  }
+  window.lemariData = lemariData;
 }
-async function idbGet(kunci){
-  try{
-    const db = await bukaDB();
-    return await new Promise((resolve, reject) => {
-      const tx = db.transaction('kunci', 'readonly');
-      const req = tx.objectStore('kunci').get(kunci);
-      req.onsuccess = () => resolve(req.result === undefined ? null : req.result);
-      req.onerror = () => reject(req.error);
-    });
-  }catch(e){ return null; }
-}
-async function idbSet(kunci, nilai){
-  const db = await bukaDB();
-  return await new Promise((resolve, reject) => {
-    const tx = db.transaction('kunci', 'readwrite');
-    tx.objectStore('kunci').put(nilai, kunci);
-    tx.oncomplete = () => resolve();
-    tx.onerror = () => reject(tx.error);
-  });
-}
-async function idbHapus(kunci){
-  const db = await bukaDB();
-  return await new Promise((resolve) => {
-    const tx = db.transaction('kunci', 'readwrite');
-    tx.objectStore('kunci').delete(kunci);
-    tx.oncomplete = () => resolve();
-    tx.onerror = () => resolve();
-  });
-}
-// Pindah data lama localStorage -> IndexedDB, sekali saja, lalu hapus localStorage
-async function pindahDariLocalStorage(){
-  try{
-    if(localStorage.length === 0) return;
-    const daftar = ['modeMavix','modeBackground','modeBackgroundManualHari','lemariMavix'];
-    for(const k of daftar){
-      const v = localStorage.getItem(k);
-      if(v !== null){
-        let simpan = v;
-        try{ simpan = JSON.parse(v); }catch(e){}
-        const lama = await idbGet(k);
-        if(lama === null) await idbSet(k, simpan);
+
+async function simpanLemari(){
+  window.lemariData = lemariData;
+  for(const laci of lemariData){
+    if(daftarNamaLaci.includes(laci.nama)){
+      await simpanLaci(laci.nama, laci.isi);
+    } else {
+      await simpanLaci(laci.nama, laci.isi);
+      // Catat nama laci tambahan biar besok ke baca lagi
+      let extra = await ambilCatatan("daftarLaci");
+      if(!extra.includes(laci.nama)){
+        extra.push(laci.nama);
+        await simpanLaci("daftarLaci", extra);
       }
     }
-    // Hapus semua kunci lama kita
-    for(const k of daftar) localStorage.removeItem(k);
-  }catch(e){}
+  }
 }
-window.idbGet = idbGet;
-window.idbSet = idbSet;
-window.idbHapus = idbHapus;
-window.bukaDB = bukaDB;
-</script>
-<script>
-// ===== MODE NGOBROL / BACA + SIANG / MALAM - SUDAH PAKAI IndexedDB =====
-window.modeMavix = "NGOBROL";
+
 async function gantiMode(modeBaru){
   window.modeMavix = modeBaru;
-  await idbSet('modeMavix', modeBaru);
+  await simpanLaci("mode", [modeBaru]); // Ikut Ingatan
   document.getElementById('btnNgobrol').classList.toggle('aktif', modeBaru === 'NGOBROL');
   document.getElementById('btnBaca').classList.toggle('aktif', modeBaru === 'BACA');
 }
@@ -215,46 +189,31 @@ function modeAutoIkutJam(){ const jam = new Date().getHours(); return (jam >= 6 
 async function gantiBackgroundManual(){
   const sekarang = document.body.classList.contains('siang') ? 'malam' : 'siang';
   terapkanMode(sekarang);
-  await idbSet('modeBackground', sekarang);
-  await idbSet('modeBackgroundManualHari', new Date().toDateString());
+  await simpanLaci("background", [sekarang]); // Ikut Ingatan
+  await simpanLaci("backgroundHari", [new Date().toDateString()]);
 }
 document.getElementById('input').addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); document.getElementById('kirimBtn').click(); } });
 window.gantiMode = gantiMode;
 
-// Jalan pertama: pindah data lama, lalu baca dari IndexedDB
 (async function initMode(){
-  await pindahDariLocalStorage();
-  window.modeMavix = (await idbGet('modeMavix')) || "NGOBROL";
+  await muatLemari();
+  const modeArr = await ambilCatatan("mode");
+  window.modeMavix = modeArr[0] || "NGOBROL";
   gantiMode(window.modeMavix);
-  const manualHari = await idbGet('modeBackgroundManualHari');
-  if(manualHari === new Date().toDateString()){
-    terapkanMode((await idbGet('modeBackground')) || 'siang');
+  const hariArr = await ambilCatatan("backgroundHari");
+  if(hariArr[0] === new Date().toDateString()){
+    const bgArr = await ambilCatatan("background");
+    terapkanMode(bgArr[0] || 'siang');
   } else {
     terapkanMode(modeAutoIkutJam());
-    await idbHapus('modeBackground');
   }
   setInterval(async function(){
-    const hari = await idbGet('modeBackgroundManualHari');
-    if(hari !== new Date().toDateString()) terapkanMode(modeAutoIkutJam());
+    const h = await ambilCatatan("backgroundHari");
+    if(h[0] !== new Date().toDateString()) terapkanMode(modeAutoIkutJam());
   }, 60000);
 })();
 
-// ===== LEMARI GAYA 3 - SUDAH PAKAI IndexedDB =====
-let lemariData = [];
-async function muatLemari(){
-  const data = await idbGet('lemariMavix');
-  if(data && Array.isArray(data)){ lemariData = data; }
-  else {
-    lemariData = [
-      { nama: 'nama', terbuka: false, isi: ['Bos'] },
-      { nama: 'suka', terbuka: true, isi: ['kopi', 'nasi lemak'] },
-      { nama: 'hobi', terbuka: false, isi: ['ngobrol'] }
-    ];
-    await idbSet('lemariMavix', lemariData);
-  }
-  window.lemariData = lemariData;
-}
-async function simpanLemari(){ window.lemariData = lemariData; await idbSet('lemariMavix', lemariData); }
+// ===== LEMARI PANEL - IKUT INGATAN =====
 function toggleLemari(){
   const panel = document.getElementById('panelLemari');
   const btn = document.getElementById('btnLemari');
@@ -316,10 +275,11 @@ async function hapusIsi(i, j){
 }
 async function hapusLaci(i){
   if(!confirm('Hapus laci ' + lemariData[i].nama + ' beserta semua isinya?')) return;
+  const nama = lemariData[i].nama;
   lemariData.splice(i, 1);
+  await simpanLaci(nama, []); // Kosongkan di Ingatan
   await simpanLemari(); renderLemari();
 }
-muatLemari();
 window.renderLemari = renderLemari;
 window.simpanLemari = simpanLemari;
 </script>
