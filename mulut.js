@@ -1,12 +1,7 @@
-// =================================================
-// OTAK MULUT - 3 LAPIS
-// Lapis 1: Server Bos /suara -> id-ID-GadisNeural (paling bagus)
-// Lapis 2: Kalau Server gagal, Edge Browser -> Microsoft
-// Lapis 3: Kalau Edge gagal, Suara Bawaan HP
-// =================================================
+// MULUT MAVIX V2.4 - 3 LAPIS SUARA
+// Perbaikan: potong 800 karakter di depan, bersihkan audio saat selesai
 let audioServer = null;
 let suaraEdge = null;
-
 function cariSuaraEdge() {
   const semua = speechSynthesis.getVoices() || [];
   if (!semua.length) return null;
@@ -20,24 +15,21 @@ if ("speechSynthesis" in window) {
   speechSynthesis.onvoiceschanged = () => { suaraEdge = cariSuaraEdge(); };
   suaraEdge = cariSuaraEdge();
 }
-
-// LAPIS 1: Server EdgeTTS Bos
 async function bicaraServer(teks) {
   try {
     if (audioServer) { audioServer.pause(); audioServer = null; }
     try { speechSynthesis.cancel(); } catch(e) {}
-    const res = await fetch("/suara?teks=" + encodeURIComponent(teks));
+    const res = await fetch("/suara?teks=" + encodeURIComponent(teks.slice(0,800)));
     if (!res.ok) return false;
     const blob = await res.blob();
     if (!blob || blob.size < 100) return false;
     const url = URL.createObjectURL(blob);
     audioServer = new Audio(url);
+    audioServer.onended = () => { audioServer = null; };
     await audioServer.play();
     return true;
-  } catch (e) { return false; }
+  } catch (e) { audioServer = null; return false; }
 }
-
-// LAPIS 2: Edge Browser
 function bicaraEdge(teks) {
   try {
     if (!suaraEdge) suaraEdge = cariSuaraEdge();
@@ -51,8 +43,6 @@ function bicaraEdge(teks) {
     return true;
   } catch (e) { return false; }
 }
-
-// LAPIS 3: Bawaan HP
 function bicaraBawaan(teks) {
   try {
     speechSynthesis.cancel();
@@ -62,20 +52,14 @@ function bicaraBawaan(teks) {
     return true;
   } catch (e) { return false; }
 }
-
-// Depan cuma panggil ini
 async function bicara(teks) {
   if (!teks) return;
-  // Coba Lapis 1 dulu
   const okServer = await bicaraServer(teks);
   if (okServer) return;
-  // Gagal, coba Lapis 2
   const okEdge = bicaraEdge(teks);
   if (okEdge) return;
-  // Gagal, coba Lapis 3
   bicaraBawaan(teks);
 }
-
 function stopBicara() {
   try { if (audioServer) { audioServer.pause(); audioServer = null; } } catch(e) {}
   try { speechSynthesis.cancel(); } catch(e) {}
