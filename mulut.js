@@ -1,148 +1,82 @@
-// mulut.js - VERSI TERAKHIR IKUT BOS + JEDA PINTAR
-// 1 = 2 detik, Bos diam 2 detik, baru proses (ada di telinga.js)
-// 2 = Mavix jangan diam masa otak mikir, terus ngomong teks lama, sudah dapat jawaban baru potong
-// 3 = TAK PAKAI, SUDAH BUANG
-// TAMBAHAN BARU = Jeda pintar di akhir kalimat, baru buka telinga. Kalau dengar suara sendiri, HAPUS.
+// =================================================
+// OTAK MULUT - 3 LAPIS
+// Lapis 1: Server Bos /suara -> id-ID-GadisNeural (paling bagus)
+// Lapis 2: Kalau Server gagal, Edge Browser -> Microsoft
+// Lapis 3: Kalau Edge gagal, Suara Bawaan HP
+// =================================================
+let audioServer = null;
+let suaraEdge = null;
 
-let suaraTerpilih = null;
-
-window.MAVIX = window.MAVIX || {};
-window.MAVIX.sedangNgomong = false;
-window.MAVIX.kalimatSekarang = "";
-window.MAVIX.teksMavixTerakhir = "";
-window.MAVIX.waktuMavixNgomongTerakhir = 0;
-window.MAVIX.micNyala = window.MAVIX.micNyala || false;
-window.MAVIX.recognition = window.MAVIX.recognition || null;
-window.MAVIX.tampungPesan = "";
-window.MAVIX.adaTampung = false;
-window.MAVIX.antrianTerakhir = "";
-window.MAVIX.waktuBosMulaiNgomong = 0;
-window.MAVIX.idBicara = window.MAVIX.idBicara || 0; // Untuk potong yang lama
-
-function siapkanSuara(){
-  const list = window.speechSynthesis.getVoices();
-  suaraTerpilih = list.find(v => v.lang === "id-ID") || list.find(v => v.lang.startsWith("id")) || list[0];
+function cariSuaraEdge() {
+  const semua = speechSynthesis.getVoices() || [];
+  if (!semua.length) return null;
+  let pilih = semua.find(v => v.name.includes("Microsoft") && v.lang.includes("id-ID"));
+  if (pilih) return pilih;
+  pilih = semua.find(v => v.name.includes("Microsoft"));
+  if (pilih) return pilih;
+  return null;
 }
-window.speechSynthesis.onvoiceschanged = siapkanSuara;
-siapkanSuara();
-
-function bicara(teks){
-  // PERATURAN 2 BOS: Bila jawaban SUDAH dapat, barulah potong teks lama, timpa dengan jawaban baru
-  // Sebelum bicara() dipanggil, Mavix terus ngomong teks lama, dia tidak diam
-  // Jadi di sini, kita potong dulu yang lama, baru ngomong yang baru
-  try{ window.speechSynthesis.cancel(); }catch(e){}
-
-  // Naikkan ID. Ini supaya kalimat lama yang masih antri, tahu dia sudah kena potong, dia berhenti sendiri.
-  window.MAVIX.idBicara++;
-  let idSaya = window.MAVIX.idBicara;
-
-  // 1. Pecah teks panjang jadi kalimat-kalimat kecil. Pecah di titik, seru, tanya.
-  let daftarKalimat = teks.match(/[^.!?]+[.!?]+/g);
-  if(!daftarKalimat) daftarKalimat = [teks];
-
-  let index = 0;
-
-  function ngomongSatuKalimat(){
-    // Kalau sudah kena potong sama jawaban baru, berhenti. Jangan lanjut.
-    if(idSaya !== window.MAVIX.idBicara) return;
-    if(index >= daftarKalimat.length){
-      // Semua kalimat sudah habis, baru buka telinga penuh
-      window.MAVIX.sedangNgomong = false;
-      window.MAVIX.kalimatSekarang = "";
-      setStatusMulut("Lagi dengerin Bos...");
-      hidupkanMicLagi();
-      return;
-    }
-
-    let satuKalimat = daftarKalimat[index].trim();
-    index++;
-
-    // 2. TUTUP TELINGA waktu ngomong satu kalimat ini
-    window.MAVIX.sedangNgomong = true;
-    window.MAVIX.kalimatSekarang = satuKalimat;
-    // Simpan kalimat ini, supaya telinga kenal kalau ini suara sendiri, nanti dia HAPUS
-    window.MAVIX.teksMavixTerakhir = satuKalimat;
-    window.MAVIX.waktuMavixNgomongTerakhir = Date.now();
-    setStatusMulut("Mavix ngomong: " + satuKalimat);
-
-    // Matikan mic dulu, biar tidak dengar suara sendiri di tengah kalimat
-    if(window.MAVIX.recognition && window.MAVIX.micNyala){
-      try{ window.MAVIX.recognition.stop(); }catch(e){}
-    }
-
-    // 3. Tunggu 300ms, baru ngomong. Biar mic betul-betul mati dulu.
-    setTimeout(function(){
-      if(idSaya !== window.MAVIX.idBicara) return; // Sudah kena potong, jangan ngomong
-
-      const ucapan = new SpeechSynthesisUtterance(satuKalimat);
-      ucapan.lang = "id-ID"; ucapan.rate = 1.0; ucapan.pitch = 1.0;
-      if(suaraTerpilih) ucapan.voice = suaraTerpilih;
-
-      ucapan.onend = function(){
-        if(idSaya !== window.MAVIX.idBicara) return; // Sudah kena potong
-
-        // 4. INI JEDA PINTAR - AKHIR KALIMAT
-        // Satu kalimat sudah habis. Buka telinga sebentar, 600ms saja.
-        window.MAVIX.sedangNgomong = false;
-        window.MAVIX.kalimatSekarang = "";
-        setStatusMulut("Jeda... buka telinga sebentar, cek Bos mau nyela tak...");
-
-        // Buka telinga
-        if(window.MAVIX.recognition && window.MAVIX.micNyala){
-          try{ window.MAVIX.recognition.start(); }catch(e){}
-        }
-
-        // Tunggu 600ms di jeda ini
-        setTimeout(function(){
-          if(idSaya !== window.MAVIX.idBicara) return; // Sudah kena potong sama jawaban baru
-          // Kalau Bos tidak nyela dalam 600ms, tutup telinga lagi, lanjut kalimat seterusnya
-          // Kalau Bos nyela, telinga akan proses, dan bicara() baru akan dipanggil, idBicara akan naik, yang lama ini akan berhenti sendiri di atas
-          window.MAVIX.sedangNgomong = true;
-          if(window.MAVIX.recognition && window.MAVIX.micNyala){
-            try{ window.MAVIX.recognition.stop(); }catch(e){}
-          }
-          ngomongSatuKalimat();
-        }, 600);
-      };
-
-      ucapan.onerror = function(){
-        if(idSaya !== window.MAVIX.idBicara) return;
-        window.MAVIX.sedangNgomong = false;
-        window.MAVIX.kalimatSekarang = "";
-        hidupkanMicLagi();
-      };
-
-      window.speechSynthesis.speak(ucapan);
-    }, 300);
-  }
-
-  ngomongSatuKalimat();
+if ("speechSynthesis" in window) {
+  speechSynthesis.onvoiceschanged = () => { suaraEdge = cariSuaraEdge(); };
+  suaraEdge = cariSuaraEdge();
 }
 
-function hentikanMavixKarenaBosNgomong(){
-  // Ini juga potong. Bila Bos ngomong, potong teks lama.
-  window.MAVIX.idBicara++; // Naikkan ID, supaya antrian kalimat lama berhenti
-  try{ window.speechSynthesis.cancel(); }catch(e){}
-  window.MAVIX.sedangNgomong = false;
-  window.MAVIX.kalimatSekarang = "";
-  setStatusMulut("Sudah dapat jawaban, potong teks lama...");
-  hidupkanMicLagi();
+// LAPIS 1: Server EdgeTTS Bos
+async function bicaraServer(teks) {
+  try {
+    if (audioServer) { audioServer.pause(); audioServer = null; }
+    try { speechSynthesis.cancel(); } catch(e) {}
+    const res = await fetch("/suara?teks=" + encodeURIComponent(teks));
+    if (!res.ok) return false;
+    const blob = await res.blob();
+    if (!blob || blob.size < 100) return false;
+    const url = URL.createObjectURL(blob);
+    audioServer = new Audio(url);
+    await audioServer.play();
+    return true;
+  } catch (e) { return false; }
 }
 
-function setStatusMulut(teks){
-  const s = document.getElementById("status");
-  if(s) s.innerText = teks;
-}
-function hidupkanMicLagi(){
-  // Kasih jeda 500ms, biar ekor suara habis dulu, baru buka telinga
-  setTimeout(function(){
-    if(window.MAVIX.recognition && window.MAVIX.micNyala){
-      try{ window.MAVIX.recognition.start(); }catch(e){}
-    }
-  }, 500);
+// LAPIS 2: Edge Browser
+function bicaraEdge(teks) {
+  try {
+    if (!suaraEdge) suaraEdge = cariSuaraEdge();
+    if (!suaraEdge) return false;
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(teks);
+    u.voice = suaraEdge;
+    u.lang = suaraEdge.lang;
+    u.rate = 1; u.pitch = 1; u.volume = 1;
+    speechSynthesis.speak(u);
+    return true;
+  } catch (e) { return false; }
 }
 
-window.bicara = bicara;
-window.stopMulut = hentikanMavixKarenaBosNgomong;
-window.potongMavix = hentikanMavixKarenaBosNgomong;
-window.hentikanMavixKarenaBosNgomong = hentikanMavixKarenaBosNgomong;
+// LAPIS 3: Bawaan HP
+function bicaraBawaan(teks) {
+  try {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(teks);
+    u.lang = "id-ID"; u.rate = 1; u.pitch = 1; u.volume = 1;
+    speechSynthesis.speak(u);
+    return true;
+  } catch (e) { return false; }
+}
+
+// Depan cuma panggil ini
+async function bicara(teks) {
+  if (!teks) return;
+  // Coba Lapis 1 dulu
+  const okServer = await bicaraServer(teks);
+  if (okServer) return;
+  // Gagal, coba Lapis 2
+  const okEdge = bicaraEdge(teks);
+  if (okEdge) return;
+  // Gagal, coba Lapis 3
+  bicaraBawaan(teks);
+}
+
+function stopBicara() {
+  try { if (audioServer) { audioServer.pause(); audioServer = null; } } catch(e) {}
+  try { speechSynthesis.cancel(); } catch(e) {}
+}
