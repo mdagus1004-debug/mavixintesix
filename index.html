@@ -73,7 +73,7 @@ body.malam .btn-tambah-isi { color:#22d3ee; border-color:#22d3ee; }
 .btn-hapus-laci { border:none; background:transparent; color:#EF4444; font-size:11px; font-weight:bold; padding:7px 8px; cursor:pointer; width:100%; text-align:left; }
 .lemari-kosong { text-align:center; font-size:13px; padding:15px; opacity:0.7; }
 #chatBox { flex:1; overflow-y:auto; padding:15px; display:flex; flex-direction:column; gap:12px; }
-.msg { max-width:82%; padding:12px 16px; border-radius:18px; font-size:16px; line-height:1.45; }
+.msg { max-width:82%; padding:12px 16px; border-radius:18px; font-size:16px; line-height:1.45; word-break:break-word; }
 .mavix { align-self:flex-start; }
 .user { align-self:flex-end; font-weight:500; }
 .input-row { display:flex; gap:8px; padding:10px; align-items:center; }
@@ -111,8 +111,9 @@ body.malam .btn-tambah-isi { color:#22d3ee; border-color:#22d3ee; }
 function tambah(siapa, teks){
   const chat = document.getElementById('chatBox');
   if(!chat) return;
+  teks = String(teks == null ? "" : teks);
   let kelas = 'mavix';
-  if(siapa && siapa.toLowerCase() === 'user') kelas = 'user';
+  if(siapa && String(siapa).toLowerCase() === 'user') kelas = 'user';
   const div = document.createElement('div');
   div.className = 'msg ' + kelas;
   if (teks.includes('<button') || teks.includes('<div id="isi_')) { div.innerHTML = teks.replace(/\n/g, '<br>'); }
@@ -131,8 +132,8 @@ window.tambah = tambah;
 <script src="otak-depan.js"></script>
 <script>
 // ===== IKUT INGATAN SEMUA - 1 GUDANG: OtakKecilCS =====
-// Tidak ada lagi mavixDB / idbGet / localStorage di file ini
 // Mode + Lemari semua simpan di OtakKecilCS lewat ambilCatatan / simpanLaci
+// Tombol Kirim + Enter DIPEGANG otak-depan.js SAJA, jangan pasang lagi di sini
 
 window.modeMavix = "NGOBROL";
 let lemariData = [];
@@ -182,10 +183,8 @@ async function simpanLemari(){
 // ===== MODE NGOBROL / BACA + SIANG / MALAM - IKUT INGATAN =====
 async function gantiMode(modeBaru){
   window.modeMavix = modeBaru;
-  // Ganti warna DULU biar langsung terasa ditekan
   document.getElementById('btnNgobrol').classList.toggle('aktif', modeBaru === 'NGOBROL');
   document.getElementById('btnBaca').classList.toggle('aktif', modeBaru === 'BACA');
-  // Simpan belakangan
   try{ await simpanLaci("mode", [modeBaru]); }catch(e){}
 }
 function terapkanMode(mode){
@@ -202,7 +201,6 @@ async function gantiBackgroundManual(){
     await simpanLaci("backgroundHari", [new Date().toDateString()]);
   }catch(e){}
 }
-document.getElementById('input').addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); document.getElementById('kirimBtn').click(); } });
 window.gantiMode = gantiMode;
 
 (async function initMode(){
@@ -227,7 +225,7 @@ window.gantiMode = gantiMode;
   }, 60000);
 })();
 
-// ===== JALUR 1: MANUAL LEWAT LEMARI - EDIT / HAPUS / TAMBAH =====
+// ===== JALUR 1: MANUAL LEWAT LEMARI =====
 async function toggleLemari(){
   const panel = document.getElementById('panelLemari');
   const btn = document.getElementById('btnLemari');
@@ -273,8 +271,8 @@ async function tambahLaci(){
   const namaBersih = nama.trim();
   if(lemariData.some(l => l.nama.toLowerCase() === namaBersih.toLowerCase())){ alert('Laci ' + namaBersih + ' sudah ada!'); return; }
   lemariData.push({ nama: namaBersih, terbuka: true, isi: [] });
-  renderLemari(); // Tampil dulu
-  simpanLemari(); // Simpan belakangan
+  renderLemari();
+  simpanLemari();
 }
 async function tambahIsi(i){
   const isi = prompt('Isi baru untuk laci ' + lemariData[i].nama + ':');
@@ -307,11 +305,10 @@ async function hapusLaci(i){
 window.renderLemari = renderLemari;
 window.simpanLemari = simpanLemari;
 
-// ===== JALUR 2: LEWAT CHAT - EDIT / HAPUS / TAMBAH INGATAN =====
+// ===== JALUR 2: LEWAT CHAT - DIPANGGIL OLEH otak-depan.js, JANGAN DIBUNGKUS LAGI DI SINI =====
 async function perintahLemariViaChat(teksAsli){
   const teks = teksAsli.toLowerCase().trim();
   let m;
-  // HAPUS LACI: "hapus laci hobi"
   m = teks.match(/(?:hapus|buang)\s+laci\s+(.+)/);
   if(m){
     const namaLaci = m[1].trim();
@@ -323,7 +320,6 @@ async function perintahLemariViaChat(teksAsli){
     simpanLemari();
     return "Sudah Bos, laci " + namaLaci + " sudah saya hapus dari Ingatan.";
   }
-  // UBAH ISI: "ubah suka kopi jadi teh tarik"
   m = teks.match(/(?:ubah|ganti)\s+(\w+)\s+(.+?)\s+jadi\s+(.+)/);
   if(m){
     const namaLaci = m[1].trim();
@@ -338,13 +334,11 @@ async function perintahLemariViaChat(teksAsli){
     simpanLemari();
     return "Sudah Bos, di laci " + namaLaci + " sudah saya ubah " + lama + " jadi " + baru + ".";
   }
-  // HAPUS ISI: "hapus kopi dari suka" / "lupakan kopi"
   if(teks.startsWith("hapus ") || teks.startsWith("buang ") || teks.startsWith("lupakan ")){
     m = teks.match(/(?:hapus|buang|lupakan)\s+(.+?)(?:\s+dari\s+(\w+))?$/);
     if(m){
       const isiHapus = m[1].trim();
       const namaLaci = m[2] ? m[2].trim() : null;
-      // Jangan tangkap "hapus laci" lagi, sudah di atas
       if(isiHapus === "laci") return null;
       let ketemu = false;
       for(const laci of lemariData){
@@ -363,7 +357,6 @@ async function perintahLemariViaChat(teksAsli){
       return "Sudah Bos, " + isiHapus + " sudah saya hapus dari Ingatan.";
     }
   }
-  // TAMBAH ISI: "tambah teh tarik ke suka"
   m = teks.match(/tambah\s+(.+?)\s+ke\s+(\w+)/);
   if(m){
     const isiBaru = m[1].trim();
@@ -382,42 +375,8 @@ async function perintahLemariViaChat(teksAsli){
   return null;
 }
 window.perintahLemariViaChat = perintahLemariViaChat;
-
-// Sambungkan Jalur Chat ke Otak Depan, biar perintah lemari tidak dikirim ke Server
-(function sambungChatKeLemari(){
-  const asli = window.prosesDepan;
-  if(typeof asli === 'function' && !asli.sudahSambungLemari){
-    const bungkus = async function(teks){
-      const hasil = await perintahLemariViaChat(teks);
-      if(hasil){
-        tambah('mavix', hasil);
-        if(typeof ngomong === 'function'){ try{ ngomong(hasil); }catch(e){} }
-        return;
-      }
-      return asli(teks);
-    };
-    bungkus.sudahSambungLemari = true;
-    window.prosesDepan = bungkus;
-  }
-  // Pengaman tombol Kirim kalau Depan gagal pasang listener
-  setTimeout(function(){
-    const btn = document.getElementById('kirimBtn');
-    if(btn && !btn.dataset.sudah){
-      btn.dataset.sudah = "1";
-      btn.addEventListener('click', async function(){
-        const inp = document.getElementById('input');
-        const teks = (inp.value || "").trim();
-        if(!teks) return;
-        // Coba dulu jalur lemari, kalau bukan perintah lemari, serahkan ke Depan
-        if(typeof window.prosesDepan === 'function'){
-          inp.value = '';
-          tambah('user', teks);
-          await window.prosesDepan(teks);
-        }
-      });
-    }
-  }, 500);
-})();
+// TIDAK ADA LAGI sambungChatKeLemari / setTimeout kirimBtn di sini
+// Biar otak-depan.js yang pegang tombol Kirim 1x saja
 </script>
 </body>
 </html>
