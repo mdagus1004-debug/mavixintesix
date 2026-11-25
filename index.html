@@ -87,6 +87,15 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   setInterval(tampilLemari, 3000);
 });
+
+  window.gantiMode = async function(mode) {
+  window.modeMavix = mode;
+  try { await simpanLaci("mode", [mode]); } catch(e) {}
+  document.querySelectorAll(".modeBtn").forEach(x => {
+    x.classList.toggle("aktif", x.dataset.mode === mode || x.getAttribute("onclick")?.includes(mode));
+  });
+  tampilLemari();
+};
 </script>
 </body>
 </html>
