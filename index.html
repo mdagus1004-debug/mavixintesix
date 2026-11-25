@@ -130,27 +130,31 @@ window.tambah = tambah;
 <script src="telinga.js"></script>
 <script src="otak-depan.js"></script>
 <script>
-// ===== IKUT INGATAN SEMUA - TIDAK ADA DB BUATAN SENDIRI LAGI =====
-// DB cuma 1: OtakKecilCS dari otak-ingatan.js
-// Lemari cuma 1: laci di OtakKecilCS
-// Mode cuma 1: laci "mode" dan "background" di OtakKecilCS
+// ===== IKUT INGATAN SEMUA - 1 GUDANG: OtakKecilCS =====
+// Tidak ada lagi mavixDB / idbGet / localStorage di file ini
+// Mode + Lemari semua simpan di OtakKecilCS lewat ambilCatatan / simpanLaci
 
 window.modeMavix = "NGOBROL";
-let lemariData = []; // [{nama, terbuka, isi:[]}]
+let lemariData = [];
 let daftarNamaLaci = ["nama","suka","hobi","kota","pekerjaan","perasaan","mode","background"];
+const LACI_SISTEM = ["mode","background","backgroundHari","daftarLaci"];
 
 async function muatLemari(){
   lemariData = [];
   for(const nama of daftarNamaLaci){
-    const isi = await ambilCatatan(nama);
-    // Biar laci default tetap ada walaupun kosong
+    let isi = [];
+    try{ isi = await ambilCatatan(nama) || []; }catch(e){ isi = []; }
+    if(!Array.isArray(isi)) isi = [];
     lemariData.push({ nama: nama, terbuka: (nama === "suka"), isi: isi });
   }
-  // Laci tambahan buatan Bos yang tidak ada di daftar, tetap dibaca dari laci "daftarLaci"
-  const extra = await ambilCatatan("daftarLaci");
+  let extra = [];
+  try{ extra = await ambilCatatan("daftarLaci") || []; }catch(e){ extra = []; }
+  if(!Array.isArray(extra)) extra = [];
   for(const nama of extra){
     if(!daftarNamaLaci.includes(nama)){
-      const isi = await ambilCatatan(nama);
+      let isi = [];
+      try{ isi = await ambilCatatan(nama) || []; }catch(e){ isi = []; }
+      if(!Array.isArray(isi)) isi = [];
       lemariData.push({ nama: nama, terbuka: true, isi: isi });
     }
   }
@@ -159,26 +163,30 @@ async function muatLemari(){
 
 async function simpanLemari(){
   window.lemariData = lemariData;
-  for(const laci of lemariData){
-    if(daftarNamaLaci.includes(laci.nama)){
+  try{
+    for(const laci of lemariData){
       await simpanLaci(laci.nama, laci.isi);
-    } else {
-      await simpanLaci(laci.nama, laci.isi);
-      // Catat nama laci tambahan biar besok ke baca lagi
-      let extra = await ambilCatatan("daftarLaci");
-      if(!extra.includes(laci.nama)){
-        extra.push(laci.nama);
-        await simpanLaci("daftarLaci", extra);
+      if(!daftarNamaLaci.includes(laci.nama)){
+        let extra = [];
+        try{ extra = await ambilCatatan("daftarLaci") || []; }catch(e){ extra = []; }
+        if(!Array.isArray(extra)) extra = [];
+        if(!extra.includes(laci.nama)){
+          extra.push(laci.nama);
+          await simpanLaci("daftarLaci", extra);
+        }
       }
     }
-  }
+  }catch(e){ console.log("Gagal simpan lemari, tapi tetap tampil:", e); }
 }
 
+// ===== MODE NGOBROL / BACA + SIANG / MALAM - IKUT INGATAN =====
 async function gantiMode(modeBaru){
   window.modeMavix = modeBaru;
-  await simpanLaci("mode", [modeBaru]); // Ikut Ingatan
+  // Ganti warna DULU biar langsung terasa ditekan
   document.getElementById('btnNgobrol').classList.toggle('aktif', modeBaru === 'NGOBROL');
   document.getElementById('btnBaca').classList.toggle('aktif', modeBaru === 'BACA');
+  // Simpan belakangan
+  try{ await simpanLaci("mode", [modeBaru]); }catch(e){}
 }
 function terapkanMode(mode){
   document.body.classList.remove('siang','malam');
@@ -189,45 +197,54 @@ function modeAutoIkutJam(){ const jam = new Date().getHours(); return (jam >= 6 
 async function gantiBackgroundManual(){
   const sekarang = document.body.classList.contains('siang') ? 'malam' : 'siang';
   terapkanMode(sekarang);
-  await simpanLaci("background", [sekarang]); // Ikut Ingatan
-  await simpanLaci("backgroundHari", [new Date().toDateString()]);
+  try{
+    await simpanLaci("background", [sekarang]);
+    await simpanLaci("backgroundHari", [new Date().toDateString()]);
+  }catch(e){}
 }
 document.getElementById('input').addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); document.getElementById('kirimBtn').click(); } });
 window.gantiMode = gantiMode;
 
 (async function initMode(){
   await muatLemari();
-  const modeArr = await ambilCatatan("mode");
+  let modeArr = [];
+  try{ modeArr = await ambilCatatan("mode") || []; }catch(e){ modeArr = []; }
   window.modeMavix = modeArr[0] || "NGOBROL";
   gantiMode(window.modeMavix);
-  const hariArr = await ambilCatatan("backgroundHari");
+  let hariArr = [];
+  try{ hariArr = await ambilCatatan("backgroundHari") || []; }catch(e){ hariArr = []; }
   if(hariArr[0] === new Date().toDateString()){
-    const bgArr = await ambilCatatan("background");
+    let bgArr = [];
+    try{ bgArr = await ambilCatatan("background") || []; }catch(e){ bgArr = []; }
     terapkanMode(bgArr[0] || 'siang');
   } else {
     terapkanMode(modeAutoIkutJam());
   }
   setInterval(async function(){
-    const h = await ambilCatatan("backgroundHari");
+    let h = [];
+    try{ h = await ambilCatatan("backgroundHari") || []; }catch(e){ h = []; }
     if(h[0] !== new Date().toDateString()) terapkanMode(modeAutoIkutJam());
   }, 60000);
 })();
 
-// ===== LEMARI PANEL - IKUT INGATAN =====
-function toggleLemari(){
+// ===== JALUR 1: MANUAL LEWAT LEMARI - EDIT / HAPUS / TAMBAH =====
+async function toggleLemari(){
   const panel = document.getElementById('panelLemari');
   const btn = document.getElementById('btnLemari');
+  if(lemariData.length === 0) await muatLemari();
   const buka = panel.classList.toggle('buka');
   btn.classList.toggle('aktif', buka);
   if(buka) renderLemari();
 }
 function renderLemari(){
   const wadah = document.getElementById('daftarLaci');
-  if(lemariData.length === 0){
+  const tampil = lemariData.filter(l => !LACI_SISTEM.includes(l.nama));
+  if(tampil.length === 0){
     wadah.innerHTML = '<div class="lemari-kosong">Lemari masih kosong.<br>Pencet + Tambah Laci Baru di atas.</div>';
     return;
   }
-  wadah.innerHTML = lemariData.map((laci, i) => {
+  wadah.innerHTML = tampil.map((laci) => {
+    const i = lemariData.indexOf(laci);
     const isiHtml = laci.isi.map((item, j) => `
       <div class="isi-row">
         <span class="isi-teks">${item}</span>
@@ -249,39 +266,158 @@ function renderLemari(){
     </div>`;
   }).join('');
 }
-async function toggleLaci(i){ lemariData[i].terbuka = !lemariData[i].terbuka; await simpanLemari(); renderLemari(); }
+async function toggleLaci(i){ lemariData[i].terbuka = !lemariData[i].terbuka; simpanLemari(); renderLemari(); }
 async function tambahLaci(){
   const nama = prompt('Nama laci baru apa? contoh: cita-cita');
-  if(!nama) return;
-  lemariData.push({ nama: nama.trim(), terbuka: true, isi: [] });
-  await simpanLemari(); renderLemari();
+  if(!nama || !nama.trim()) return;
+  const namaBersih = nama.trim();
+  if(lemariData.some(l => l.nama.toLowerCase() === namaBersih.toLowerCase())){ alert('Laci ' + namaBersih + ' sudah ada!'); return; }
+  lemariData.push({ nama: namaBersih, terbuka: true, isi: [] });
+  renderLemari(); // Tampil dulu
+  simpanLemari(); // Simpan belakangan
 }
 async function tambahIsi(i){
   const isi = prompt('Isi baru untuk laci ' + lemariData[i].nama + ':');
-  if(!isi) return;
+  if(!isi || !isi.trim()) return;
   lemariData[i].isi.push(isi.trim());
-  await simpanLemari(); renderLemari();
+  renderLemari();
+  simpanLemari();
 }
 async function ubahIsi(i, j){
   const baru = prompt('Ubah "' + lemariData[i].isi[j] + '" jadi apa?', lemariData[i].isi[j]);
   if(baru === null || baru.trim() === '') return;
   lemariData[i].isi[j] = baru.trim();
-  await simpanLemari(); renderLemari();
+  renderLemari();
+  simpanLemari();
 }
 async function hapusIsi(i, j){
   if(!confirm('Hapus "' + lemariData[i].isi[j] + '" dari laci ' + lemariData[i].nama + '?')) return;
   lemariData[i].isi.splice(j, 1);
-  await simpanLemari(); renderLemari();
+  renderLemari();
+  simpanLemari();
 }
 async function hapusLaci(i){
   if(!confirm('Hapus laci ' + lemariData[i].nama + ' beserta semua isinya?')) return;
   const nama = lemariData[i].nama;
   lemariData.splice(i, 1);
-  await simpanLaci(nama, []); // Kosongkan di Ingatan
-  await simpanLemari(); renderLemari();
+  renderLemari();
+  try{ await simpanLaci(nama, []); }catch(e){}
+  simpanLemari();
 }
 window.renderLemari = renderLemari;
 window.simpanLemari = simpanLemari;
+
+// ===== JALUR 2: LEWAT CHAT - EDIT / HAPUS / TAMBAH INGATAN =====
+async function perintahLemariViaChat(teksAsli){
+  const teks = teksAsli.toLowerCase().trim();
+  let m;
+  // HAPUS LACI: "hapus laci hobi"
+  m = teks.match(/(?:hapus|buang)\s+laci\s+(.+)/);
+  if(m){
+    const namaLaci = m[1].trim();
+    const idx = lemariData.findIndex(l => l.nama.toLowerCase() === namaLaci);
+    if(idx === -1) return "Laci " + namaLaci + " tidak ada Bos.";
+    lemariData.splice(idx, 1);
+    renderLemari();
+    try{ await simpanLaci(namaLaci, []); }catch(e){}
+    simpanLemari();
+    return "Sudah Bos, laci " + namaLaci + " sudah saya hapus dari Ingatan.";
+  }
+  // UBAH ISI: "ubah suka kopi jadi teh tarik"
+  m = teks.match(/(?:ubah|ganti)\s+(\w+)\s+(.+?)\s+jadi\s+(.+)/);
+  if(m){
+    const namaLaci = m[1].trim();
+    const lama = m[2].trim();
+    const baru = m[3].trim();
+    const laci = lemariData.find(l => l.nama.toLowerCase() === namaLaci);
+    if(!laci) return "Laci " + namaLaci + " tidak ada Bos.";
+    const j = laci.isi.findIndex(x => x.toLowerCase() === lama);
+    if(j === -1) return "Di laci " + namaLaci + " tidak ada " + lama + " Bos.";
+    laci.isi[j] = baru;
+    renderLemari();
+    simpanLemari();
+    return "Sudah Bos, di laci " + namaLaci + " sudah saya ubah " + lama + " jadi " + baru + ".";
+  }
+  // HAPUS ISI: "hapus kopi dari suka" / "lupakan kopi"
+  if(teks.startsWith("hapus ") || teks.startsWith("buang ") || teks.startsWith("lupakan ")){
+    m = teks.match(/(?:hapus|buang|lupakan)\s+(.+?)(?:\s+dari\s+(\w+))?$/);
+    if(m){
+      const isiHapus = m[1].trim();
+      const namaLaci = m[2] ? m[2].trim() : null;
+      // Jangan tangkap "hapus laci" lagi, sudah di atas
+      if(isiHapus === "laci") return null;
+      let ketemu = false;
+      for(const laci of lemariData){
+        if(namaLaci && laci.nama.toLowerCase() !== namaLaci) continue;
+        if(LACI_SISTEM.includes(laci.nama)) continue;
+        const j = laci.isi.findIndex(x => x.toLowerCase() === isiHapus || x.toLowerCase().includes(isiHapus));
+        if(j !== -1){
+          laci.isi.splice(j, 1);
+          ketemu = true;
+          if(namaLaci) break;
+        }
+      }
+      if(!ketemu) return "Tidak ketemu " + isiHapus + " di Ingatan Bos.";
+      renderLemari();
+      simpanLemari();
+      return "Sudah Bos, " + isiHapus + " sudah saya hapus dari Ingatan.";
+    }
+  }
+  // TAMBAH ISI: "tambah teh tarik ke suka"
+  m = teks.match(/tambah\s+(.+?)\s+ke\s+(\w+)/);
+  if(m){
+    const isiBaru = m[1].trim();
+    const namaLaci = m[2].trim();
+    let laci = lemariData.find(l => l.nama.toLowerCase() === namaLaci);
+    if(!laci){
+      lemariData.push({ nama: namaLaci, terbuka: true, isi: [isiBaru] });
+    } else {
+      if(laci.isi.some(x => x.toLowerCase() === isiBaru)) return isiBaru + " sudah ada di laci " + namaLaci + " Bos.";
+      laci.isi.push(isiBaru);
+    }
+    renderLemari();
+    simpanLemari();
+    return "Sudah Bos, " + isiBaru + " sudah saya simpan ke laci " + namaLaci + ".";
+  }
+  return null;
+}
+window.perintahLemariViaChat = perintahLemariViaChat;
+
+// Sambungkan Jalur Chat ke Otak Depan, biar perintah lemari tidak dikirim ke Server
+(function sambungChatKeLemari(){
+  const asli = window.prosesDepan;
+  if(typeof asli === 'function' && !asli.sudahSambungLemari){
+    const bungkus = async function(teks){
+      const hasil = await perintahLemariViaChat(teks);
+      if(hasil){
+        tambah('mavix', hasil);
+        if(typeof ngomong === 'function'){ try{ ngomong(hasil); }catch(e){} }
+        return;
+      }
+      return asli(teks);
+    };
+    bungkus.sudahSambungLemari = true;
+    window.prosesDepan = bungkus;
+  }
+  // Pengaman tombol Kirim kalau Depan gagal pasang listener
+  setTimeout(function(){
+    const btn = document.getElementById('kirimBtn');
+    if(btn && !btn.dataset.sudah){
+      btn.dataset.sudah = "1";
+      btn.addEventListener('click', async function(){
+        const inp = document.getElementById('input');
+        const teks = (inp.value || "").trim();
+        if(!teks) return;
+        // Coba dulu jalur lemari, kalau bukan perintah lemari, serahkan ke Depan
+        if(typeof window.prosesDepan === 'function'){
+          inp.value = '';
+          tambah('user', teks);
+          await window.prosesDepan(teks);
+        }
+      });
+    }
+  }, 500);
+})();
 </script>
 </body>
 </html>
